@@ -1,1 +1,1 @@
-postgresql-devel
+postgresql
