@@ -1,0 +1,8 @@
+plotly
+pymongo
+psycopg2
+rdkit
+gseapy
+bs4
+biopython
+bioservices
