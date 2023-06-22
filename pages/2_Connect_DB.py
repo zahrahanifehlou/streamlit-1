@@ -1,5 +1,4 @@
 import warnings
-
 import numpy as np
 import pandas as pd
 import psycopg2
@@ -8,9 +7,6 @@ import streamlit as st
 warnings.filterwarnings("ignore")
 
 
-# Initialize connection.
-# Uses st.cache_resource to only run once.
-@st.cache_resource
 def init_connection():
     return psycopg2.connect(**st.secrets["postgres"])
 
@@ -18,111 +14,182 @@ def init_connection():
 conn = init_connection()
 
 
-# Perform query.
-# Uses st.cache_data to only rerun when the query changes or after 10 min.
-@st.cache_data(ttl=600)
 def run_query(query):
     with conn.cursor() as cur:
         cur.execute(query)
         return cur.fetchall()
 
 
-rows = run_query("select table_name from information_schema.tables where table_schema='public'")
-list_tables = []
-st.image("DB.png")
-for row in rows:
-    list_tables.append(str(row).split(",")[0].split("(")[1].replace("'", ""))
+# rows = run_query(
+#     "select table_name from information_schema.tables where table_schema='public'"
+# )
+# list_tables = []
 
-option = st.selectbox("Pick one table", list_tables)
-st.write("You selected the table: ", option)
+# for row in rows:
+#     list_tables.append(str(row).split(",")[0].split("(")[1].replace("'", ""))
+list_tables = ["gene", "cpd", "pathway", "disease", "keggcpd"]
+
+# -------------------------------------------------------------------------------------------------------------------
+st.image("DB.png")
+st.write(f"\n")
+# -------------------------------------------------------------------------------------------------------------------
+
+col1, col2 = st.columns(2)
+with col1:
+    option = st.selectbox("Pick one table", list_tables)
+    x = st.slider("Number of rows to display", 1, 20)
+    st.write("You selected the table: ", option)
 data = pd.read_sql("select * from " + str(option), conn)
 data = data.apply(lambda x: x.astype(str).str.upper())
 
-x = st.slider("Number of rows to display", 1, 20)
-tab1, tab2 = st.tabs(["Dataframe", "Summary"])
-tab1.write(data.sample(x))
-tab2.write(data.describe())
+with col2:
+    tab1, tab2 = st.tabs(["Dataframe", "Summary"])
+    tab1.write(data.sample(x))
+    tab2.write(data.describe().T)
+st.write(f"\n")
+# -------------------------------------------------------------------------------------------------------------------
 
-var_text = st.text_input("Enter your search")
+col3, col4 = st.columns(2)
+with col3:
+    var_text = st.text_input("Enter your search")
 
-# df_res = data[data.eq(var_text.upper()).any(1)]
-mask = np.column_stack([data[col].str.match(var_text.upper(), na=False) for col in data])
-# mask = np.column_stack([data[col].to_string()==var_text.upper() for col in data])
-# st.write(mask)
-df_res= data.loc[mask.any(axis=1)]
-# result = data[data.applymap(lambda x: var_text.upper() in str(x))]
-#filt= result[result.any(axis=1)]
-#df_res =data[data[filt.any(axis=1)]]
-st.write(f"Result in selected {str(option)} table:", df_res)
-list_df = []
-g = st.radio("Select gene or compound", ["gene", "compound"])
+mask = np.column_stack(
+    [data[col].str.match(var_text.upper(), na=False) for col in data]
+)
 
-for tab in list_tables:
-    #st.write(tab)
-    dfx = pd.read_sql("select * from " + str(tab), conn)
-    dfx = dfx.apply(lambda x: x.astype(str).str.upper())
-    mask = np.column_stack([dfx[col].str.match(var_text.upper(), na=False) for col in dfx])
+df_res = data.loc[mask.any(axis=1)].reset_index(drop=True)
 
-    df_resx= dfx.loc[mask.any(axis=1)]
-    # st.write(df_resx)
-    # df_resx = dfx[dfx.eq(var_text.upper()).any(1)]
-    if len(df_resx) > 0:
-        st.write(f"Result in {str(tab)}  table:", df_resx)
+with col4:
+    st.write(f"Result in  {str(option)} table:", df_res)
+st.write(f"\n")
+# -------------------------------------------------------------------------------------------------------------------
 
-        for col in df_resx:
-            sql_last_line = f" where UPPER({tab}.{col}) like   UPPER('{var_text}%') "
-            if g == "gene":
-                sql_crisper = (
-                    "select crispermeta.batchid,gene.geneid,gene.symbol,gene.synonyms"
-                    + " from crispermeta "
-                    + "inner join gene on crispermeta.geneid=gene.geneid "
-                    + sql_last_line
-                    + ""
-                    + " GROUP BY crispermeta.batchid,gene.geneid,gene.symbol,gene.synonyms"
-                )
-                df_cris = pd.read_sql(sql_crisper, conn)
-                if len(df_cris)>0:
-                    list_df.append(df_cris)
-                sql_cpd = (
-                    "select  batchs.batchid, gene.geneid,gene.symbol,gene.synonyms"
-                    + " from batchs"
-                    + " inner join cpdgene on cpdgene.pubchemid=batchs.pubchemid"
-                    + " inner join gene on cpdgene.geneid=gene.geneid"
-                    + sql_last_line
-                    + " GROUP BY batchs.batchid, gene.geneid,gene.symbol,gene.synonyms"
-                )
-                df_cp = pd.read_sql(sql_cpd, conn)
-                if len(df_cp)>0:
-                    list_df.append(df_cp)
-            else:
-                sql_cpd = (
-                    "select  batchs.batchid, cpd.pubchemid,cpd.name "
-                    + " from cpd"
-                    + " inner join batchs on batchs.pubchemid=cpd.pubchemid "
-                    + sql_last_line
-                    # + " GROUP BY batchs.batchid, cpd.pubchemid,cpd.name"
-                )
-                df_cps = pd.read_sql(sql_cpd, conn)
-                # st.write("Data for cpds",sql_cpd)
-                if len(df_cps)>0:
-                    list_df.append(df_cps)
-# st.write(list_df)
-if len(list_df) > 0:
-    df_prof = pd.DataFrame()
-    df_tot = pd.concat(list_df)
-    # st.write(list_df)
-    st.write(f"Compounds/crispr for {var_text.upper()}", df_tot)
-    list_batch = df_tot["batchid"]
-    batch_list = []
-    for batch in list_batch:
-        batch_list.append("'" + batch + "'")
-    conn2 = psycopg2.connect(host="192.168.2.131", port="5432", user="arno", database="ksilink_cpds", password="12345")
-    sql_profile = "select * from aggprofiles where batchid  in (" + ",".join(batch_list) + ")"
-    df_prof = pd.read_sql(sql_profile, conn2)
-    tab1, tab2 = st.tabs(["Profiles", "Summary"])
-    tab1.write(df_prof)
-    tab2.write(df_prof.describe())
+db_name = st.radio("Find compounds in which DataSet", ("SelectChem and Jump DataSet", "KEGG"),horizontal =True)
+df_cp = []
 
-    st.session_state["df"] = df_prof
-# df_prof.to_csv(f"Data_for_{var_text}.csv", index=None)
-# Print results.
+
+if db_name == "KEGG":
+    st.write(f"Result in KEGG drugs and compunds  table:")
+    list_df = []
+    sql_cpd = None
+    df_cp = []
+    if len(df_res) > 0:
+        if str(option) == "gene":
+            geneid = str(df_res["geneid"].values[0])
+            sql_last_line = f" where keggcpdgene.geneid in ( '" + geneid + "')"
+            sql_cpd = (
+                'select keggcpd.name as "KEGG Compound Name", keggcpd.keggid, keggcpdgene.geneid   '
+                + " from keggcpd "
+                + " inner join keggcpdgene on keggcpdgene.keggid=keggcpd.keggid "
+                + sql_last_line
+                + " GROUP BY keggcpd.name, keggcpd.keggid, keggcpdgene.geneid "
+            )
+        
+        if str(option) == "pathway":
+            pathid = str(df_res["pathid"].values[0])
+            sql_last_line = f" where keggcpdpath.pathid in ( '" + pathid + "')"
+            sql_cpd = (
+                'select keggcpd.name as "KEGG Compound Name", keggcpd.keggid, keggcpdpath.pathid '
+                + " from keggcpd "
+                + " inner join keggcpdpath on keggcpdpath.keggid=keggcpd.keggid "
+                + sql_last_line
+                + " GROUP BY keggcpd.name, keggcpd.keggid, keggcpdpath.pathid"
+            )
+        
+        if str(option) == "disease":
+            disid = str(df_res["disid"].values[0])
+            sql_last_line = f" where keggcpddis.disid in ( '" + disid + "')"
+            sql_cpd = (
+                'select keggcpd.name as "KEGG Compound Name", keggcpd.keggid, keggcpddis.disid '
+                + " from keggcpd "
+                + " inner join keggcpddis on keggcpddis.keggid=keggcpd.keggid "
+                + sql_last_line
+                + " GROUP BY keggcpd.name, keggcpd.keggid, keggcpddis.disid"
+            )
+
+
+if db_name == "SelectChem and Jump DataSet":
+    st.write(f"Result in SelectChem compunds  table:")
+    list_df = []
+    sql_cpd = None
+    df_cp = []
+    if len(df_res) > 0:
+        if str(option) == "gene":
+            geneid = str(df_res["geneid"].values[0])
+            sql_last_line = f" where cpdgene.geneid in ( '" + geneid + "')"
+            sql_cpd = (
+                'select cpd.synonyms as "Compound Name"  ,cpd.pubchemid as "Compound PubChemID" ,cpdbatchs.batchid as "Compound BatchID" ,cpd.name as "Compound FullName",cpdgene.geneid '
+                + " from cpdbatchs "
+                + " inner join cpdgene on cpdgene.pubchemid=cpdbatchs.pubchemid "
+                + " inner join cpd on cpdbatchs.pubchemid=cpd.pubchemid"
+                + sql_last_line
+                + " GROUP BY cpd.pubchemid,cpdbatchs.batchid,cpdgene.geneid, cpd.name"
+            )
+
+        if str(option) == "pathway":
+            pathid = str(df_res["pathid"].values[0])
+            sql_last_line = f" where UPPER(cpdpath.pathid) in ( '" + pathid + "')"
+            sql_cpd = (
+                'select cpd.synonyms as "Compound synonyms"  ,cpd.pubchemid as "Compound PubChemID" ,cpdbatchs.batchid as "Compound BatchID" ,cpd.name as "Compound FullName",cpdpath.pathid '
+                + " from cpdbatchs "
+                + " inner join cpdpath on cpdpath.pubchemid=cpdbatchs.pubchemid "
+                + " inner join cpd on cpdbatchs.pubchemid=cpd.pubchemid"
+                + sql_last_line
+                + " GROUP BY cpd.pubchemid,cpdbatchs.batchid,cpdpath.pathid, cpd.name"
+            )
+
+        if str(option) == "disease":
+            disid = str(df_res["disid"].values[0])
+            sql_last_line = f" where UPPER(keggcpddis.disid) in ( '" + disid + "')"
+            sql_cpd = (
+                'select cpd.synonyms as "Compound synonyms"  ,cpd.pubchemid as "Compound PubChemID" ,cpdbatchs.batchid as "Compound BatchID" ,cpd.name as "Compound FullName",keggcpddis.disid '
+                + " from cpdbatchs "
+                + " INNER JOIN cpd ON cpdbatchs.pubchemid=cpd.pubchemid "
+                + " INNER JOIN keggcpddis ON keggcpddis.keggid=cpd.keggid"
+                + sql_last_line
+                + " GROUP BY cpd.pubchemid,cpdbatchs.batchid,keggcpddis.disid, cpd.name"
+            )
+
+        if str(option) == "cpd":
+            pubchemid = str(df_res["pubchemid"].values[0])
+            sql_last_line = f" where UPPER(cpd.pubchemid) in ( '" + pubchemid + "')"
+            sql_cpd = (
+                'select cpd.synonyms as "Compound synonyms"  ,cpd.pubchemid as "Compound PubChemID" ,cpdbatchs.batchid as "Compound BatchID" ,cpd.name as "Compound FullName" '
+                + " from cpdbatchs "
+                + " INNER JOIN cpd ON cpdbatchs.pubchemid=cpd.pubchemid "
+                + sql_last_line
+                + " GROUP BY cpd.pubchemid,cpdbatchs.batchid,cpd.pubchemid, cpd.name"
+            )
+
+df_cp = pd.read_sql(sql_cpd, conn)
+
+
+if len(df_cp) > 0:
+    st.write(df_cp)
+    st.write(f"Profiles ")
+    if db_name == "SelectChem and Jump DataSet":
+        df_prof = pd.DataFrame()
+        list_batch = df_cp["Compound BatchID"]
+        batch_list = []
+        for batch in list_batch:
+            batch_list.append("'" + batch + "'")
+
+        conn2 = psycopg2.connect(
+            host="192.168.2.131",
+            port="5432",
+            user="arno",
+            database="ksilink_cpds",
+            password="12345",
+        )
+        sql_profile = (
+            "select * from aggcombatprofile where metabatchid in ("
+            + ",".join(batch_list)
+            + ")"
+        )
+
+        df_prof = pd.read_sql(sql_profile, conn2)
+        tab1, tab2 = st.tabs(["Profiles", "Summary"])
+        tab1.write(df_prof)
+        tab2.write(df_prof.describe().T)
+
+        st.session_state["df"] = df_prof
