@@ -21,8 +21,6 @@ col_sel = st.radio('Column to select in the df',('name','keggid'))
 
 def get_infos(df):
 
-
-
     df_cpds_in_kegg = pd.DataFrame()
     # df_cpds_tot = get_compound_info()
     if col_sel=='keggid':
@@ -35,6 +33,7 @@ def get_infos(df):
     sql_kegg ="select * from keggcpdgene inner join gene on gene.geneid=keggcpdgene.geneid where keggid in (" + ",".join(batch_list) + ")"
 
     df_cpds_in_kegg= pd.read_sql(sql_kegg,conn)
+    df_cpds_in_kegg = df_cpds_in_kegg.loc[:,~df_cpds_in_kegg.columns.duplicated()].copy()
     st.write('DF',df_cpds_in_kegg)
     # if col_sel=='name':
     #     list_name=df['name'].unique().tolist()
@@ -48,7 +47,7 @@ def get_infos(df):
     human = gp.get_library_name(organism='Human')
     col1,col2 = st.columns(2)
     with col1:
-        sel_col = st.selectbox(':red[Choose column] :worried:',df_cpds_tot.columns.to_list())
+        sel_col = st.selectbox(':red[Choose column] :worried:',dftiti.columns.to_list())
 
     with col2:
         sel = st.selectbox(':green[Choose DB]',human)

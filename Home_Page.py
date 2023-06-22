@@ -22,7 +22,7 @@ st.markdown(
 """
 )
 st.image("DB.png")
-st.write(st.session_state)
+#st.write(st.session_state)
 
 if st.button('Clear Cache'):
     for key in st.session_state.keys():
