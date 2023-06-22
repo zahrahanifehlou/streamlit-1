@@ -130,7 +130,7 @@ if var_text:
                 if 'ag' in ag and '.fth' in ag:
                     # st.write(pat+ag)
                     df_temp= pd.read_feather(pat+ag)
-                    df_temp=df_temp[df_temp['tags'].str.contains("Rolipram")].reset_index(drop=True)
+                    df_temp=df_temp[df_temp['tags'].str.contains(var_text)].reset_index(drop=True)
                     list_df.append(df_temp)
         df_all = pd.concat(list_df)
         st.write('df_all', df_all)

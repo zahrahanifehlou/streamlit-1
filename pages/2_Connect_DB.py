@@ -20,18 +20,7 @@ def run_query(query):
         return cur.fetchall()
 
 
-# rows = run_query(
-#     "select table_name from information_schema.tables where table_schema='public'"
-# )
-# list_tables = []
-
-# for row in rows:
-#     list_tables.append(str(row).split(",")[0].split("(")[1].replace("'", ""))
 list_tables = ["gene", "cpd", "pathway", "disease", "keggcpd"]
-
-# -------------------------------------------------------------------------------------------------------------------
-st.image("DB.png")
-st.write(f"\n")
 # -------------------------------------------------------------------------------------------------------------------
 
 col1, col2 = st.columns(2)
@@ -71,111 +60,131 @@ db_name = st.radio(
 )
 df_cp = []
 
-def get_last_line(col_name="geneid",table_name="keggcpdgene"):
+
+def get_sql_kegg(table_name="keggcpdgene", col_name="geneid"):
     list_tmp = df_res[col_name]
     list_geneid = []
     for t in list_tmp:
         list_geneid.append("'" + t + "'")
-    sql_last_line = f" where {table_name}.{col_name} in (" + ",".join(list_geneid) + ")"
-    return sql_last_line
-
-if db_name == "KEGG":
-    st.write(f"Result in KEGG drugs and compunds  table:")
-    list_df = []
-    sql_cpd = None
-    df_cp = []
-    if len(df_res) > 0:
-        if str(option) == "gene":
-            sql_last_line = get_last_line(col_name="geneid",table_name="keggcpdgene")
-            
-            sql_cpd = (
-                'select keggcpd.name as "KEGG Compound Name", keggcpd.keggid, keggcpdgene.geneid   '
-                + " from keggcpd "
-                + " inner join keggcpdgene on keggcpdgene.keggid=keggcpd.keggid "
-                + sql_last_line
-                + " GROUP BY keggcpd.name, keggcpd.keggid, keggcpdgene.geneid "
-            )
-
-        if str(option) == "pathway":
-            sql_last_line = get_last_line(col_name="pathid",table_name="keggcpdpath")
-            sql_cpd = (
-                'select keggcpd.name as "KEGG Compound Name", keggcpd.keggid, keggcpdpath.pathid '
-                + " from keggcpd "
-                + " inner join keggcpdpath on keggcpdpath.keggid=keggcpd.keggid "
-                + sql_last_line
-                + " GROUP BY keggcpd.name, keggcpd.keggid, keggcpdpath.pathid"
-            )
-
-        if str(option) == "disease":
-            sql_last_line = get_last_line(col_name="disid",table_name="keggcpddis")
-            sql_cpd = (
-                'select keggcpd.name as "KEGG Compound Name", keggcpd.keggid, keggcpddis.disid '
-                + " from keggcpd "
-                + " inner join keggcpddis on keggcpddis.keggid=keggcpd.keggid "
-                + sql_last_line
-                + " GROUP BY keggcpd.name, keggcpd.keggid, keggcpddis.disid"
-            )
+    sql_last_line = (
+        " where  " + table_name + "." + col_name + " in (" + ",".join(list_geneid) + ")"
+    )
+    sql = (
+        'select keggcpd.name as "KEGG Compound Name", keggcpd.keggid, '
+        + table_name
+        + "."
+        + col_name
+        + " from keggcpd  inner join "
+        + table_name
+        + " on "
+        + table_name
+        + ".keggid=keggcpd.keggid "
+        + sql_last_line
+        + " GROUP BY keggcpd.name, keggcpd.keggid, "
+        + table_name
+        + "."
+        + col_name
+    )
+    return sql
 
 
-if db_name == "SelectChem and Jump DataSet":
-    st.write(f"Result in SelectChem compunds  table:")
-    list_df = []
-    sql_cpd = None
-    df_cp = []
-    if len(df_res) > 0:
-        if str(option) == "gene":
-            sql_last_line = get_last_line(col_name="geneid",table_name="cpdgene")
-            sql_cpd = (
-                'select cpd.synonyms as "Compound Name"  ,cpd.pubchemid as "Compound PubChemID" ,cpdbatchs.batchid as "Compound BatchID" ,cpd.name as "Compound FullName",cpdgene.geneid '
-                + " from cpdbatchs "
-                + " inner join cpdgene on cpdgene.pubchemid=cpdbatchs.pubchemid "
-                + " inner join cpd on cpdbatchs.pubchemid=cpd.pubchemid"
-                + sql_last_line
-                + " GROUP BY cpd.pubchemid,cpdbatchs.batchid,cpdgene.geneid, cpd.name"
-            )
+def get_sql_jump(table_name="cpdgene", col_name="geneid"):
+    list_tmp = df_res[col_name]
+    list_geneid = []
+    for t in list_tmp:
+        list_geneid.append("'" + t + "'")
+    sql_last_line = (
+        " where  " + table_name + "." + col_name + " in (" + ",".join(list_geneid) + ")"
+    )
 
-        if str(option) == "pathway":
-            sql_last_line = get_last_line(col_name="pathid",table_name="cpdpath")
-            
-            sql_cpd = (
-                'select cpd.synonyms as "Compound synonyms"  ,cpd.pubchemid as "Compound PubChemID" ,cpdbatchs.batchid as "Compound BatchID" ,cpd.name as "Compound FullName",cpdpath.pathid '
-                + " from cpdbatchs "
-                + " inner join cpdpath on cpdpath.pubchemid=cpdbatchs.pubchemid "
-                + " inner join cpd on cpdbatchs.pubchemid=cpd.pubchemid"
-                + sql_last_line
-                + " GROUP BY cpd.pubchemid,cpdbatchs.batchid,cpdpath.pathid, cpd.name"
-            )
+    if table_name == "disease":
+        st.write(table_name)
+        sql = (
+            'select cpd.synonyms as "Compound Name" ,cpd.pubchemid as "Compound PubChemID" ,cpdbatchs.batchid as "Compound BatchID" ,cpd.name as "Compound FullName", keggcpddis.disid '
+            + " from cpdbatchs inner join cpd on cpdbatchs.pubchemid=cpd.pubchemid "
+            + " inner  join keggcpd on keggcpd.keggid=cpd.keggid"
+            + " inner  join keggcpddis on keggcpd.keggid=keggcpddis.keggid"
+            + sql_last_line
+        )
 
-        if str(option) == "disease":
-            sql_last_line = get_last_line(col_name="disid",table_name="keggcpddis")
-            sql_cpd = (
-                'select cpd.synonyms as "Compound synonyms"  ,cpd.pubchemid as "Compound PubChemID" ,cpdbatchs.batchid as "Compound BatchID" ,cpd.name as "Compound FullName",keggcpddis.disid '
-                + " from cpdbatchs "
-                + " INNER JOIN cpd ON cpdbatchs.pubchemid=cpd.pubchemid "
-                + " INNER JOIN keggcpddis ON keggcpddis.keggid=cpd.keggid"
-                + sql_last_line
-                + " GROUP BY cpd.pubchemid,cpdbatchs.batchid,keggcpddis.disid, cpd.name"
-            )
+    if table_name == "cpd":
+        st.write(table_name)
+        sql = (
+            'select cpd.synonyms as "Compound Name"  ,cpd.pubchemid as "Compound PubChemID" ,cpdbatchs.batchid as "Compound BatchID" ,cpd.name as "Compound FullName",'
+            + table_name
+            + "."
+            + col_name
+            + " from cpdbatchs "
+            + " inner join "
+            + table_name
+            + " on "
+            + table_name
+            + ".pubchemid=cpdbatchs.pubchemid   "
+            + sql_last_line
+            + " GROUP BY cpd.pubchemid,cpdbatchs.batchid,"
+            + table_name
+            + "."
+            + col_name
+            + ", cpd.name"
+        )
 
-        if str(option) == "cpd":
-            sql_last_line = get_last_line(col_name="pubchemid",table_name="cpd")
- 
+    if table_name not in ["cpd", "disease"]:
+        sql = (
+            'select cpd.synonyms as "Compound Name"  ,cpd.pubchemid as "Compound PubChemID" ,cpdbatchs.batchid as "Compound BatchID" ,cpd.name as "Compound FullName",'
+            + table_name
+            + "."
+            + col_name
+            + " from cpdbatchs "
+            + " inner join "
+            + table_name
+            + " on "
+            + table_name
+            + ".pubchemid=cpdbatchs.pubchemid   inner join cpd on cpdbatchs.pubchemid=cpd.pubchemid"
+            + sql_last_line
+            + " GROUP BY cpd.pubchemid,cpdbatchs.batchid,"
+            + table_name
+            + "."
+            + col_name
+            + ", cpd.name"
+        )
 
-            sql_cpd = (
-                'select cpd.synonyms as "Compound synonyms"  ,cpd.pubchemid as "Compound PubChemID" ,cpdbatchs.batchid as "Compound BatchID" ,cpd.name as "Compound FullName" '
-                + " from cpdbatchs "
-                + " INNER JOIN cpd ON cpdbatchs.pubchemid=cpd.pubchemid "
-                + sql_last_line
-                + " GROUP BY cpd.pubchemid,cpdbatchs.batchid,cpd.pubchemid, cpd.name"
-            )
+    return sql
 
 
-df_cp = pd.read_sql(sql_cpd, conn)
+table_mapping = {
+    "KEGG": {
+        "gene": ("keggcpdgene", "geneid"),
+        "pathway": ("keggcpdpath", "pathid"),
+        "disease": ("keggcpddis", "disid"),
+        "cpdkegg": ("cpdkegg", "keggid"),
+    },
+    "SelectChem and Jump DataSet": {
+        "gene": ("cpdgene", "geneid"),
+        "pathway": ("cpdpath", "pathid"),
+        "disease": ("disease", "disid"),
+        "cpd": ("cpd", "pubchemid"),
+    },
+}
+
+list_df = []
+df_cp = []
+sql_query = []
+if len(df_res) > 0:
+    if str(option) in table_mapping[db_name]:
+        table_name, col_name = table_mapping[db_name][str(option)]
+        if db_name == "KEGG":
+            sql_query = get_sql_kegg(table_name=table_name, col_name=col_name)
+        else:
+            sql_query = get_sql_jump(table_name=table_name, col_name=col_name)
+
+
+if sql_query != []:
+    df_cp = pd.read_sql(sql_query, conn)
 
 
 if len(df_cp) > 0:
     st.write(df_cp)
-    st.write(f"Profiles ")
+    st.write(f"Profiles in JUMP CP DATA SET")
     if db_name == "SelectChem and Jump DataSet":
         df_prof = pd.DataFrame()
         list_batch = df_cp["Compound BatchID"]
@@ -202,3 +211,5 @@ if len(df_cp) > 0:
         tab2.write(df_prof.describe().T)
 
         st.session_state["df_profiles"] = df_prof
+else:
+    st.write(" try  something else :) ")
