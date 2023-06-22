@@ -6,10 +6,10 @@ import streamlit as st
 from pqdm.processes import pqdm
 from sklearn.metrics.pairwise import cosine_similarity
 
-if "df" not in st.session_state:
+if "df_profiles" not in st.session_state:
     st.write("Connect DB First")
 else:
-    df = st.session_state["df"]
+    df = st.session_state["df_profiles"]
     st.write("Data from DB", df)
     list_cpds = df["metasource"] + "+" + df["metabatchid"]
     choix = st.selectbox("Select the Profile", list_cpds)
@@ -33,9 +33,7 @@ else:
         "source_13",
     ]
     choix_source = st.selectbox("Select the Source", list_sources)
-   
-    x_list=[col for col in df.columns if not col.startswith('meta')]
-    
+
 
     conn2 = psycopg2.connect(
         host="192.168.2.131",
@@ -45,11 +43,12 @@ else:
         password="12345",
     )
     sql_profile = "select * from aggcombatprofile where metasource=" + "'" + choix_source + "'"
+
     df_prof = pd.read_sql(sql_profile, conn2)
 
     # df_pro = pd.read_feather(f"/mnt/shares/L/DB/updateDB/clean_profiles/{source}_feature_select.fth")
-    filter_col = [col for col in df_prof.columns if not col.startswith('meta')]
-   
+
+
 
     list_cpd = []
     progress_text = "Computing similarities. Please wait"
@@ -57,14 +56,21 @@ else:
     list_cpd_keep = []
 
     # @st.cache_data
-    def crisper_find_sim_from_cpd2(df, df_se2l):
-        simi = cosine_similarity(df[filter_col], df_se2l[filter_col])
+    def crisper_find_sim_from_cpd2(df1, df2):
+
+        filter_col1 = [col for col in df1.columns if not col.startswith('meta')]
+        filter_col2 = [col for col in df2.columns if not col.startswith('meta')]
+        filter_col=list(set(filter_col1) & set(filter_col2))
+        st.write(len(filter_col))
+        simi = cosine_similarity(df1[filter_col], df2[filter_col])
         return simi
-    df_prof=df_prof[df_prof.notna()]
-    df_sel=df_sel[df_sel.notna()]
+
+    st.write(df_prof.shape)
+    st.write(df_sel.shape)
+    filter_col = [col for col in df_prof.columns if not col.startswith('meta')]
 
     sim_test = crisper_find_sim_from_cpd2(df_prof, df_sel)
-
+    st.write(sim_test)
     # st.write(sim_test.shape)
     # sim_all = crisper_find_sim_from_cpd(df_prof, "batchid")
     df_hist = pd.DataFrame()
@@ -103,4 +109,4 @@ else:
     if len(df_keep_prof) > 0:
         st.session_state["df_keep"] = df_keep_prof
     st.session_state["df_all_data"] = df_hist
-    df_hist.to_csv("sim_selected_source2.csv", index=None)
+    # df_hist.to_csv("sim_selected_source2.csv", index=None)

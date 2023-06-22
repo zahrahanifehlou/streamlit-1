@@ -64,7 +64,11 @@ with col4:
 st.write(f"\n")
 # -------------------------------------------------------------------------------------------------------------------
 
-db_name = st.radio("Find compounds in which DataSet", ("SelectChem and Jump DataSet", "KEGG"),horizontal =True)
+db_name = st.radio(
+    "Find compounds in which DataSet",
+    ("SelectChem and Jump DataSet", "KEGG"),
+    horizontal=True,
+)
 df_cp = []
 
 
@@ -75,8 +79,11 @@ if db_name == "KEGG":
     df_cp = []
     if len(df_res) > 0:
         if str(option) == "gene":
-            geneid = str(df_res["geneid"].values[0])
-            sql_last_line = f" where keggcpdgene.geneid in ( '" + geneid + "')"
+            list_tmp = df_res["geneid"]
+            list_geneid = []
+            for t in list_tmp:
+                list_geneid.append("'" + t + "'")
+            sql_last_line = f" where keggcpdgene.geneid in (" + ",".join(list_geneid) + ")"
             sql_cpd = (
                 'select keggcpd.name as "KEGG Compound Name", keggcpd.keggid, keggcpdgene.geneid   '
                 + " from keggcpd "
@@ -84,10 +91,13 @@ if db_name == "KEGG":
                 + sql_last_line
                 + " GROUP BY keggcpd.name, keggcpd.keggid, keggcpdgene.geneid "
             )
-        
+
         if str(option) == "pathway":
-            pathid = str(df_res["pathid"].values[0])
-            sql_last_line = f" where keggcpdpath.pathid in ( '" + pathid + "')"
+            list_tmp = df_res["pathid"]
+            list_pathid = []
+            for t in list_tmp:
+                list_pathid.append("'" + t + "'")
+            sql_last_line = f" where keggcpdpath.pathid in (" + ",".join(list_pathid) + ")"
             sql_cpd = (
                 'select keggcpd.name as "KEGG Compound Name", keggcpd.keggid, keggcpdpath.pathid '
                 + " from keggcpd "
@@ -95,10 +105,15 @@ if db_name == "KEGG":
                 + sql_last_line
                 + " GROUP BY keggcpd.name, keggcpd.keggid, keggcpdpath.pathid"
             )
-        
+
         if str(option) == "disease":
-            disid = str(df_res["disid"].values[0])
-            sql_last_line = f" where keggcpddis.disid in ( '" + disid + "')"
+            list_tmp = df_res["disid"]
+            list_disid = []
+            for t in list_tmp:
+                list_disid.append("'" + t + "'")
+            sql_last_line = f" where keggcpddis.disid in (" + ",".join(list_disid) + ")"
+            
+         
             sql_cpd = (
                 'select keggcpd.name as "KEGG Compound Name", keggcpd.keggid, keggcpddis.disid '
                 + " from keggcpd "
@@ -115,8 +130,11 @@ if db_name == "SelectChem and Jump DataSet":
     df_cp = []
     if len(df_res) > 0:
         if str(option) == "gene":
-            geneid = str(df_res["geneid"].values[0])
-            sql_last_line = f" where cpdgene.geneid in ( '" + geneid + "')"
+            list_tmp = df_res["geneid"]
+            list_geneid = []
+            for t in list_tmp:
+                list_geneid.append("'" + t + "'")
+            sql_last_line = f" where cpdgene.geneid in (" + ",".join(list_geneid) + ")"
             sql_cpd = (
                 'select cpd.synonyms as "Compound Name"  ,cpd.pubchemid as "Compound PubChemID" ,cpdbatchs.batchid as "Compound BatchID" ,cpd.name as "Compound FullName",cpdgene.geneid '
                 + " from cpdbatchs "
@@ -127,8 +145,11 @@ if db_name == "SelectChem and Jump DataSet":
             )
 
         if str(option) == "pathway":
-            pathid = str(df_res["pathid"].values[0])
-            sql_last_line = f" where UPPER(cpdpath.pathid) in ( '" + pathid + "')"
+            list_tmp = df_res["pathid"]
+            list_pathid = []
+            for t in list_tmp:
+                list_pathid.append("'" + t + "'")
+            sql_last_line = f" where cpdpath.pathid in (" + ",".join(list_pathid) + ")"
             sql_cpd = (
                 'select cpd.synonyms as "Compound synonyms"  ,cpd.pubchemid as "Compound PubChemID" ,cpdbatchs.batchid as "Compound BatchID" ,cpd.name as "Compound FullName",cpdpath.pathid '
                 + " from cpdbatchs "
@@ -139,8 +160,11 @@ if db_name == "SelectChem and Jump DataSet":
             )
 
         if str(option) == "disease":
-            disid = str(df_res["disid"].values[0])
-            sql_last_line = f" where UPPER(keggcpddis.disid) in ( '" + disid + "')"
+            list_tmp = df_res["disid"]
+            list_disid = []
+            for t in list_tmp:
+                list_disid.append("'" + t + "'")
+            sql_last_line = f" where keggcpddis.disid in (" + ",".join(list_disid) + ")"
             sql_cpd = (
                 'select cpd.synonyms as "Compound synonyms"  ,cpd.pubchemid as "Compound PubChemID" ,cpdbatchs.batchid as "Compound BatchID" ,cpd.name as "Compound FullName",keggcpddis.disid '
                 + " from cpdbatchs "
@@ -151,8 +175,12 @@ if db_name == "SelectChem and Jump DataSet":
             )
 
         if str(option) == "cpd":
-            pubchemid = str(df_res["pubchemid"].values[0])
-            sql_last_line = f" where UPPER(cpd.pubchemid) in ( '" + pubchemid + "')"
+            list_tmp = df_res["pubchemid"]
+            list_pub = []
+            for t in list_tmp:
+                list_pub.append("'" + t + "'")
+            sql_last_line = f" where cpd.pubchemid in (" + ",".join(list_pub) + ")"
+
             sql_cpd = (
                 'select cpd.synonyms as "Compound synonyms"  ,cpd.pubchemid as "Compound PubChemID" ,cpdbatchs.batchid as "Compound BatchID" ,cpd.name as "Compound FullName" '
                 + " from cpdbatchs "
@@ -160,6 +188,7 @@ if db_name == "SelectChem and Jump DataSet":
                 + sql_last_line
                 + " GROUP BY cpd.pubchemid,cpdbatchs.batchid,cpd.pubchemid, cpd.name"
             )
+
 
 df_cp = pd.read_sql(sql_cpd, conn)
 
@@ -192,4 +221,4 @@ if len(df_cp) > 0:
         tab1.write(df_prof)
         tab2.write(df_prof.describe().T)
 
-        st.session_state["df"] = df_prof
+        st.session_state["df_profiles"] = df_prof

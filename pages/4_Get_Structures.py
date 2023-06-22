@@ -23,7 +23,7 @@ def tanimoto_similarity(mol1, mol2):
     return similarity
 
 def get_struc(df):
-    batch_list = df["batchid"].tolist()
+    batch_list = df["metabatchid"].tolist()
     b_list = []
 
 
@@ -35,7 +35,8 @@ def get_struc(df):
             # b_list.append(b.upper())
     # st.write(b_list)
     if len(b_list)>0:
-        sql_profile = "select * from batchs where batchid  in (" + ",".join(b_list) + ")"
+        sql_profile = "select * from cpdbatchs where batchid  in (" + ",".join(b_list) + ")"
+        st.write(sql_profile)
         df_int = pd.read_sql(sql_profile, conn)
 
         b_list2 = df_int["pubchemid"].to_list()

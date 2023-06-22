@@ -24,16 +24,21 @@ def get_infos(df):
 
 
     df_cpds_in_kegg = pd.DataFrame()
-    df_cpds_tot = get_compound_info()
+    # df_cpds_tot = get_compound_info()
     if col_sel=='keggid':
         df=df[df.keggid !='No result']
         list_gene=df['keggid'].unique().tolist()
         # st.write(list_gene)
+    batch_list = []
+    for batch in list_gene:
+        batch_list.append("'" + batch + "'")
+    sql_kegg ="select * from keggcpdgene inner join gene on gene.geneid=keggcpdgene.geneid where keggid in (" + ",".join(batch_list) + ")"
 
-        df_cpds_in_kegg= df_cpds_tot[df_cpds_tot['keggid'].isin(list_gene)].reset_index()
-    if col_sel=='name':
-        list_name=df['name'].unique().tolist()
-        df_cpds_in_kegg= df_cpds_tot[df_cpds_tot['name'].isin(list_name)].reset_index()
+    df_cpds_in_kegg= pd.read_sql(sql_kegg,conn)
+    st.write('DF',df_cpds_in_kegg)
+    # if col_sel=='name':
+    #     list_name=df['name'].unique().tolist()
+    #     df_cpds_in_kegg= df_cpds_tot[df_cpds_tot['name'].isin(list_name)].reset_index()
 
     # df_cpds_in_kegg=df_cpds_in_kegg[df_cpds_in_kegg.geneid !='None']
     dftiti=df_cpds_in_kegg.drop_duplicates(keep='first')
@@ -140,9 +145,12 @@ def get_infos(df):
 
 
 def get_compound_info():
-    df_kegg_d=pd.read_csv("/mnt/shares/L/DB/KEGG/Drugs_And_CPDS_inKEGG/drug_in_all_kegg.csv")
-    df_kegg_c=pd.read_csv("/mnt/shares/L/DB/KEGG/Drugs_And_CPDS_inKEGG/drug_in_all_kegg.csv")
-    df_kegg=pd.concat([df_kegg_d,df_kegg_c],axis=0)
+
+    st.write('To replace by sql ...')
+    sql_kegg= 'select * from '
+    # df_kegg_d=pd.read_csv("/mnt/shares/L/DB/KEGG/Drugs_And_CPDS_inKEGG/drug_in_all_kegg.csv")
+    # df_kegg_c=pd.read_csv("/mnt/shares/L/DB/KEGG/Drugs_And_CPDS_inKEGG/drug_in_all_kegg.csv")
+    # df_kegg=pd.concat([df_kegg_d,df_kegg_c],axis=0)
     return df_kegg
 
 
