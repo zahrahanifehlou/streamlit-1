@@ -16,30 +16,39 @@ def init_connection():
 conn = init_connection()
 
 
-col_sel = st.radio('Column to select in the df',('name','keggid'))
-
 
 def get_infos(df):
-
+    list_cols=df.columns.tolist()
+    col_sel = st.radio('Column to select in the df',list_cols)
     df_cpds_in_kegg = pd.DataFrame()
     # df_cpds_tot = get_compound_info()
     if col_sel=='keggid':
         df=df[df.keggid !='No result']
         list_gene=df['keggid'].unique().tolist()
+        batch_list = []
+        for batch in list_gene:
+            batch_list.append("'" + batch + "'")
+        sql_kegg ="select * from keggcpdgene inner join gene on gene.geneid=keggcpdgene.geneid where keggid in (" + ",".join(batch_list) + ")"
+
+        df_cpds_in_kegg= pd.read_sql(sql_kegg,conn)
+        df_cpds_in_kegg = df_cpds_in_kegg.loc[:,~df_cpds_in_kegg.columns.duplicated()].copy()
+        st.write('DF',df_cpds_in_kegg)
         # st.write(list_gene)
-    batch_list = []
-    for batch in list_gene:
-        batch_list.append("'" + batch + "'")
-    sql_kegg ="select * from keggcpdgene inner join gene on gene.geneid=keggcpdgene.geneid where keggid in (" + ",".join(batch_list) + ")"
+    if col_sel=='geneid':
+        list_gene=df['geneid'].unique().tolist()
+        batch_list = []
+        for batch in list_gene:
+            batch_list.append("'" + batch + "'")
+        sql_kegg ="select * from gene where geneid in (" + ",".join(batch_list) + ")"
 
-    df_cpds_in_kegg= pd.read_sql(sql_kegg,conn)
-    df_cpds_in_kegg = df_cpds_in_kegg.loc[:,~df_cpds_in_kegg.columns.duplicated()].copy()
-    st.write('DF',df_cpds_in_kegg)
-    # if col_sel=='name':
-    #     list_name=df['name'].unique().tolist()
-    #     df_cpds_in_kegg= df_cpds_tot[df_cpds_tot['name'].isin(list_name)].reset_index()
+        df_cpds_in_kegg= pd.read_sql(sql_kegg,conn)
+        df_cpds_in_kegg = df_cpds_in_kegg.loc[:,~df_cpds_in_kegg.columns.duplicated()].copy()
+        st.write('DF',df_cpds_in_kegg)
 
-    # df_cpds_in_kegg=df_cpds_in_kegg[df_cpds_in_kegg.geneid !='None']
+
+
+
+
     dftiti=df_cpds_in_kegg.drop_duplicates(keep='first')
     dftiti.dropna(subset='symbol',axis=0,inplace=True)
     # st.write("Data from Kegg:", df_cpds_in_kegg)
@@ -51,9 +60,7 @@ def get_infos(df):
 
     with col2:
         sel = st.selectbox(':green[Choose DB]',human)
-    # go_mf = gp.get_library(name=sel, organism='Human')
 
-    # st.write("DataTypes of Selection:", go_mf.keys())
 
     gene_list=dftiti['symbol'].squeeze().str.strip().to_list()
 
@@ -71,86 +78,6 @@ def get_infos(df):
 
     fig = px.bar(df_enr,x='Pathways',y='Log_10_Pv')
     st.plotly_chart(fig, theme="streamlit", use_container_width=True)
-    # from gseapy.plot import barplot, dotplot
-    # fig2 = barplot(enr.res2d,title='GO Biological Processes seroneg day 1 (up)',color = 'r')
-    # st.pyplot(fig2)
-
-    # path_names=df_enr['Pathways'].unique().tolist()
-    # path_name =st.selectbox('Chose Pathway',path_names)
-    #  # ### GET PATHWAYS_ID IN DATA
-    # b_list=["'" + b + "'"for b in path_names]
-    # sql_path = "select * from pathway where name  in (" + ",".join(b_list) + ")"
-    # df_path_names = pd.read_sql(sql_path, conn)
-    # df_path_names.drop('servername',inplace=True,axis=1)
-    # df_conc=df_path_names.merge(df_enr,left_on='name',right_on='Pathways')
-    # st.write("Data from pathway:", df_path_names)
-
-    # string_path = "http://www.kegg.jp/kegg-bin/show_pathway?" +path_name+'/'
-    # list_gene=df_cpds_in_kegg['geneid'].tolist()
-    # # list_color=df_c['hex_colors'].tolist()
-    # for g in list_gene:
-    #     string_path += g.lower() + "%09,"
-    # string_path += "/default%3dpink/"
-    # string_path += "%09,blue"
-
-    # st.write(string_path, unsafe_allow_html=True)
-
-    # ### GET PATHWAYS IN DATA
-    # b_list=["'" + b.lower() + "'"for b in df_cpds_in_kegg['geneid']]
-    # sql_genepath = "select * from genepath where geneid  in (" + ",".join(b_list) + ")"
-    # df_path = pd.read_sql(sql_genepath, conn)
-    # df_path= df_path[~df_path.pathid.str.contains('REACT')]
-
-    # st.write("Data from genepath:", df_path)
-
-    # ### GET PATHWAYS_NAMES IN DATA
-    # b_list=["'" + b.lower() + "'"for b in df_path['pathid']]
-    # sql_path = "select * from pathway where pathid  in (" + ",".join(b_list) + ")"
-    # df_path_names = pd.read_sql(sql_path, conn)
-    # df_path_names.drop('servername',inplace=True,axis=1)
-    # df_conc=df_path.merge(df_path_names,left_on='pathid',right_on='pathid')
-    # st.write("Data from pathway:", df_conc)
-
-
-    # ### GET ALL GENES IN PATHS
-    # b_list=["'" + b.lower() + "'"for b in df_path['pathid'].unique()]
-    # sql_genepath = "select * from genepath where pathid  in (" + ",".join(b_list) + ")"
-    # df_path_tot = pd.read_sql(sql_genepath, conn)
-    # df_path_tot= df_path_tot[~df_path_tot.pathid.str.contains('REACT')]
-
-
-
-    # ### COMPUTE NUMBER OF GENES IN PATHs
-    # df_path_tot['#Genes'] = df_path_tot.groupby(['pathid']).transform('count')
-
-    # df_path_tot.drop('geneid',axis=1,inplace=True)
-    # df_path_tot.drop_duplicates(subset='pathid',keep='first',inplace=True)
-    # # st.write("# genes in pathways:", df_path_tot)
-
-    # z = df_conc['pathid'].value_counts()
-    # df_conc['#Genes'] = df_conc['pathid'].map(z)
-    # df_conc.drop('geneid',axis=1,inplace=True)
-    # df_conc.drop_duplicates(subset='pathid',keep='first',inplace=True)
-
-    # # df_conc['#Genes'] = df_conc.groupby(['pathid']).transform('count')
-    # # st.write(df_conc)
-
-    # df_m = df_conc.merge(df_path_tot,left_on='pathid',right_on='pathid')
-    # df_m['Percentage']=df_m['#Genes_x']/df_m['#Genes_y']
-    # st.write(df_m)
-
-
-
-
-
-def get_compound_info():
-
-    st.write('To replace by sql ...')
-    sql_kegg= 'select * from '
-    # df_kegg_d=pd.read_csv("/mnt/shares/L/DB/KEGG/Drugs_And_CPDS_inKEGG/drug_in_all_kegg.csv")
-    # df_kegg_c=pd.read_csv("/mnt/shares/L/DB/KEGG/Drugs_And_CPDS_inKEGG/drug_in_all_kegg.csv")
-    # df_kegg=pd.concat([df_kegg_d,df_kegg_c],axis=0)
-    return df_kegg
 
 
 
@@ -166,7 +93,7 @@ def upload_files():
             list_df.append(pd.read_feather(uploaded_file))
     return(list_df)
 
-if "df_kegg" not in st.session_state:
+if "df_keggGene" not in st.session_state:
 
     # st.write(uploaded_file)
     list_df = upload_files()
@@ -176,7 +103,7 @@ if "df_kegg" not in st.session_state:
         st.write("Data from file:", df)
         get_infos(df)
 else:
-    df = st.session_state["df_kegg"]
+    df = st.session_state["df_keggGene"]
     if len(df)>0:
         st.write("Data from Get Structures:", df)
         get_infos(df)

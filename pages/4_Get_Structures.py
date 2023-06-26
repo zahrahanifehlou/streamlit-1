@@ -2,13 +2,13 @@
 import os
 from urllib.parse import urlencode
 from urllib.request import urlretrieve
-
 import pandas as pd
 import plotly.express as px
 import psycopg2
 import streamlit as st
 from rdkit import Chem, DataStructs
 from rdkit.Chem import AllChem
+from rdkit.Chem import Draw
 
 
 @st.cache_resource
@@ -23,95 +23,40 @@ def tanimoto_similarity(mol1, mol2):
     return similarity
 
 
-def get_struc(df):
-    batch_list = df["metabatchid"].tolist()
-    b_list = []
-
-    df_cpd = pd.DataFrame()
-    for b in batch_list:
-        if "jcp2022_800" not in b:
-            b_list.append("'" + b + "'")
-            # b_list.append(b.upper())
-    # st.write(b_list)
-    if len(b_list) > 0:
-        sql_profile = (
-            "select * from cpdbatchs where batchid  in (" + ",".join(b_list) + ")"
-        )
-
-        df_int = pd.read_sql(sql_profile, conn)
-
-        b_list2 = df_int["pubchemid"].to_list()
-        if len(b_list2) > 0:
-            bq = []
-            for bs in b_list2:
-                # st.write('bs',bs)
-                if len(bs)<10:
-
-                    bq.append("'" + bs + "'")
-
-            sql_batch = "select * from cpd where pubchemid in (" + ",".join(bq) + ")"
-            df_cpd = pd.read_sql(sql_batch, conn)
-            df_cpd.fillna("No result", inplace=True)
-            df_cpd = df_cpd[df_cpd["smile"] != "No result"].reset_index()
-            # Define the molecule ID
-            st.write(df_cpd)
-            ik = 0
+def get_pubchemPNG(df_cpd):
+    mol_list = df_cpd["mol"].tolist()
+    ik = 0
+    cpt = 0
+    cols = st.columns(5)
+    for mol in mol_list:
+        if cpt == 5:
             cpt = 0
-            smiles_list = df_cpd["smile"].tolist()
-            # Convert SMILES strings to RDKit molecules
-            molecules = [Chem.MolFromSmiles(smiles) for smiles in smiles_list]
+        try:
+            cols[cpt].image(
+                Draw.MolToImage(mol), df_cpd["name"][ik] + ":" + df_cpd["pubchemid"][ik]
+            )
+            ik = ik + 1
+            cpt = cpt + 1
+        except:
+            st.write("http error: ")
 
-            # Compute pairwise similarities between the N compounds
-            similarity_matrix = []
-            for i in range(len(molecules)):
-                row = []
-                for j in range(len(molecules)):
-                    similarity = tanimoto_similarity(molecules[i], molecules[j])
-                    row.append(similarity)
-                similarity_matrix.append(row)
 
-            sim_df = pd.DataFrame(similarity_matrix)
-            fig = px.imshow(sim_df, title="Structure Similarities")
-            st.plotly_chart(fig)
-            # st.write('Structure Similarities', similarity_matrix)
-
-            cols = st.columns(5)
-            for id in df_cpd["pubchemid"]:
-                mol_id = id
-                if cpt == 5:
-                    cpt = 0
-                # Define the URL for the PubChem structure image API
-                url = "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/{}/PNG".format(
-                    mol_id
-                )
-
-                # Define the file name for the image
-                file_name = "{}.png".format(mol_id)
-
-                # Define the file path for the image
-                file_path = os.path.join(os.getcwd(), file_name)
-
-                # Download the image from the URL and save it to the file path
-                try:
-                    urlretrieve(url, file_path)
-
-                    cols[cpt].image(
-                        file_path, df_cpd["name"][ik] + ":" + df_cpd["keggid"][ik]
-                    )
-                    ik = ik + 1
-                    cpt = cpt + 1
-                    os.remove(file_path)
-                except:
-                    st.write('http error: ',url)
-    return df_cpd
+def get_struc(mol_list):
+    similarity_matrix = []
+    for i in range(len(mol_list)):
+        row = []
+        for j in range(len(mol_list)):
+            similarity = tanimoto_similarity(mol_list[i], mol_list[j])
+            row.append(similarity)
+        similarity_matrix.append(row)
+    sim_df = pd.DataFrame(similarity_matrix)
+    return sim_df
 
 
 def upload_files():
     uploaded_files = st.file_uploader(
         "Choose files with batchids if df null", accept_multiple_files=True
     )
-
-    # st.write(uploaded_file)
     list_df = []
     for uploaded_file in uploaded_files:
         if ".csv" in uploaded_file.name:
@@ -123,25 +68,35 @@ def upload_files():
 
 
 conn = init_connection()
-if "df_keep" not in st.session_state:
+if "df_cpds" not in st.session_state:
     list_df = upload_files()
 
     if len(list_df) > 0:
-        df2 = pd.concat(list_df)
-        df_c = get_struc(df2)
+        df_keep = pd.concat(list_df)
+        df_c = get_struc(df_keep)
         if len(df_c) > 0:
             st.session_state["df_kegg"] = df_c
 else:
-    df2 = st.session_state["df_keep"]
-    st.write('Data From Profiles', df2)
-    df_c = get_struc(df2)
-    if len(df_c) > 0:
-        st.session_state["df_kegg"] = df_c
-    else:
-        st.write("No Data from pubchems")
-        list_df_p = upload_files()
-        if len(list_df_p) > 0:
-            df3 = pd.concat(list_df_p)
-            df_c = get_struc(df3)
+    df_cpd = st.session_state["df_cpds"]
+    if len(df_cpd) > 0:
+        st.write(df_cpd)
+        smiles_list = df_cpd["smile"].tolist()
+
+        mol_list = [Chem.MolFromSmiles(smiles) for smiles in df_cpd["smile"].tolist()]
+        df_cpd["mol"] = mol_list
+        df_c = get_struc(df_cpd["mol"])
+        fig = px.imshow(df_c, title="Structure Similarities")
+        st.plotly_chart(fig)
+        st.write("Structure Similarities", df_c)
+        get_pubchemPNG(df_cpd)
+
         if len(df_c) > 0:
-            st.session_state["df_kegg"] = df_c
+            st.session_state["df_kegg"] = df_cpd
+        else:
+            st.write("No Data from pubchems")
+            list_df_p = upload_files()
+            if len(list_df_p) > 0:
+                df3 = pd.concat(list_df_p)
+                df_c = get_struc(df3)
+            if len(df_c) > 0:
+                st.session_state["df_kegg"] = df_c
