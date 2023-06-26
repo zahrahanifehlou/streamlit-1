@@ -178,80 +178,85 @@ if len(df_res) > 0:
         table_name, col_name = table_mapping[db_name][str(option)]
         if db_name == "KEGG":
             sql_query = get_sql_kegg(table_name=table_name, col_name=col_name)
+            df_kegg = pd.read_sql(sql_query, conn)
+            df_kegg = df_kegg.drop_duplicates(subset=["keggid"])
+            df_kegg = df_kegg.reset_index(drop=True)
+            st.write(df_kegg)
         else:
             sql_query = get_sql_jump(table_name=table_name, col_name=col_name)
+            df_cpds = pd.read_sql(sql_query, conn)
+            df_cpds = df_cpds.drop_duplicates(subset=["batchid"])
+            df_cpds = df_cpds.reset_index(drop=True)
 
 
-if sql_query != []:
-    df_cpds = pd.read_sql(sql_query, conn)
-    df_cpds = df_cpds.drop_duplicates(subset=["batchid"])
-    df_cpds = df_cpds.reset_index(drop=True)
 
-# get KEGG info
-df_kegg = df_cpds[df_cpds["keggid"].notna()]
-# get KEGG GENE and PATHWAY info
 if len(df_cpds) > 0:
-    list_batchid = []
+    df_kegg = df_cpds[df_cpds["keggid"].notna()]
+    list_pubchemid = []
     for t in df_cpds["pubchemid"]:
-        list_batchid.append("'" + t + "'")
+        list_pubchemid.append("'" + t + "'")
+
+    batch_list = []
+    for batch in df_cpds["batchid"]:
+        batch_list.append("'" + batch + "'")
+
     sql_kegg_gene = (
         "select gene.geneid, gene.symbol,cpdgene.pubchemid,cpdgene.server from gene inner join  cpdgene on cpdgene.geneid=gene.geneid where  cpdgene.pubchemid"
         + " in ("
-        + ",".join(list_batchid)
+        + ",".join(list_pubchemid)
         + ")"
     )
-    df_keggGene = pd.read_sql(sql_kegg_gene, conn)
-    df_keggGene = df_keggGene.drop_duplicates(subset=["pubchemid","geneid","server"])
-    df_keggGene = df_keggGene.reset_index(drop=True)
+    df_cpdGene = pd.read_sql(sql_kegg_gene, conn)
+    df_cpdGene = df_cpdGene.drop_duplicates(subset=["pubchemid", "geneid", "server"])
+    df_cpdGene = df_cpdGene.reset_index(drop=True)
 
     sql_kegg_pathway = (
         "select pathway.pathid, pathway.name,cpdpath.pubchemid, cpdpath.server from pathway inner join  cpdpath on cpdpath.pathid=pathway.pathid  where  cpdpath.pubchemid"
         + " in ("
-        + ",".join(list_batchid)
+        + ",".join(list_pubchemid)
         + ")"
     )
-    df_keggPath = pd.read_sql(sql_kegg_pathway, conn)
-    df_keggPath = df_keggPath.drop_duplicates(subset=["pubchemid","pathid","server"])
-    df_keggPath = df_keggPath.reset_index(drop=True)
+    df_cpdPath = pd.read_sql(sql_kegg_pathway, conn)
+    df_cpdPath = df_cpdPath.drop_duplicates(subset=["pubchemid", "pathid", "server"])
+    df_cpdPath = df_cpdPath.reset_index(drop=True)
 
-
-if len(df_cpds) > 0:
-    tab1, tab2, tab3= st.tabs(["compounds info", "compounds GENE info",  "compounds PATHWAY info"])
+    tab1, tab2, tab3 = st.tabs(
+        ["compounds info", "compounds GENE info", "compounds PATHWAY info"]
+    )
     tab1.write(df_cpds)
-    tab2.write(df_keggGene)
-    tab3.write(df_keggPath)
-    
+    tab2.write(df_cpdGene)
+    tab3.write(df_cpdPath)
+
     st.write(f"Profiles in JUMP CP DATA SET")
-    if db_name == "SelectChem and Jump DataSet":
-        df_prof = pd.DataFrame()
-        list_batch = df_cpds["batchid"]
-        batch_list = []
-        for batch in list_batch:
-            batch_list.append("'" + batch + "'")
 
-        conn2 = psycopg2.connect(
-            host="192.168.2.131",
-            port="5432",
-            user="arno",
-            database="ksilink_cpds",
-            password="12345",
-        )
-        sql_profile = (
-            "select * from aggcombatprofile where metabatchid in ("
-            + ",".join(batch_list)
-            + ")"
-        )
+    df_prof = pd.DataFrame()
 
-        df_prof = pd.read_sql(sql_profile, conn2)
-        tab1, tab2 = st.tabs(["Profiles", "Summary"])
-        tab1.write(df_prof)
-        tab2.write(df_prof.describe().T)
-     
+    conn_profileDB = psycopg2.connect(
+        host="192.168.2.131",
+        port="5432",
+        user="arno",
+        database="ksilink_cpds",
+        password="12345",
+    )
 
-        st.session_state["df_profiles"] = df_prof
-        st.session_state["df_cpds"] = df_cpds
-        st.session_state["df_kegg"] = df_kegg
-        st.session_state["df_keggGene"] = df_keggGene
-        st.session_state["df_keggPath"] = df_keggPath
+    sql_profile = (
+        "select * from aggcombatprofile where metabatchid in ("
+        + ",".join(batch_list)
+        + ")"
+    )
+
+    df_prof = pd.read_sql(sql_profile, conn_profileDB)
+    tab1, tab2 = st.tabs(["Profiles", "Summary"])
+    tab1.write(df_prof)
+    tab2.write(df_prof.describe().T)
+
+    st.session_state["df_profiles"] = df_prof
+    st.session_state["df_cpds"] = df_cpds
+    st.session_state["df_kegg"] = df_kegg
+    st.session_state["df_cpdGene"] = df_cpdGene
+    st.session_state["df_cpdPath"] = df_cpdPath
+    
+    conn_profileDB.close()
+    conn.close()
 else:
     st.write(" try  something else :) ")
