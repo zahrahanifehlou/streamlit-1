@@ -1,5 +1,16 @@
 import streamlit as st
 
+st.set_page_config(
+    page_title="Welcome to Ksilink Databases",
+    page_icon="🧊",
+    layout="wide",
+    # initial_sidebar_state="expanded",
+    # menu_items={
+    #     'Get Help': 'https://www.extremelycoolapp.com/help',
+    #     'Report a bug': "https://www.extremelycoolapp.com/bug",
+    #     'About': "# This is a header. This is an *extremely* cool app!"
+    # }
+)
 st.write("# Welcome to Ksilink Databases")
 st.write('Can be access on : http://192.168.2.131:8501; http://192.168.2.130:8501; http://192.168.2.128:8501')
 # st.sidebar.success("Select a demo above.")
@@ -17,7 +28,7 @@ st.markdown(
     - [Connect DB](http://192.168.2.131:8501/Connect_DB) connect to DB and get data from DBs
     - [Plot Profiles](http://192.168.2.131:8501/Plot_Profiles) plot profiles close to the ones selected in connect DB from a selected source
     - [Get structures](http://192.168.2.131:8501/Get_Structures) display the structures and names of the closest profiles
-    - [Get Bio Infos](http://192.168.2.131:8501/Get_Biological_Infos) compute the overrepresation in pathways and connect to >50 Libraries
+    - [Get Bio Infos](http://192.168.2.131:8501/Get_Biological_Infos) compute the overrepresentation in pathways and connect to >50 Libraries
     - [Pathway Interaction](http://192.168.2.131:8501/Pathway_Interaction) display the involved genes in a specific pathway
     - [CRISPR & CPDS](http://192.168.2.131:8501/CRISPR_&_CPDS) compute the similarities between crispr and cpds.
     - [Historical Data](http://192.168.2.131:8501/Historical_Data) Gather all available Ksilink data

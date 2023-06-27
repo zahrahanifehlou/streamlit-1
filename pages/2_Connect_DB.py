@@ -103,7 +103,7 @@ def get_sql_jump(table_name="cpdgene", col_name="geneid"):
         st.write(table_name)
         sql = (
             sql_first_line
-            +" ,keggcpddis.disid from cpdbatchs inner join cpd on cpdbatchs.pubchemid=cpd.pubchemid inner join keggcpddis on keggcpddis.keggid=cpd.keggid "
+            + " ,keggcpddis.disid from cpdbatchs inner join cpd on cpdbatchs.pubchemid=cpd.pubchemid inner join keggcpddis on keggcpddis.keggid=cpd.keggid "
             + sql_last_line
         )
 
@@ -242,6 +242,6 @@ if len(df_cpds) > 0:
     st.session_state["df_cpdPath"] = df_cpdPath
 
     conn_profileDB.close()
-    conn.close()
+   
 else:
     st.write(" try  something else :) ")
