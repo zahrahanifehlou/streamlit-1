@@ -1,4 +1,5 @@
 import warnings
+
 import numpy as np
 import pandas as pd
 import psycopg2
@@ -98,40 +99,24 @@ def get_sql_jump(table_name="cpdgene", col_name="geneid"):
     )
     sql_first_line = "select cpd.pubchemid,cpd.synonyms,cpd.keggid, cpd.name, cpd.smile ,cpdbatchs.batchid "
 
-    if table_name == "disease":
+    if table_name == "keggcpddis":
         st.write(table_name)
         sql = (
             sql_first_line
-            + ", keggcpddis.disid "
-            + " from cpdbatchs inner join cpd on cpdbatchs.pubchemid=cpd.pubchemid "
-            + " inner  join keggcpd on keggcpd.keggid=cpd.keggid"
-            + " inner  join keggcpddis on keggcpd.keggid=keggcpddis.keggid"
+            +" ,keggcpddis.disid from cpdbatchs inner join cpd on cpdbatchs.pubchemid=cpd.pubchemid inner join keggcpddis on keggcpddis.keggid=cpd.keggid "
             + sql_last_line
         )
 
     if table_name == "cpd":
         st.write(table_name)
-
         sql = (
             sql_first_line
-            + table_name
-            + "."
-            + col_name
-            + " from cpdbatchs "
-            + " inner join "
-            + table_name
-            + " on "
-            + table_name
-            + ".pubchemid=cpdbatchs.pubchemid   "
+            + " from cpdbatchs inner join cpd on cpd.pubchemid=cpdbatchs.pubchemid "
             + sql_last_line
-            + " GROUP BY cpd.pubchemid,cpdbatchs.batchid,"
-            + table_name
-            + "."
-            + col_name
-            + ", cpd.name"
         )
 
-    if table_name not in ["cpd", "disease"]:
+    if table_name not in ["cpd", "keggcpddis"]:
+        st.write(table_name)
         sql = (
             sql_first_line
             + ","
@@ -165,7 +150,7 @@ table_mapping = {
     "SelectChem and Jump DataSet": {
         "gene": ("cpdgene", "geneid"),
         "pathway": ("cpdpath", "pathid"),
-        "disease": ("disease", "disid"),
+        "disease": ("keggcpddis", "disid"),
         "cpd": ("cpd", "pubchemid"),
     },
 }
@@ -181,13 +166,13 @@ if len(df_res) > 0:
             df_kegg = pd.read_sql(sql_query, conn)
             df_kegg = df_kegg.drop_duplicates(subset=["keggid"])
             df_kegg = df_kegg.reset_index(drop=True)
+            # df_cpds = df_kegg
             st.write(df_kegg)
         else:
             sql_query = get_sql_jump(table_name=table_name, col_name=col_name)
             df_cpds = pd.read_sql(sql_query, conn)
             df_cpds = df_cpds.drop_duplicates(subset=["batchid"])
             df_cpds = df_cpds.reset_index(drop=True)
-
 
 
 if len(df_cpds) > 0:
@@ -255,7 +240,7 @@ if len(df_cpds) > 0:
     st.session_state["df_kegg"] = df_kegg
     st.session_state["df_cpdGene"] = df_cpdGene
     st.session_state["df_cpdPath"] = df_cpdPath
-    
+
     conn_profileDB.close()
     conn.close()
 else:

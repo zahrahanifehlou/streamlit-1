@@ -1,4 +1,3 @@
-# Import necessary libraries
 import os
 from urllib.parse import urlencode
 from urllib.request import urlretrieve
@@ -9,11 +8,7 @@ import streamlit as st
 from rdkit import Chem, DataStructs
 from rdkit.Chem import AllChem
 from rdkit.Chem import Draw
-
-
-@st.cache_resource
-def init_connection():
-    return psycopg2.connect(**st.secrets["postgres"])
+import tmap
 
 
 def tanimoto_similarity(mol1, mol2):
@@ -21,24 +16,6 @@ def tanimoto_similarity(mol1, mol2):
     fp2 = AllChem.GetMorganFingerprint(mol2, 2)
     similarity = DataStructs.TanimotoSimilarity(fp1, fp2)
     return similarity
-
-
-def get_pubchemPNG(df_cpd):
-    mol_list = df_cpd["mol"].tolist()
-    ik = 0
-    cpt = 0
-    cols = st.columns(5)
-    for mol in mol_list:
-        if cpt == 5:
-            cpt = 0
-        try:
-            cols[cpt].image(
-                Draw.MolToImage(mol), df_cpd["name"][ik] + ":" + df_cpd["pubchemid"][ik]
-            )
-            ik = ik + 1
-            cpt = cpt + 1
-        except:
-            st.write("http error: ")
 
 
 def get_struc(mol_list):
@@ -67,7 +44,6 @@ def upload_files():
     return list_df
 
 
-conn = init_connection()
 if "df_cpds" not in st.session_state:
     list_df = upload_files()
 
@@ -79,24 +55,54 @@ if "df_cpds" not in st.session_state:
 else:
     df_cpd = st.session_state["df_cpds"]
     if len(df_cpd) > 0:
-        st.write(df_cpd)
-        smiles_list = df_cpd["smile"].tolist()
-
+        
+        
+        st.write("DATA frame",df_cpd)
         mol_list = [Chem.MolFromSmiles(smiles) for smiles in df_cpd["smile"].tolist()]
-        df_cpd["mol"] = mol_list
-        df_c = get_struc(df_cpd["mol"])
-        fig = px.imshow(df_c, title="Structure Similarities")
-        st.plotly_chart(fig)
-        st.write("Structure Similarities", df_c)
-        get_pubchemPNG(df_cpd)
+        
+        # plot similarity-----------------------------------------------------------------------------------
+        df_c = get_struc(mol_list)
+        col1, col2 = st.columns(2)
+        with col1:
+            st.write("Structure Similarities", df_c)
+        with col2:
+            fig = px.imshow(df_c)
+            st.plotly_chart(fig)
 
-        if len(df_c) > 0:
-            st.session_state["df_kegg"] = df_cpd
-        else:
-            st.write("No Data from pubchems")
-            list_df_p = upload_files()
-            if len(list_df_p) > 0:
-                df3 = pd.concat(list_df_p)
-                df_c = get_struc(df3)
-            if len(df_c) > 0:
-                st.session_state["df_kegg"] = df_c
+        # plot tmap-----------------------------------------------------------------------------------
+        bits = 1024
+        df_tmap = df_cpd.copy()
+        morgan_list = [
+            AllChem.GetMorganFingerprintAsBitVect(
+                mol, useChirality=True, radius=3, nBits=bits
+            )
+            for mol in mol_list
+        ]
+        morgan_list = [tmap.VectorUchar(list(fp)) for fp in morgan_list]
+
+        enc = tmap.Minhash(bits, seed=42)
+        lf_morgan = tmap.LSHForest(bits)
+        lf_morgan.batch_add(enc.batch_from_binary_array(morgan_list))
+        lf_morgan.index()
+        x, y, s, t, _ = tmap.layout_from_lsh_forest(lf_morgan)
+
+        df_tmap["x"] = x
+        df_tmap["y"] = y
+
+        fig = px.scatter(df_tmap, x="x", y="y", hover_data=["name", "pubchemid"])
+        st.write("TMAP")
+        st.plotly_chart(fig, theme="streamlit", use_container_width=True)
+
+        # plot smile-----------------------------------------------------------------------------------
+        ik = 0
+        cpt = 0
+        cols = st.columns(5)
+        for mol in mol_list:
+            if cpt == 5:
+                cpt = 0
+            try:
+                cols[cpt].image(Draw.MolToImage(mol), df_cpd["pubchemid"][ik])
+                ik = ik + 1
+                cpt = cpt + 1
+            except:
+                st.write("http error: ")

@@ -1,6 +1,7 @@
 import streamlit as st
 
 st.write("# Welcome to Ksilink Databases")
+st.write('Can be access on : http://192.168.2.131:8501; http://192.168.2.130:8501; http://192.168.2.128:8501')
 # st.sidebar.success("Select a demo above.")
 
 st.markdown(
@@ -23,7 +24,7 @@ st.markdown(
 
     ### Normal Process:
     - Load Data, Historical data and CRISPR & CPDS are independent
-    - Otherwise you should start from ConnectDB-> Plot profiles -> Get Structures -> Get BioInfos -> Pathway Interaction
+    - Otherwise you should start from ConnectDB...
     - You can also make it independetly and a csv or fth files will be necessary to be uploaded (with relevant column names)
 
 """

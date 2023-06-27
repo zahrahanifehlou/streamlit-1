@@ -111,7 +111,7 @@ numerics = ["int16", "int32", "int64", "float16", "float32", "float64"]
 df_num_crispr = df_crispr_merge.select_dtypes(include=numerics)
 df_num_cpd = df_cpds_merge_meta.select_dtypes(include=numerics)
 list_common_cols = list(set(df_num_crispr.columns).intersection(df_num_cpd.columns))
-
+df_cpds_merge_meta.dropna(subset='efficacy',inplace=True)
 
 df_num_cpd["meta_efficacy"] = df_cpds_merge_meta["efficacy"].apply(
     lambda x: x.split(",")[0]
