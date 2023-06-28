@@ -179,13 +179,21 @@ if len(df_cpds) > 0:
     
     df_prof = pd.read_sql(sql_profile, conn_profileDB)
     
-    # df_prof = df_prof.merge(df_efficacy[["batchid","efficacy"]],left_on='metabatchid',right_on='batchid').reset_index(drop=True)
-    # df_prof = df_prof.merge(df_cpdGene[df_cpdGene["server"] == "KEGG"][["batchid","geneid","server"]],left_on='batchid',right_on='batchid').reset_index(drop=True)
+    dic_efficacy = df_efficacy.set_index("batchid")["efficacy"].to_dict()
+    dic_Gene = df_cpdGene.set_index("batchid")["geneid"].to_dict()
+    df_prof["metageneid"] = df_prof["metabatchid"].map(dic_Gene)
+    df_prof["metaefficacy"] = df_prof["metabatchid"].map(dic_efficacy)
+    df_prof["metaefficacy"].fillna("Unknown", inplace=True)
+    df_prof["metatype"] = "CPDS"
+    
+    
     
     tab1, tab2,tab3,tab4 = st.tabs(["compounds Profiles", "compounds Summary","Crisper Profiles", "Crisper Summary"])
     tab1.write(df_prof)
     tab2.write(df_prof.describe().T)
     if str(option)=="gene":
+        df_prof_crisper["metatype"] = "CRISPR"
+        df_prof_crisper["metaefficacy"] = "Unknown"
         tab3.write(df_prof_crisper)
         tab4.write(df_prof_crisper.describe().T)
 

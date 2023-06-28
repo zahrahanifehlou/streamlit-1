@@ -20,19 +20,14 @@ else:
     df_efficacy = st.session_state["df_efficacy"]
     df_cpdGene = st.session_state["df_cpdGene"]
     df_cpdGene = df_cpdGene[df_cpdGene["server"] == "KEGG"]
-    dic_efficacy = df_efficacy.set_index("batchid")["efficacy"].to_dict()
-    dic_Gene = df_cpdGene.set_index("batchid")["geneid"].to_dict()
+    
 
     list_sources = all_df["metasource"].unique().tolist()
     st.write("Data from DB", all_df)
     choix_source = st.selectbox("Select the Source", list_sources)
-    df_source = all_df[all_df["metasource"] == choix_source].reset_index(drop=True)
-    df_source["metageneid"] = df_source["metabatchid"].map(dic_Gene)
-    df_source["metaefficacy"] = df_source["metabatchid"].map(dic_efficacy)
-    df_source["metaefficacy"].fillna("Unknown", inplace=True)
-    df_source["metatype"] = "CPDS"
-    crisper_pro["metatype"] = "CRISPR"
-    crisper_pro["metaefficacy"] = "Unknown"
+    df_source = all_df[all_df["metasource"] == choix_source]
+    df_source=df_source[df_source["metageneid"].notna()].reset_index(drop=True)
+    
 
     tab1, tab2 = st.tabs(["compounds profile", "Crisper profile"])
     tab1.write(df_source)
@@ -51,12 +46,12 @@ else:
 
     cols = st.columns(3)
     with cols[0]:
-        find_umap(df_source, "UMAP in CPD pro")
+        find_umap(df_source, "UMAP in CPD profile")
     with cols[1]:
-        find_umap(crisper_pro, "UMAP in Crisper pro")
+        find_umap(crisper_pro, "UMAP in Crisper profile")
     with cols[2]:
         df = pd.concat([df_source, crisper_pro]).reset_index(drop=True)
-        find_umap(df, "UMAP in CPD and Crisper pro")
+        find_umap(df, "UMAP in CPD and Crisper profile")
 
     st.write("## UMAP")
 
@@ -66,7 +61,7 @@ else:
     simi = cosine_similarity(df[filter_cols])
 
     sim_df = pd.DataFrame(simi)
-    sim_df['target']=df['metageneid']
+    sim_df['target']=df['metageneid'] +' _ ' + df['metatype']
     st.write('sim_df',sim_df)
     fig = px.imshow(sim_df, title="Profiles Similarities")
     st.plotly_chart(fig)
