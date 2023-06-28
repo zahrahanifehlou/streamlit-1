@@ -14,6 +14,13 @@ def init_connection():
 
 conn = init_connection()
 
+conn_profileDB = psycopg2.connect(
+        host="192.168.2.131",
+        port="5432",
+        user="arno",
+        database="ksilink_cpds",
+        password="12345",
+    )
 
 def run_query(query):
     with conn.cursor() as cur:
@@ -38,20 +45,37 @@ with col2:
     tab2.write(data.describe().T)
 st.write(f"\n")
 # -------------------------------------------------------------------------------------------------------------------
-
 col3, col4 = st.columns(2)
 with col3:
-    var_text = st.text_input("Enter your search")
+    var_text = st.text_area("Enter your search")
+var_t=var_text.split('\n')
+var_t = [t.strip().upper() for t in var_t]
 
-mask = np.column_stack(
-    [data[col].str.match(var_text.upper(), na=False) for col in data]
-)
+mask = np.column_stack([data[col].isin(var_t) for col in data])
+
 
 df_res = data.loc[mask.any(axis=1)].reset_index(drop=True)
 
 with col4:
     st.write(f"Result in  {str(option)} table:", df_res)
 st.write(f"\n")
+
+
+# col3, col4 = st.columns(2)
+# with col3:
+   
+#     var_text = st.text_area("Enter your search")
+# with col4:
+#      opt_col = st.selectbox("Pick one column", data.columns.to_list())
+
+# var_t=var_text.split('\n')
+
+# var_t = [t.strip().upper() for t in var_t]
+# df_res = data.loc[data[opt_col].isin(var_t)]
+
+# st.write(f"Result in  {str(option)} table:", df_res)
+# st.write(f"\n")
+
 # -------------------------------------------------------------------------------------------------------------------
 
 db_name = st.radio(
@@ -173,6 +197,36 @@ if len(df_res) > 0:
             df_cpds = pd.read_sql(sql_query, conn)
             df_cpds = df_cpds.drop_duplicates(subset=["batchid"])
             df_cpds = df_cpds.reset_index(drop=True)
+# get crisper profiles when search gene
+if str(option)=="gene":
+  
+    geneid_lis = []
+    for geneid in df_res["geneid"]:
+        geneid_lis.append("'" + geneid + "'")
+
+    sql_crisper = (
+        "select crisperbatchs.batchid from crisperbatchs where crisperbatchs.geneid"
+        + " in ("
+        + ",".join(geneid_lis)
+        + ")"
+    )
+    df_crisperBatchs = pd.read_sql(sql_crisper, conn)
+    df_crisperBatchs = df_crisperBatchs.drop_duplicates(subset=["batchid"])
+    batch_list = []
+    for geneid in df_crisperBatchs["batchid"]:
+        batch_list.append("'" + geneid + "'")
+    sql_crisper_profile = (
+        "select * from aggcombatprofile where metabatchid in ("
+        + ",".join(batch_list)
+        + ")"
+    )
+
+    df_prof_crisper = pd.read_sql(sql_crisper_profile, conn_profileDB)
+    
+
+    
+    
+    
 
 
 if len(df_cpds) > 0:
@@ -216,13 +270,7 @@ if len(df_cpds) > 0:
 
     df_prof = pd.DataFrame()
 
-    conn_profileDB = psycopg2.connect(
-        host="192.168.2.131",
-        port="5432",
-        user="arno",
-        database="ksilink_cpds",
-        password="12345",
-    )
+    
 
     sql_profile = (
         "select * from aggcombatprofile where metabatchid in ("
@@ -231,17 +279,20 @@ if len(df_cpds) > 0:
     )
 
     df_prof = pd.read_sql(sql_profile, conn_profileDB)
-    tab1, tab2 = st.tabs(["Profiles", "Summary"])
+    tab1, tab2,tab3,tab4 = st.tabs(["compounds Profiles", "compounds Summary","Crisper Profiles", "Crisper Summary"])
     tab1.write(df_prof)
     tab2.write(df_prof.describe().T)
+    tab3.write(df_prof_crisper)
+    tab4.write(df_prof_crisper.describe().T)
 
     st.session_state["df_profiles"] = df_prof
     st.session_state["df_cpds"] = df_cpds
     st.session_state["df_kegg"] = df_kegg
     st.session_state["df_cpdGene"] = df_cpdGene
     st.session_state["df_cpdPath"] = df_cpdPath
+    st.session_state["crisper"] = df_prof_crisper
 
     conn_profileDB.close()
-   
+
 else:
-    st.write(" try  something else :) ")
+    st.warning(" No Luck!! ")

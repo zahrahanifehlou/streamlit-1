@@ -46,7 +46,7 @@ else:
         y="umap2",
         color="color",
         title=f"{choix_source} profiles ",
-        hover_data=["metabatchid", "metaplate", "metawell"],
+        hover_data=["metabatchid"],
     )
     st.plotly_chart(fig, theme="streamlit", use_container_width=True)
 
@@ -133,7 +133,7 @@ else:
                     y="umap2",
                     color="color",
                     title=f"similar cpds to {choix} profiles  ",
-                    hover_data=["metabatchid", "metaplate", "metawell"],
+                    hover_data=["metabatchid"],
                 )
                 st.plotly_chart(fig, theme="streamlit", use_container_width=True)
 
