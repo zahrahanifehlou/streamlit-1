@@ -51,8 +51,8 @@ with col3:
 var_t=var_text.split('\n')
 var_t = [t.strip().upper() for t in var_t]
 
-mask = np.column_stack([data[col].isin(var_t) for col in data])
 
+mask = np.column_stack([data[col].str.match(v.upper(), na=False) for col in data.columns for v in var_t])
 
 df_res = data.loc[mask.any(axis=1)].reset_index(drop=True)
 
@@ -63,13 +63,10 @@ st.write(f"\n")
 
 # col3, col4 = st.columns(2)
 # with col3:
-   
 #     var_text = st.text_area("Enter your search")
 # with col4:
 #      opt_col = st.selectbox("Pick one column", data.columns.to_list())
-
 # var_t=var_text.split('\n')
-
 # var_t = [t.strip().upper() for t in var_t]
 # df_res = data.loc[data[opt_col].isin(var_t)]
 
