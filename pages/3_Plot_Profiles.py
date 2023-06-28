@@ -20,7 +20,9 @@ profile_conn = psycopg2.connect(
 if "df_profiles" not in st.session_state:
     st.write("Connect DB First")
 else:
-    all_df = st.session_state["df_profiles"]
+    cpd_pro = st.session_state["df_profiles"]
+    crisper_pro = st.session_state["df_crisper"]
+    all_df=pd.concat([cpd_pro,crisper_pro])
     list_sources = all_df["metasource"].unique().tolist()
 
     st.write("Data from DB", all_df)
@@ -98,20 +100,31 @@ else:
             b_list.append("'" + b + "'")
 
     if len(b_list) > 0:
-        sql_meta = (
-            "select cpd.pubchemid,cpd.keggid, cpd.name, cpd.smile from cpd inner join cpdbatchs on cpd.pubchemid=cpdbatchs.pubchemid where cpdbatchs.batchid in "
+        if choix_source=="source_13":
+            sql_meta = (
+            "select gene.geneid,gene.symbol,crisperbatchs.batchid  from gene inner join crisperbatchs on crisperbatchs.geneid=gene.geneid where crisperbatchs.batchid in "
             + "("
             + ",".join(b_list)
             + ")"
+            
         )
+            
+        else:
+            sql_meta = (
+                "select cpd.pubchemid,cpd.keggid, cpd.name, cpd.smile from cpd inner join cpdbatchs on cpd.pubchemid=cpdbatchs.pubchemid where cpdbatchs.batchid in "
+                + "("
+                + ",".join(b_list)
+                + ")"
+            )
 
         df_cpd = pd.read_sql(sql_meta, conn)
         
 
         if len(df_cpd) > 0:
+            st.write(df_cpd)
             df_cpd.fillna("No result", inplace=True)
-            df_cpd = df_cpd[df_cpd["smile"] != "No result"].reset_index()
-            df_cpd = df_cpd.drop(columns=["index"])
+            
+        
 
             tab_list = st.tabs(["Histogram", "Data", "UMAP", "MetaData", "Summary"])
             with tab_list[0]:
@@ -159,7 +172,8 @@ else:
                     df_plt, x=filter_col, y=cpd_names, width=1400, height=1000
                 )
                 st.plotly_chart(fig2, theme="streamlit", use_container_width=True)
-                st.session_state["df_cpds"] = df_cpd
+                if choix_source!="source_13":
+                    st.session_state["df_cpds"] = df_cpd
                 profile_conn.close()
                 conn.close()
             # st.session_state["df_all_data"] = df_hist

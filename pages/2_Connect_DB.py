@@ -1,5 +1,5 @@
-import warnings
 
+import warnings
 import numpy as np
 import pandas as pd
 import psycopg2
@@ -10,8 +10,6 @@ warnings.filterwarnings("ignore")
 
 def init_connection():
     return psycopg2.connect(**st.secrets["postgres"])
-
-
 conn = init_connection()
 
 conn_profileDB = psycopg2.connect(
@@ -22,20 +20,14 @@ conn_profileDB = psycopg2.connect(
         password="12345",
     )
 
-def run_query(query):
-    with conn.cursor() as cur:
-        cur.execute(query)
-        return cur.fetchall()
 
-
-list_tables = ["gene", "cpd", "pathway", "disease", "keggcpd"]
-# -------------------------------------------------------------------------------------------------------------------
-
+list_tables = ["gene", "cpd", "pathway", "disease"]
 col1, col2 = st.columns(2)
 with col1:
     option = st.selectbox("Pick one table", list_tables)
     x = st.slider("Number of rows to display", 1, 20)
     st.write("You selected the table: ", option)
+    
 data = pd.read_sql("select * from " + str(option), conn)
 data = data.apply(lambda x: x.astype(str).str.upper())
 
@@ -45,6 +37,7 @@ with col2:
     tab2.write(data.describe().T)
 st.write(f"\n")
 # -------------------------------------------------------------------------------------------------------------------
+
 col3, col4 = st.columns(2)
 with col3:
     var_text = st.text_area("Enter your search")
@@ -53,26 +46,10 @@ var_t = [t.strip().upper() for t in var_t]
 
 
 mask = np.column_stack([data[col].str.match(v.upper(), na=False) for col in data.columns for v in var_t])
-
 df_res = data.loc[mask.any(axis=1)].reset_index(drop=True)
-
 with col4:
     st.write(f"Result in  {str(option)} table:", df_res)
 st.write(f"\n")
-
-
-# col3, col4 = st.columns(2)
-# with col3:
-#     var_text = st.text_area("Enter your search")
-# with col4:
-#      opt_col = st.selectbox("Pick one column", data.columns.to_list())
-# var_t=var_text.split('\n')
-# var_t = [t.strip().upper() for t in var_t]
-# df_res = data.loc[data[opt_col].isin(var_t)]
-
-# st.write(f"Result in  {str(option)} table:", df_res)
-# st.write(f"\n")
-
 # -------------------------------------------------------------------------------------------------------------------
 
 db_name = st.radio(
@@ -80,85 +57,39 @@ db_name = st.radio(
     ("SelectChem and Jump DataSet", "KEGG"),
     horizontal=True,
 )
-df_cpds = []
+
 
 
 def get_sql_kegg(table_name="keggcpdgene", col_name="geneid"):
-    list_tmp = df_res[col_name]
-    list_geneid = []
-    for t in list_tmp:
-        list_geneid.append("'" + t + "'")
-    sql_last_line = (
-        " where  " + table_name + "." + col_name + " in (" + ",".join(list_geneid) + ")"
-    )
-    sql = (
-        'select keggcpd.name as "KEGG Compound Name", keggcpd.keggid, '
-        + table_name
-        + "."
-        + col_name
-        + " from keggcpd  inner join "
-        + table_name
-        + " on "
-        + table_name
-        + ".keggid=keggcpd.keggid "
-        + sql_last_line
-        + " GROUP BY keggcpd.name, keggcpd.keggid, "
-        + table_name
-        + "."
-        + col_name
-    )
+    list_geneid = [f"'{t}'" for t in df_res[col_name]]
+    sql_last_line = f" WHERE UPPER({table_name}.{col_name} ) IN ({','.join(list_geneid)})"
+    
+    if table_name == "keggcpd":
+        sql = f"SELECT * FROM keggcpd {sql_last_line}"
+    else:
+        sql = f"SELECT  keggcpd.keggid,keggcpd.name , {table_name}.{col_name} FROM keggcpd INNER JOIN {table_name} ON {table_name}.keggid=keggcpd.keggid {sql_last_line} GROUP BY keggcpd.name, keggcpd.keggid, {table_name}.{col_name}"
+    
     return sql
 
 
 def get_sql_jump(table_name="cpdgene", col_name="geneid"):
-    list_tmp = df_res[col_name]
-    list_geneid = []
-    for t in list_tmp:
-        list_geneid.append("'" + t + "'")
-    sql_last_line = (
-        " where  " + table_name + "." + col_name + " in (" + ",".join(list_geneid) + ")"
-    )
-    sql_first_line = "select cpd.pubchemid,cpd.synonyms,cpd.keggid, cpd.name, cpd.smile ,cpdbatchs.batchid "
-
+    list_geneid = [f"'{t}'" for t in df_res[col_name]]
+    sql_last_line = f" WHERE UPPER({table_name}.{col_name}) IN ({','.join(list_geneid)})"
+    sql_first_line = "SELECT cpd.pubchemid, cpdbatchs.batchid, cpd.synonyms, cpd.keggid, cpd.name, cpd.smile"
+    
     if table_name == "keggcpddis":
         st.write(table_name)
-        sql = (
-            sql_first_line
-            + " ,keggcpddis.disid from cpdbatchs inner join cpd on cpdbatchs.pubchemid=cpd.pubchemid inner join keggcpddis on keggcpddis.keggid=cpd.keggid "
-            + sql_last_line
-        )
-
-    if table_name == "cpd":
+        sql = f"{sql_first_line}, keggcpddis.disid FROM cpdbatchs INNER JOIN cpd ON cpdbatchs.pubchemid=cpd.pubchemid INNER JOIN keggcpddis ON keggcpddis.keggid=cpd.keggid {sql_last_line}"
+    elif table_name == "cpd":
         st.write(table_name)
-        sql = (
-            sql_first_line
-            + " from cpdbatchs inner join cpd on cpd.pubchemid=cpdbatchs.pubchemid "
-            + sql_last_line
-        )
-
-    if table_name not in ["cpd", "keggcpddis"]:
+        sql = f"{sql_first_line} FROM cpdbatchs INNER JOIN cpd ON cpd.pubchemid=cpdbatchs.pubchemid {sql_last_line}"
+    else:
         st.write(table_name)
-        sql = (
-            sql_first_line
-            + ","
-            + table_name
-            + "."
-            + col_name
-            + " from cpdbatchs "
-            + " inner join "
-            + table_name
-            + " on "
-            + table_name
-            + ".pubchemid=cpdbatchs.pubchemid   inner join cpd on cpdbatchs.pubchemid=cpd.pubchemid"
-            + sql_last_line
-            + " GROUP BY cpd.pubchemid,cpdbatchs.batchid,"
-            + table_name
-            + "."
-            + col_name
-            + ", cpd.name"
-        )
-
+        sql = f"{sql_first_line}, {table_name}.{col_name} FROM cpdbatchs INNER JOIN {table_name} ON {table_name}.pubchemid=cpdbatchs.pubchemid INNER JOIN cpd ON cpdbatchs.pubchemid=cpd.pubchemid {sql_last_line} GROUP BY cpd.pubchemid, cpdbatchs.batchid, {table_name}.{col_name}, cpd.name"
+    
     return sql
+
+
 
 
 table_mapping = {
@@ -166,7 +97,8 @@ table_mapping = {
         "gene": ("keggcpdgene", "geneid"),
         "pathway": ("keggcpdpath", "pathid"),
         "disease": ("keggcpddis", "disid"),
-        "cpdkegg": ("cpdkegg", "keggid"),
+    
+        "cpd": ("keggcpd", "keggid"),
     },
     "SelectChem and Jump DataSet": {
         "gene": ("cpdgene", "geneid"),
@@ -176,7 +108,7 @@ table_mapping = {
     },
 }
 
-list_df = []
+
 df_cpds = []
 sql_query = []
 if len(df_res) > 0:
@@ -184,84 +116,54 @@ if len(df_res) > 0:
         table_name, col_name = table_mapping[db_name][str(option)]
         if db_name == "KEGG":
             sql_query = get_sql_kegg(table_name=table_name, col_name=col_name)
-            df_kegg = pd.read_sql(sql_query, conn)
-            df_kegg = df_kegg.drop_duplicates(subset=["keggid"])
-            df_kegg = df_kegg.reset_index(drop=True)
-            # df_cpds = df_kegg
+            
+            df_kegg = pd.read_sql(sql_query, conn).drop_duplicates(subset=["keggid"]).reset_index(drop=True)
             st.write(df_kegg)
+            
         else:
             sql_query = get_sql_jump(table_name=table_name, col_name=col_name)
-            df_cpds = pd.read_sql(sql_query, conn)
-            df_cpds = df_cpds.drop_duplicates(subset=["batchid"])
-            df_cpds = df_cpds.reset_index(drop=True)
+            df_cpds = pd.read_sql(sql_query, conn).drop_duplicates(subset=["batchid"]).reset_index(drop=True)
+
 # get crisper profiles when search gene
-if str(option)=="gene":
-  
-    geneid_lis = []
-    for geneid in df_res["geneid"]:
-        geneid_lis.append("'" + geneid + "'")
-
-    sql_crisper = (
-        "select crisperbatchs.batchid from crisperbatchs where crisperbatchs.geneid"
-        + " in ("
-        + ",".join(geneid_lis)
-        + ")"
-    )
-    df_crisperBatchs = pd.read_sql(sql_crisper, conn)
-    df_crisperBatchs = df_crisperBatchs.drop_duplicates(subset=["batchid"])
-    batch_list = []
-    for geneid in df_crisperBatchs["batchid"]:
-        batch_list.append("'" + geneid + "'")
-    sql_crisper_profile = (
-        "select * from aggcombatprofile where metabatchid in ("
-        + ",".join(batch_list)
-        + ")"
-    )
-
+df_prof_crisper = None
+if str(option) == "gene":
+    geneid_lis = [f"'{geneid}'" for geneid in df_res["geneid"]]
+    sql_crisper = f"SELECT * FROM crisperbatchs WHERE crisperbatchs.geneid IN ({','.join(geneid_lis)})"
+    df_crisperBatchs = pd.read_sql(sql_crisper, conn).drop_duplicates(subset=["batchid"])
+    batch_list = [f"'{batchid}'" for batchid in df_crisperBatchs["batchid"]]
+    sql_crisper_profile = f"SELECT * FROM aggcombatprofile WHERE metabatchid IN ({','.join(batch_list)})"
     df_prof_crisper = pd.read_sql(sql_crisper_profile, conn_profileDB)
-    
-
-    
-    
-    
-
-
+    crisper_dic = df_crisperBatchs.set_index("batchid")["geneid"].to_dict()
+    df_prof_crisper["metageneid"] = df_prof_crisper["metabatchid"].map(crisper_dic)
+   
 if len(df_cpds) > 0:
-    df_kegg = df_cpds[df_cpds["keggid"].notna()]
-    list_pubchemid = []
-    for t in df_cpds["pubchemid"]:
-        list_pubchemid.append("'" + t + "'")
+    list_pubchemid = [f"'{t}'" for t in df_cpds["pubchemid"]]
+    list_batchid = [f"'{batch}'" for batch in df_cpds["batchid"]]
 
-    batch_list = []
-    for batch in df_cpds["batchid"]:
-        batch_list.append("'" + batch + "'")
+    # compounds GENE info
+    sql = f"SELECT cpdgene.pubchemid, gene.geneid, gene.symbol, cpdgene.server FROM gene INNER JOIN cpdgene ON cpdgene.geneid=gene.geneid WHERE cpdgene.pubchemid IN ({','.join(list_pubchemid)})"
+    df_cpdGene = pd.read_sql(sql, conn).drop_duplicates(subset=["pubchemid", "geneid", "server"]).reset_index(drop=True)
+    df_cpdGene = df_cpdGene.merge(df_cpds[["batchid","pubchemid"]],left_on='pubchemid',right_on='pubchemid').reset_index(drop=True)
+  
 
-    sql_kegg_gene = (
-        "select gene.geneid, gene.symbol,cpdgene.pubchemid,cpdgene.server from gene inner join  cpdgene on cpdgene.geneid=gene.geneid where  cpdgene.pubchemid"
-        + " in ("
-        + ",".join(list_pubchemid)
-        + ")"
-    )
-    df_cpdGene = pd.read_sql(sql_kegg_gene, conn)
-    df_cpdGene = df_cpdGene.drop_duplicates(subset=["pubchemid", "geneid", "server"])
-    df_cpdGene = df_cpdGene.reset_index(drop=True)
+    # compounds efficacy info
+    sql = f"SELECT cpd.pubchemid, keggcpd.efficacy, keggcpd.keggid FROM keggcpd INNER JOIN cpd ON keggcpd.keggid=cpd.keggid WHERE cpd.pubchemid IN ({','.join(list_pubchemid)})"
+    df_efficacy = pd.read_sql(sql, conn).drop_duplicates(subset=["pubchemid", "efficacy", "keggid"]).reset_index(drop=True)
+    df_efficacy = df_efficacy.merge(df_cpds[["batchid","pubchemid"]],left_on='pubchemid',right_on='pubchemid').reset_index(drop=True)
 
-    sql_kegg_pathway = (
-        "select pathway.pathid, pathway.name,cpdpath.pubchemid, cpdpath.server from pathway inner join  cpdpath on cpdpath.pathid=pathway.pathid  where  cpdpath.pubchemid"
-        + " in ("
-        + ",".join(list_pubchemid)
-        + ")"
-    )
-    df_cpdPath = pd.read_sql(sql_kegg_pathway, conn)
-    df_cpdPath = df_cpdPath.drop_duplicates(subset=["pubchemid", "pathid", "server"])
-    df_cpdPath = df_cpdPath.reset_index(drop=True)
+    # compounds PATHWAY info
+    sql = f"SELECT cpdpath.pubchemid, pathway.pathid, pathway.name, cpdpath.server FROM pathway INNER JOIN cpdpath ON cpdpath.pathid=pathway.pathid WHERE cpdpath.pubchemid IN ({','.join(list_pubchemid)})"
+    df_cpdPath = pd.read_sql(sql, conn).drop_duplicates(subset=["pubchemid", "pathid", "server"]).reset_index(drop=True)
+    df_cpdPath = df_cpdPath.merge(df_cpds[["batchid","pubchemid"]],left_on='pubchemid',right_on='pubchemid').reset_index(drop=True)
 
-    tab1, tab2, tab3 = st.tabs(
-        ["compounds info", "compounds GENE info", "compounds PATHWAY info"]
-    )
-    tab1.write(df_cpds)
-    tab2.write(df_cpdGene)
-    tab3.write(df_cpdPath)
+    tabs = st.tabs(["compounds info", "compounds GENE info", "compounds PATHWAY info", "compounds efficacy info"])
+    tabs[0].write(df_cpds)
+    tabs[1].write(df_cpdGene)
+    tabs[2].write(df_cpdPath)
+    tabs[3].write(df_efficacy)
+    
+
+
 
     st.write(f"Profiles in JUMP CP DATA SET")
 
@@ -271,23 +173,28 @@ if len(df_cpds) > 0:
 
     sql_profile = (
         "select * from aggcombatprofile where metabatchid in ("
-        + ",".join(batch_list)
+        + ",".join(list_batchid)
         + ")"
     )
-
+    
     df_prof = pd.read_sql(sql_profile, conn_profileDB)
+    
+    # df_prof = df_prof.merge(df_efficacy[["batchid","efficacy"]],left_on='metabatchid',right_on='batchid').reset_index(drop=True)
+    # df_prof = df_prof.merge(df_cpdGene[df_cpdGene["server"] == "KEGG"][["batchid","geneid","server"]],left_on='batchid',right_on='batchid').reset_index(drop=True)
+    
     tab1, tab2,tab3,tab4 = st.tabs(["compounds Profiles", "compounds Summary","Crisper Profiles", "Crisper Summary"])
     tab1.write(df_prof)
     tab2.write(df_prof.describe().T)
-    tab3.write(df_prof_crisper)
-    tab4.write(df_prof_crisper.describe().T)
+    if str(option)=="gene":
+        tab3.write(df_prof_crisper)
+        tab4.write(df_prof_crisper.describe().T)
 
     st.session_state["df_profiles"] = df_prof
     st.session_state["df_cpds"] = df_cpds
-    st.session_state["df_kegg"] = df_kegg
     st.session_state["df_cpdGene"] = df_cpdGene
     st.session_state["df_cpdPath"] = df_cpdPath
-    st.session_state["crisper"] = df_prof_crisper
+    st.session_state["df_efficacy"] = df_efficacy
+    st.session_state["df_crisper"] = df_prof_crisper
 
     conn_profileDB.close()
 

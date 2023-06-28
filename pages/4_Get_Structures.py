@@ -54,6 +54,7 @@ if "df_cpds" not in st.session_state:
             st.session_state["df_kegg"] = df_c
 else:
     df_cpd = st.session_state["df_cpds"]
+    df_cpd = df_cpd[df_cpd["smile"] != "No result"].reset_index()
     if len(df_cpd) > 0:
         
         
