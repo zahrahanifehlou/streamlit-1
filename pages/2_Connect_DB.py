@@ -42,6 +42,7 @@ st.write(f"\n")
 col3, col4 = st.columns(2)
 with col3:
     var_text = st.text_area("Enter your search",help='Name or ID separated by enter')
+    
 var_t=var_text.split('\n')
 var_t = [t.strip().upper() for t in var_t]
 
@@ -92,7 +93,7 @@ def get_sql_jump(table_name="cpdgene", col_name="geneid"):
         sql = f"{sql_first_line} FROM cpdbatchs INNER JOIN cpd ON cpd.pubchemid=cpdbatchs.pubchemid {sql_last_line}"
     else:
         st.write(table_name)
-        sql = f"{sql_first_line}, {table_name}.{col_name} FROM cpdbatchs INNER JOIN {table_name} ON {table_name}.pubchemid=cpdbatchs.pubchemid INNER JOIN cpd ON cpdbatchs.pubchemid=cpd.pubchemid {sql_last_line} GROUP BY cpd.pubchemid, cpdbatchs.batchid, {table_name}.{col_name}, cpd.name"
+        sql = f"{sql_first_line}, {table_name}.{col_name} FROM cpdbatchs INNER JOIN {table_name} ON {table_name}.pubchemid=cpdbatchs.pubchemid INNER JOIN cpd ON cpdbatchs.pubchemid=cpd.pubchemid {sql_last_line} GROUP BY cpd.pubchemid, cpdbatchs.batchid, cpd.synonyms, cpd.keggid, cpd.name, cpd.smile, {table_name}.{col_name}"
 
     return sql
 

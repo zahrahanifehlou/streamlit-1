@@ -1,3 +1,4 @@
+# NMDA GSK2879552 Bay K 
 import pandas as pd
 import plotly.express as px
 import pqdm
@@ -5,7 +6,8 @@ import psycopg2
 import streamlit as st
 from pqdm.processes import pqdm
 from sklearn.metrics.pairwise import cosine_similarity
-
+import seaborn as sns
+import matplotlib.pyplot as plt
   # @st.cache_data
 def find_sim_cpds(df1, df2):
         filter_col1 = [col for col in df1.columns if not col.startswith("meta")]
@@ -29,6 +31,7 @@ profile_conn = psycopg2.connect(
 if "df_profiles" not in st.session_state:
     st.write("Connect DB First")
 else:
+    df_cpds = st.session_state["df_cpds"]
     cpd_pro = st.session_state["df_profiles"]
     crisper_pro = st.session_state["df_crisper"]
     list_sources = cpd_pro["metasource"].unique().tolist()
@@ -36,6 +39,8 @@ else:
     choix_source = st.selectbox("Select the Source", list_sources)
 
     # -------------------umap
+    sql_umqpemd_crips = f"select * from umapemd where metasource='source_13'"
+    df_crisper_emd = pd.read_sql(sql_umqpemd_crips, profile_conn)
     sql_umqpemd = f"select * from umapemd where metasource='{choix_source}'"
     batchs = cpd_pro[cpd_pro["metasource"] == choix_source]["metabatchid"].values
     df_src_emd = pd.read_sql(sql_umqpemd, profile_conn)
@@ -51,9 +56,35 @@ else:
         hover_data=["metabatchid"],
     )
     st.plotly_chart(fig, theme="streamlit", use_container_width=True)
+    list_col = [col for col in cpd_pro.columns if not col.startswith("meta")]
     
-    sql_umqpemd_crips = f"select * from umapemd where metasource='source_13'"
-    df_crisper_emd = pd.read_sql(sql_umqpemd_crips, profile_conn)
+    df_plt=pd.DataFrame()
+    df_plt = cpd_pro[list_col]
+    df_plt["name"]=cpd_pro["metabatchid"]+"_"+cpd_pro["metasource"]
+    df_plt.set_index("name", inplace=True)
+    fig, ax = plt.subplots()
+    fig=sns.clustermap(
+        df_plt,
+        #metric="cosine",
+        method="ward",
+       
+        xticklabels=False,
+        yticklabels=True,
+        col_cluster=False,
+       cmap="vlag",
+        center=0,
+         vmin=-5,
+         vmax=5,
+      
+    )
+
+
+   
+    st.pyplot(fig)
+    
+
+
+    
 
     # ---- source and crisper profile ----------------------------------------------------------------------------
     sql_profile = f"select * from aggcombatprofile where metasource='{choix_source}'"
@@ -85,10 +116,12 @@ else:
     df_keep_crisper = df_hist_crisper[df_hist_crisper ["sim"] > thres].head(thresq).sort_values(by="sim", ascending=False).reset_index(drop=True)
     batch_list_crisper = df_keep_crisper["metabatchid"].tolist()
     b_list_crisper = [f"'{b}'" for b in batch_list_crisper if "jcp2022_800" not in b]
+    df_results_cripser=pd.DataFrame()
     if len(b_list_crisper) > 0:
         sql_crisper = f"select gene.geneid,gene.symbol,crisperbatchs.batchid  from gene inner join crisperbatchs on crisperbatchs.geneid=gene.geneid where crisperbatchs.batchid in ({','.join(b_list_crisper)})"
         df_results_cripser = pd.read_sql(sql_crisper, conn)
         if len(df_results_cripser) > 0:
+           
             st.session_state["df_crisper"] = df_results_cripser
             df_keep_prof_crisper = df_prof_crisper[df_prof_crisper["metabatchid"].isin(df_keep_crisper["metabatchid"].values)]
             st.session_state["df_crisper_profile"] = df_keep_prof_crisper
@@ -96,14 +129,20 @@ else:
     sim_cpds = find_sim_cpds(df_source, df_sel)
     df_hist_cpd = pd.DataFrame({"sim": sim_cpds.flatten().tolist(), "metabatchid": df_source["metabatchid"]})
     df_keep_cpd = df_hist_cpd[df_hist_cpd["sim"] > thres].head(thresq).sort_values(by="sim", ascending=False).reset_index(drop=True)
+   
+    df_keep_cpd.loc[len(df_keep_cpd.index)] = [1,choix]
+
     batch_list_cpd = df_keep_cpd["metabatchid"].tolist()
     b_list_cpd = [f"'{b}'" for b in batch_list_cpd if "jcp2022_800" not in b]
+    df_results_cpd=pd.DataFrame()
     if len(b_list_cpd) > 0:
         sql_cpds = f"select cpd.pubchemid,cpd.keggid, cpd.name, cpd.smile from cpd inner join cpdbatchs on cpd.pubchemid=cpdbatchs.pubchemid where cpdbatchs.batchid in ({','.join(b_list_cpd)})"
         df_results_cpd = pd.read_sql(sql_cpds, conn)
+        df_results_cpd.drop_duplicates(subset=["pubchemid"],inplace=True)
         if len(df_results_cpd) > 0:
-                st.session_state["df_cpds"] = df_results_cpd
+                st.session_state["df_cpds"] = pd.concat([df_results_cpd,df_cpds])
                 df_keep_prof = df_source[df_source["metabatchid"].isin(df_keep_cpd["metabatchid"].values)]
+                
                 st.session_state["df_cpds_profile"] = df_keep_prof
         
     
@@ -141,7 +180,7 @@ else:
                     st.write(df_keep_cpd.describe())
 
                 
-                st.write(df_keep_prof)
+        
 
                 if len(df_keep_prof) < 11:
                     cpd_names = df_keep_prof.metabatchid.values
@@ -178,15 +217,5 @@ else:
                 with tab_list[4]:
                     st.write(df_keep_crisper.describe())
 
-                
-                st.write(df_keep_crisper)
-
-                if len(df_keep_crisper) < 11:
-                    cpd_names = df_keep_crisper.metabatchid.values
-                    df_plt = df_keep_crisper.set_index("metabatchid")
-                    filter_col = [col for col in df_plt.columns if not col.startswith("meta")]
-                    df_plt = df_plt[filter_col].T
-                    fig1 = px.line(df_plt, x=filter_col, y=cpd_names, width=1400, height=1000)
-                    st.plotly_chart(fig1, theme="streamlit", use_container_width=True)
-
+          
 
