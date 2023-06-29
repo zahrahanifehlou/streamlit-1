@@ -143,6 +143,10 @@ if str(option) == "gene" and len(df_res)>0:
     crisper_dic = df_crisperBatchs.set_index("batchid")["geneid"].to_dict()
     df_prof_crisper["metageneid"] = df_prof_crisper["metabatchid"].map(crisper_dic)
 
+    
+    
+    
+
 if len(df_cpds) > 0:
     list_pubchemid = [f"'{t}'" for t in df_cpds["pubchemid"]]
     list_batchid = [f"'{batch}'" for batch in df_cpds["batchid"]]
