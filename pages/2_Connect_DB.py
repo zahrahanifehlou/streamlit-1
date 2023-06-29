@@ -41,7 +41,7 @@ st.write(f"\n")
 
 col3, col4 = st.columns(2)
 with col3:
-    var_text = st.text_area("Enter your search")
+    var_text = st.text_area("Enter your search",help='Name or ID separated by enter')
 var_t=var_text.split('\n')
 var_t = [t.strip().upper() for t in var_t]
 
