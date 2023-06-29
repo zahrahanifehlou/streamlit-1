@@ -41,7 +41,7 @@ st.write(f"\n")
 
 col3, col4 = st.columns(2)
 with col3:
-    var_text = st.text_area("Enter your search")
+    var_text = st.text_area("Enter your search",help='Name or ID separated by enter')
 var_t=var_text.split('\n')
 var_t = [t.strip().upper() for t in var_t]
 
@@ -93,7 +93,7 @@ def get_sql_jump(table_name="cpdgene", col_name="geneid"):
     else:
         st.write(table_name)
         sql = f"{sql_first_line}, {table_name}.{col_name} FROM cpdbatchs INNER JOIN {table_name} ON {table_name}.pubchemid=cpdbatchs.pubchemid INNER JOIN cpd ON cpdbatchs.pubchemid=cpd.pubchemid {sql_last_line} GROUP BY cpd.pubchemid, cpdbatchs.batchid, {table_name}.{col_name}, cpd.name"
-        
+
     return sql
 
 
@@ -174,7 +174,7 @@ if len(df_cpds) > 0:
         df = df_cpdGene
         if server_name != "all":
             df = df_cpdGene[df_cpdGene["server"] == server_name]
-        
+
     tabs[1].write(df)
     tabs[2].write(df_cpdPath)
     tabs[3].write(df_efficacy)
