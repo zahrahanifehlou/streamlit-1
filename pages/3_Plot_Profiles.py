@@ -6,6 +6,7 @@ import streamlit as st
 from pqdm.processes import pqdm
 from sklearn.metrics.pairwise import cosine_similarity
 
+
 def init_connection():
     return psycopg2.connect(**st.secrets["postgres"])
 conn = init_connection()
@@ -84,8 +85,9 @@ else:
         thres = st.slider("Threshold", -1.0, 1.0, 0.85)
     with col4:
         thresq = st.slider("Cardinal Threshold", 0, 200, 10)
-    fig = px.histogram(df_hist, x="sim")
-    fig.add_vline(x=thres)
+    fig2 = px.histogram(df_hist, x="sim")
+    fig2.add_vline(x=thres)
+
 
     df_keep = df_hist[df_hist["sim"] > thres]
     df_keep = df_keep.head(thresq).reset_index()
@@ -106,9 +108,9 @@ else:
             + "("
             + ",".join(b_list)
             + ")"
-            
+
         )
-            
+
         else:
             sql_meta = (
                 "select cpd.pubchemid,cpd.keggid, cpd.name, cpd.smile from cpd inner join cpdbatchs on cpd.pubchemid=cpdbatchs.pubchemid where cpdbatchs.batchid in "
@@ -118,17 +120,17 @@ else:
             )
 
         df_cpd = pd.read_sql(sql_meta, conn)
-        
+
 
         if len(df_cpd) > 0:
             st.write(df_cpd)
             df_cpd.fillna("No result", inplace=True)
-            
-        
+
+
 
             tab_list = st.tabs(["Histogram", "Data", "UMAP", "MetaData", "Summary"])
             with tab_list[0]:
-                st.plotly_chart(fig, theme="streamlit", use_container_width=True)
+                st.plotly_chart(fig2, theme="streamlit", use_container_width=True)
             with tab_list[1]:
                 st.write(df_keep)
             with tab_list[2]:

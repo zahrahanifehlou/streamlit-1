@@ -52,7 +52,7 @@ df_res=pd.DataFrame()
 # df_res= data.loc[mask.any(axis=1)]
 
 if len(var_t)>0 and var_t[0]!="":
-    mask = np.column_stack([data[col].str.match(v.upper(), na=False) for col in data.columns for v in var_t])
+    mask = np.column_stack([data[col].str.match(v.upper(), na=False) for col in data.columns for v in var_t if v!=''])
     df_res= data.loc[mask.any(axis=1)]
     with col4:
         st.write(f"Result in  {str(option)} table:", df_res)
@@ -93,7 +93,7 @@ def get_sql_jump(table_name="cpdgene", col_name="geneid"):
     else:
         st.write(table_name)
         sql = f"{sql_first_line}, {table_name}.{col_name} FROM cpdbatchs INNER JOIN {table_name} ON {table_name}.pubchemid=cpdbatchs.pubchemid INNER JOIN cpd ON cpdbatchs.pubchemid=cpd.pubchemid {sql_last_line} GROUP BY cpd.pubchemid, cpdbatchs.batchid, {table_name}.{col_name}, cpd.name"
-        
+
     return sql
 
 
@@ -174,7 +174,7 @@ if len(df_cpds) > 0:
         df = df_cpdGene
         if server_name != "all":
             df = df_cpdGene[df_cpdGene["server"] == server_name]
-        
+
     tabs[1].write(df)
     tabs[2].write(df_cpdPath)
     tabs[3].write(df_efficacy)
@@ -221,7 +221,13 @@ if len(df_cpds) > 0:
     st.session_state["df_efficacy"] = df_efficacy
     st.session_state["df_crisper"] = df_prof_crisper
 
-    conn_profileDB.close()
+
 
 else:
     st.warning(" No Luck!! ")
+
+# tmap
+sql = "SELECT * FROM tmap"
+df_tmap = pd.read_sql(sql, conn_profileDB).reset_index(drop=True)
+st.session_state["df_tmap"] = df_tmap
+conn_profileDB.close()

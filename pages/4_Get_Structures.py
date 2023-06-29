@@ -8,9 +8,10 @@ import streamlit as st
 from rdkit import Chem, DataStructs
 from rdkit.Chem import AllChem
 from rdkit.Chem import Draw
-import tmap
 
 
+
+   
 def tanimoto_similarity(mol1, mol2):
     fp1 = AllChem.GetMorganFingerprint(mol1, 2)
     fp2 = AllChem.GetMorganFingerprint(mol2, 2)
@@ -44,6 +45,24 @@ def upload_files():
     return list_df
 
 
+#-----------------------------------------------------------------------------------------------------------------------
+
+if "df_tmap" not in st.session_state:
+    st.write("Connect DB First")
+else:
+    df_tmap = st.session_state["df_tmap"]
+color_col = st.radio(
+        "select color",
+        ("source", "genetarget", "efficacy", "disname"),
+        horizontal=True,
+    )
+st.write("TMAP plt of all compounds")
+fig = px.scatter(df_tmap, x="x", y="y", hover_data=['pubchemid', 'name','genetarget', 'efficacy', 'disname', 'keggid'], color_continuous_scale='RdBu_r',color=color_col,width=1500,height=1000 )
+
+st.plotly_chart(fig, theme="streamlit", use_container_width=True)
+st.write("\n")
+#-----------------------------------------------------------------------------------------------------------------------
+
 if "df_cpds" not in st.session_state:
     list_df = upload_files()
 
@@ -53,46 +72,39 @@ if "df_cpds" not in st.session_state:
         if len(df_c) > 0:
             st.session_state["df_kegg"] = df_c
 else:
-    df_cpd = st.session_state["df_cpds"]
-    df_cpd = df_cpd[df_cpd["smile"] != "No result"].reset_index()
-    if len(df_cpd) > 0:
+    df_cpds = st.session_state["df_cpds"]
+    df_str = df_cpds[df_cpds["smile"] != "No result"].reset_index()
+    df_str=df_str.drop_duplicates(subset=["pubchemid"])
+    df_str=df_str[df_str["pubchemid"].notna()]
+    if len(df_str) > 0:
         
+        df_tmap["selected compounds"]="others"
+        df_tmap.loc[df_tmap['pubchemid'].isin(df_str.pubchemid), 'selected compounds'] = "selected compounds"
+        st.write("TMAP plt of selected compounds")
+        fig = px.scatter(df_tmap, x="x", y="y", hover_data=['pubchemid', 'name','genetarget', 'efficacy', 'disname', 'keggid'],color_discrete_sequence=["blue", "red" ],color="selected compounds",width=800,height=1000 )
+        st.plotly_chart(fig, theme="streamlit", use_container_width=True)
+        st.write("\n")
         
-        st.write("DATA frame",df_cpd)
-        mol_list = [Chem.MolFromSmiles(smiles) for smiles in df_cpd["smile"].tolist()]
         
         # plot similarity-----------------------------------------------------------------------------------
+        st.write("DATA frame",df_str)
+        mol_list = [Chem.MolFromSmiles(smiles) for smiles in df_str["smile"].tolist()]
         df_c = get_struc(mol_list)
-        col1, col2 = st.columns(2)
-        with col1:
-            st.write("Structure Similarities", df_c)
-        with col2:
-            fig = px.imshow(df_c)
-            st.plotly_chart(fig)
+      
+        name_list = [f"`{t}`" for t in df_str["pubchemid"]]
+     
 
-        # plot tmap-----------------------------------------------------------------------------------
-        bits = 1024
-        df_tmap = df_cpd.copy()
-        morgan_list = [
-            AllChem.GetMorganFingerprintAsBitVect(
-                mol, useChirality=True, radius=3, nBits=bits
-            )
-            for mol in mol_list
-        ]
-        morgan_list = [tmap.VectorUchar(list(fp)) for fp in morgan_list]
+        df_c = df_c.rename(index=dict(enumerate(name_list, 0)), columns=dict(enumerate(name_list, 0)))
+     
 
-        enc = tmap.Minhash(bits, seed=42)
-        lf_morgan = tmap.LSHForest(bits)
-        lf_morgan.batch_add(enc.batch_from_binary_array(morgan_list))
-        lf_morgan.index()
-        x, y, s, t, _ = tmap.layout_from_lsh_forest(lf_morgan)
 
-        df_tmap["x"] = x
-        df_tmap["y"] = y
+      
+        fig = px.imshow(df_c, color_continuous_scale='RdBu_r')
+          
 
-        fig = px.scatter(df_tmap, x="x", y="y", hover_data=["name", "pubchemid"])
-        st.write("TMAP")
-        st.plotly_chart(fig, theme="streamlit", use_container_width=True)
+        st.plotly_chart(fig)
+
+       
 
         # plot smile-----------------------------------------------------------------------------------
         ik = 0
@@ -102,8 +114,12 @@ else:
             if cpt == 5:
                 cpt = 0
             try:
-                cols[cpt].image(Draw.MolToImage(mol), df_cpd["pubchemid"][ik])
+                cols[cpt].image(Draw.MolToImage(mol), df_str["pubchemid"][ik])
                 ik = ik + 1
                 cpt = cpt + 1
             except:
-                st.write("http error: ")
+                st.write("")
+               
+            
+                   
+            
