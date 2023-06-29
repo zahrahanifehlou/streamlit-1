@@ -47,16 +47,16 @@ var_t = [t.strip().upper() for t in var_t]
 
 df_res=pd.DataFrame()
 
+# for var_text in var_t:
+#     mask = np.column_stack([data[col].str.match(var_text.upper(), na=False) for col in data])
+# df_res= data.loc[mask.any(axis=1)]
 
-for var_text in var_t:
-    mask = np.column_stack([data[col].str.match(var_text.upper(), na=False) for col in data])
-df_res= data.loc[mask.any(axis=1)]
-            
-
-with col4:
+if len(var_t)>0 and var_t[0]!="":
+    mask = np.column_stack([data[col].str.match(v.upper(), na=False) for col in data.columns for v in var_t])
+    df_res= data.loc[mask.any(axis=1)]
+    with col4:
         st.write(f"Result in  {str(option)} table:", df_res)
-        st.write(f"\n")
-
+    st.write(f"\n")
 # -------------------------------------------------------------------------------------------------------------------
 
 db_name = st.radio(
@@ -93,7 +93,7 @@ def get_sql_jump(table_name="cpdgene", col_name="geneid"):
     else:
         st.write(table_name)
         sql = f"{sql_first_line}, {table_name}.{col_name} FROM cpdbatchs INNER JOIN {table_name} ON {table_name}.pubchemid=cpdbatchs.pubchemid INNER JOIN cpd ON cpdbatchs.pubchemid=cpd.pubchemid {sql_last_line} GROUP BY cpd.pubchemid, cpdbatchs.batchid, {table_name}.{col_name}, cpd.name"
-       
+        
     return sql
 
 

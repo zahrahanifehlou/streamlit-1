@@ -12,7 +12,7 @@ import psycopg2
 
 st.write("## Based on Kegg Annotations....")
 
-if "df_profiles" not in st.session_state:
+if "df_profiles" and  "df_crisper" not in st.session_state:
     st.write("Connect DB First")
 else:
     all_df = st.session_state["df_profiles"]
