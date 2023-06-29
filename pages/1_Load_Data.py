@@ -22,7 +22,7 @@ def load_files(uploaded_files):
             list_df.append(pd.read_feather(uploaded_file))
     return list_df
 
-
+# TEST
 def filter_data(list_dfs):
     data = pd.concat(list_dfs)
     st.write('Raw Data', data.head(2))
