@@ -151,6 +151,7 @@ if str(option) == "gene" and len(df_res)>0:
 if len(df_cpds) > 0:
     list_pubchemid = [f"'{t}'" for t in df_cpds["pubchemid"]]
     list_batchid = [f"'{batch}'" for batch in df_cpds["batchid"]]
+    
 
     # compounds GENE info
     sql = f"SELECT cpdgene.pubchemid, gene.geneid, gene.symbol, cpdgene.server FROM gene INNER JOIN cpdgene ON cpdgene.geneid=gene.geneid WHERE cpdgene.pubchemid IN ({','.join(list_pubchemid)})"
@@ -192,7 +193,7 @@ if len(df_cpds) > 0:
     df_prof = pd.DataFrame()
 
 
-
+    
     sql_profile = (
         "select * from aggcombatprofile where metabatchid in ("
         + ",".join(list_batchid)
@@ -201,8 +202,8 @@ if len(df_cpds) > 0:
 
     df_prof = pd.read_sql(sql_profile, conn_profileDB)
 
-    dic_efficacy = df_efficacy.set_index("batchid")["efficacy"].to_dict()
-    dic_Gene = df_cpdGene.set_index("batchid")["geneid"].to_dict()
+    dic_efficacy = df_efficacy.set_index("batchid").to_dict()["efficacy"]
+    dic_Gene = df_cpdGene.set_index("batchid").to_dict()["geneid"]
     df_prof["metageneid"] = df_prof["metabatchid"].map(dic_Gene)
     df_prof["metaefficacy"] = df_prof["metabatchid"].map(dic_efficacy)
     df_prof["metaefficacy"].fillna("Unknown", inplace=True)

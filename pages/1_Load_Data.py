@@ -126,7 +126,7 @@ if len(list_df) > 0:
                 )
                 st.plotly_chart(fig2, theme="streamlit", use_container_width=True)
             import umap
-
+#
             model = umap.UMAP(random_state=42, verbose=False).fit(data_scaled[col_sel])
             emb = model.transform(data_scaled[col_sel])
 
@@ -143,7 +143,7 @@ if len(list_df) > 0:
                 hover_data=["tags"],
                 color="tags",
             )
-            st.plotly_chart(fig3, theme="streamlit", use_container_width=True)
+            st.plotly_chart(fig3, theme="streamlit", use_container_width=True)#
     else:
         st.warning('No column tags in your dataset')
         g = st.radio("MinMax", ["yes", "no"])
