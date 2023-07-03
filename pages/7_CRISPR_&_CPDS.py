@@ -15,23 +15,23 @@ st.write("## Based on Kegg Annotations....")
 if "df_profiles" and  "df_crisper" not in st.session_state:
     st.write("Connect DB First")
 else:
-    all_df = st.session_state["df_profiles"]
-    crisper_pro = st.session_state["df_crisper"]
+    df_source = st.session_state["df_profiles"]
+    df_crisper = st.session_state["df_crisper"]
     df_efficacy = st.session_state["df_efficacy"]
     df_cpdGene = st.session_state["df_cpdGene"]
     df_cpdGene = df_cpdGene[df_cpdGene["server"] == "KEGG"]
     
 
-    list_sources = all_df["metasource"].unique().tolist()
-    st.write("Data from DB", all_df)
+    list_sources = df_source["metasource"].unique().tolist()
+    st.write("Data from DB", df_source)
     choix_source = st.selectbox("Select the Source", list_sources)
-    df_source = all_df[all_df["metasource"] == choix_source]
+    df_source = df_source[df_source["metasource"] == choix_source]
     df_source=df_source[df_source["metageneid"].notna()].reset_index(drop=True)
     
 
     tab1, tab2 = st.tabs(["compounds profile", "Crisper profile"])
     tab1.write(df_source)
-    tab2.write(crisper_pro)
+    tab2.write(df_crisper)
 
     def find_umap(df, title):
         filter_cols = [col for col in df.columns if not col.startswith("meta")]
@@ -48,9 +48,9 @@ else:
     with cols[0]:
         find_umap(df_source, "UMAP in CPD profile")
     with cols[1]:
-        find_umap(crisper_pro, "UMAP in Crisper profile")
+        find_umap(df_crisper, "UMAP in Crisper profile")
     with cols[2]:
-        df = pd.concat([df_source, crisper_pro]).reset_index(drop=True)
+        df = pd.concat([df_source, df_crisper]).reset_index(drop=True)
         find_umap(df, "UMAP in CPD and Crisper profile")
 
     st.write("## UMAP")

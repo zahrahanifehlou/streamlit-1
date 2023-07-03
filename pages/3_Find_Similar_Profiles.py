@@ -38,62 +38,42 @@ if "df_profiles" not in st.session_state:
 else:
     df_cpds = st.session_state["df_cpds"]
     cpd_pro = st.session_state["df_profiles"]
-    crisper_pro = st.session_state["df_crisper"]
     list_sources = cpd_pro["metasource"].unique().tolist()
-    st.write("Data from DB", cpd_pro)
-    choix_source = st.selectbox("Select the Source", list_sources)
+    
+    cols1= st.columns(2)
+    with cols1[0]:
+        choix_source = st.selectbox ("Select the Source", list_sources)
+        batchs = cpd_pro[cpd_pro["metasource"] == choix_source]["metabatchid"].values
+        choix = st.selectbox("Select the Profile", batchs)
+    df_sel = cpd_pro[(cpd_pro["metasource"] == choix_source) & (cpd_pro["metabatchid"] == choix)]
+    with cols1[1]:
+        st.write("Selected Profile", df_sel)
+    
+    cols2 = st.columns(2)
+    with cols2[0]:
+            thres = st.slider("Threshold", -1.0, 1.0, 0.85)
+    with cols2[1]:
+            thresq = st.slider("Cardinal Threshold", 0, 200, 10)
 
-    # umap--------------------------------------------------------
-    sql_umqpemd_crips = f"select * from umapemd where metasource='source_13'"
-    df_crisper_emd = pd.read_sql(sql_umqpemd_crips, profile_conn)
-    sql_umqpemd = f"select * from umapemd where metasource='{choix_source}'"
-    batchs = cpd_pro[cpd_pro["metasource"] == choix_source]["metabatchid"].values
-    df_src_emd = pd.read_sql(sql_umqpemd, profile_conn)
-    df_src_emd["color"] = "others"
-    df_src_emd.loc[df_src_emd["metabatchid"].isin(batchs), "color"] = "selected compounds"
-
-    # clustermap-------------------------------------------------------------
-    list_col = [col for col in cpd_pro.columns if not col.startswith("meta")]
-    df_plt = pd.DataFrame()
-    df_plt = cpd_pro[list_col]
-    df_plt["name"] = cpd_pro["metabatchid"] + "_" + cpd_pro["metasource"]
-    df_plt.set_index("name", inplace=True)
-    fig, ax = plt.subplots()
-    fig = sns.clustermap(
-        df_plt,
-         metric="cosine",
-       # method="ward",
-        xticklabels=False,
-        yticklabels=True,
-        col_cluster=False,
-        cmap="vlag",
-        center=0,
-        vmin=-5,
-        vmax=5,
-    )
-    st.pyplot(fig)
 
     # ---- source and crisper profile ----------------------------------------------------------------------------
     sql_profile = f"select * from aggcombatprofile where metasource='{choix_source}'"
     df_source = pd.read_sql(sql_profile, profile_conn)
 
-    sql_crisper_profile = f"SELECT * FROM aggcombatprofile WHERE metasource='source_13'"
+    sql_crisper_profile = f"SELECT * FROM aggcombatprofile WHERE metasource='CRISPER'"
     df_prof_crisper = pd.read_sql(sql_crisper_profile, profile_conn)
 
-    # ---------------------------------------------------------------------------
-
-    col3, col4 = st.columns(2)
-    with col3:
-        choix = st.selectbox("Select the Profile", batchs)
-
-    df_sel = cpd_pro[(cpd_pro["metasource"] == choix_source) & (cpd_pro["metabatchid"] == choix)]
-    with col4:
-        st.write("Selected Profile", df_sel)
-    col3, col4 = st.columns(2)
-    with col3:
-        thres = st.slider("Threshold", -1.0, 1.0, 0.85)
-    with col4:
-        thresq = st.slider("Cardinal Threshold", 0, 200, 10)
+    # umap--------------------------------------------------------
+    sql_umqpemd_crips = f"select * from umapemd where metasource='CRISPER'"
+    df_crisper_emd = pd.read_sql(sql_umqpemd_crips, profile_conn)
+    sql_umqpemd = f"select * from umapemd where metasource='{choix_source}'"
+    df_src_emd = pd.read_sql(sql_umqpemd, profile_conn)
+    
+    
+    df_src_emd["color"] = "others"
+    df_src_emd.loc[df_src_emd["metabatchid"].isin(batchs), "color"] = "selected compounds"
+    
+    
         
     # ---------------------------------------------------------------------------
     # crisper
@@ -108,12 +88,15 @@ else:
         .reset_index(drop=True)
     )
     batch_list_crisper = df_keep_crisper["metabatchid"].tolist()
-    b_list_crisper = [f"'{b}'" for b in batch_list_crisper if "jcp2022_800" not in b]
+    b_list_crisper = [f"'{b}'" for b in batch_list_crisper ]
+   # b_list_crisper = [f"'{b}'" for b in batch_list_crisper if "jcp2022_800" not in b]
     df_results_cripser = pd.DataFrame()
+    df_keep_prof_crisper=pd.DataFrame()
     if len(b_list_crisper) > 0:
         sql_crisper = f"select gene.geneid,gene.symbol,crisperbatchs.batchid \
         from gene inner join crisperbatchs on crisperbatchs.geneid=gene.geneid \
         where crisperbatchs.batchid in ({','.join(b_list_crisper)})"
+
         df_results_cripser = pd.read_sql(sql_crisper, conn)
         if len(df_results_cripser) > 0:
             st.session_state["df_crisper"] = df_results_cripser
@@ -162,12 +145,13 @@ else:
     # --------------------------------------------------------------------
     tab1, tab2 = st.tabs(["Similar profiles in compounds", "Similar profiles in Cripser"])
     with tab1:
-        fig1 = px.histogram(df_hist_cpd, x="sim")
-        fig1.add_vline(x=thres)
+        fig_clusmap = px.histogram(df_hist_cpd, x="sim")
+        fig_clusmap.add_vline(x=thres)
+        
+        tab_list = st.tabs(["Histogram", "Data", "UMAP", "MetaData", "Summary","similar cpds profile"])
+        with tab_list[0]:
+            st.plotly_chart(fig_clusmap, theme="streamlit", use_container_width=True)
         if len(df_results_cpd) > 0:
-            tab_list = st.tabs(["Histogram", "Data", "UMAP", "MetaData", "Summary","similar cpds profile"])
-            with tab_list[0]:
-                st.plotly_chart(fig1, theme="streamlit", use_container_width=True)
             with tab_list[1]:
                 st.write(df_keep_cpd)
             with tab_list[2]:
@@ -179,6 +163,7 @@ else:
                     x="umap1",
                     y="umap2",
                     color="color",
+                    color_discrete_sequence=["blue", "red","green" ],
                     title=f"similar cpds to {choix} profiles  ",
                     hover_data=["metabatchid"],
                 )
@@ -197,101 +182,103 @@ else:
                 df_plt = df_keep_prof_cpd.set_index("metabatchid")
                 filter_col = [col for col in df_plt.columns if not col.startswith("meta")]
                 df_plt = df_plt[filter_col].T
-                fig1 = px.line(df_plt, x=filter_col, y=cpd_names, width=1400, height=1000)
-                st.plotly_chart(fig1, theme="streamlit", use_container_width=True)
+                fig_clusmap = px.line(df_plt, x=filter_col, y=cpd_names, width=1400, height=1000)
+                st.plotly_chart(fig_clusmap, theme="streamlit", use_container_width=True)
     with tab2:
         fig2 = px.histogram(df_hist_crisper, x="sim")
         fig2.add_vline(x=thres)
-        if len(df_results_cripser) > 0:
-            tab_list = st.tabs(["Histogram", "Data", "UMAP", "MetaData", "Summary","similar crisper profile"])
-            with tab_list[0]:
-                st.plotly_chart(fig2, theme="streamlit", use_container_width=True)
-            with tab_list[1]:
-                st.write(df_keep_crisper)
-            with tab_list[2]:
-                df_crisper_emd["color"] = "others"
-                df_crisper_emd.loc[df_crisper_emd["metabatchid"].isin(batch_list_crisper), "color"] = "similar profile"
-                fig = px.scatter(
+        
+        tab_list = st.tabs(["Histogram", "Data", "UMAP", "MetaData", "Summary","similar crisper profile"])
+        with tab_list[0]: #Histogram
+            st.plotly_chart(fig2, theme="streamlit", use_container_width=True)
+        with tab_list[1]: #Data
+            st.write(df_keep_crisper)
+            
+        with tab_list[2]: #UMAP
+            df_crisper_emd["color"] = "others"
+            df_crisper_emd.loc[df_crisper_emd["metabatchid"].isin(batch_list_crisper), "color"] = "similar profile"
+            fig = px.scatter(
                     df_crisper_emd,
                     x="umap1",
                     y="umap2",
                     color="color",
+                    color_discrete_sequence=["blue", "red","green" ],
                     title=f"similar cpds to {choix} CRISPER profiles  ",
                     hover_data=["metabatchid"],
                 )
-                st.plotly_chart(fig, theme="streamlit", use_container_width=True)
-
-            with tab_list[3]:
+            st.plotly_chart(fig, theme="streamlit", use_container_width=True)
+        if len(df_results_cripser) > 0:
+            with tab_list[3]: #MetaData
                 st.write(df_results_cripser)
 
-            with tab_list[4]:
+        with tab_list[4]: #Summary
                 st.write(df_keep_crisper.describe())
-            with tab_list[5]:
+        with tab_list[5]:
                 st.write(df_keep_prof_crisper)
 
 #compare CPD and CRISPER---------------------------------------------------------------------------------------------------------------
     st.write("\n")
     st.write("## compare CPD and CRISPER")
+    if len(df_results_cripser) > 0:
+        import umap
+        compare_cols = st.columns(2)
+        meta_cols = [col for col in df_keep_prof_cpd.columns if  col.startswith("meta")]
+        with compare_cols[0]:
+            st.write("compounds profile")
+            st.write(df_keep_prof_cpd[meta_cols].describe().T)
+        with compare_cols[1]:
+            st.write("Crisper profile")
+            st.write(df_keep_prof_crisper[meta_cols].describe().T)
     
-    import umap
-    compare_cols = st.columns(2)
-    meta_cols = [col for col in df_keep_prof_cpd.columns if  col.startswith("meta")]
-    with compare_cols[0]:
-        st.write("compounds profile")
-        st.write(df_keep_prof_cpd[meta_cols].describe().T)
-    with compare_cols[1]:
-        st.write("Crisper profile")
-        st.write(df_keep_prof_crisper[meta_cols].describe().T)
-   
 
-    def find_umap(df, title):
+        def find_umap(df, title):
+            filter_cols = [col for col in df.columns if not col.startswith("meta")]
+            reducer = umap.UMAP(densmap=True, random_state=42, verbose=True)
+            embedding = reducer.fit_transform(df[filter_cols])
+            df_emb = pd.DataFrame({"x": embedding[:, 0], "y": embedding[:, 1]})
+            df_emb["target"] = df["metageneid"]
+            df_emb["Type"] = df["metatype"]
+            df_emb["efficacy"] = df["metaefficacy"]
+        
+            fig = px.scatter(df_emb, x="x", y="y", hover_data=["target","efficacy","Type"], color="Type", title=title)
+            st.plotly_chart(fig, theme="streamlit", use_container_width=True)
+
+        cols = st.columns(3)
+        with cols[0]:
+            find_umap(df_keep_prof_cpd, "UMAP in CPD profile")
+        with cols[1]:
+            find_umap(df_keep_prof_crisper, "UMAP in Crisper profile")
+        with cols[2]:
+            df = pd.concat([df_keep_prof_cpd, df_keep_prof_crisper]).reset_index(drop=True)
+            find_umap(df, "UMAP in CPD and Crisper profile")
+
+        list_col = [col for col in df.columns if not col.startswith("meta")]
+        df_plt = pd.DataFrame()
+        df_plt = df[list_col]
+        df_plt["name"] = df["metabatchid"] + "_" + df["metatype"]
+        df_plt.set_index("name", inplace=True)
+        fig, ax = plt.subplots()
+        fig = sns.clustermap(
+            df_plt,
+            metric="cosine",
+        # method="ward",
+            xticklabels=False,
+            yticklabels=True,
+            col_cluster=False,
+            cmap="vlag",
+            center=0,
+            vmin=-5,
+            vmax=5,
+        )
+        st.pyplot(fig)
+        st.write("## Similarity")
         filter_cols = [col for col in df.columns if not col.startswith("meta")]
-        reducer = umap.UMAP(densmap=True, random_state=42, verbose=True)
-        embedding = reducer.fit_transform(df[filter_cols])
-        df_emb = pd.DataFrame({"x": embedding[:, 0], "y": embedding[:, 1]})
-        df_emb["target"] = df["metageneid"]
-        df_emb["Type"] = df["metatype"]
-        df_emb["efficacy"] = df["metaefficacy"]
-       
-        fig = px.scatter(df_emb, x="x", y="y", hover_data=["target","efficacy","Type"], color="Type", title=title)
-        st.plotly_chart(fig, theme="streamlit", use_container_width=True)
-
-    cols = st.columns(3)
-    with cols[0]:
-        find_umap(df_keep_prof_cpd, "UMAP in CPD profile")
-    with cols[1]:
-        find_umap(df_keep_prof_crisper, "UMAP in Crisper profile")
-    with cols[2]:
-        df = pd.concat([df_keep_prof_cpd, df_keep_prof_crisper]).reset_index(drop=True)
-        find_umap(df, "UMAP in CPD and Crisper profile")
-
-    list_col = [col for col in df.columns if not col.startswith("meta")]
-    df_plt = pd.DataFrame()
-    df_plt = df[list_col]
-    df_plt["name"] = df["metabatchid"] + "_" + df["metatype"]
-    df_plt.set_index("name", inplace=True)
-    fig, ax = plt.subplots()
-    fig = sns.clustermap(
-        df_plt,
-         metric="cosine",
-       # method="ward",
-        xticklabels=False,
-        yticklabels=True,
-        col_cluster=False,
-        cmap="vlag",
-        center=0,
-        vmin=-5,
-        vmax=5,
-    )
-    st.pyplot(fig)
-    st.write("## Similarity")
-    filter_cols = [col for col in df.columns if not col.startswith("meta")]
-    simi = cosine_similarity(df[filter_cols])
-    sim_df = pd.DataFrame(simi)
-    sim_df['target']=df['metageneid'] +' _ ' + df['metatype']
-    sim_cols = st.columns(2)
-    with sim_cols[0]:     
-        st.write('sim_df',sim_df)
-    with sim_cols[1]: 
-        fig = px.imshow(sim_df, title="Profiles Similarities")
-        st.plotly_chart(fig)
+        simi = cosine_similarity(df[filter_cols])
+        sim_df = pd.DataFrame(simi)
+        sim_df['target']=df['metageneid'] +' _ ' + df['metatype']
+        sim_cols = st.columns(2)
+        with sim_cols[0]:     
+            st.write('sim_df',sim_df)
+        with sim_cols[1]: 
+            fig = px.imshow(sim_df)
+            st.plotly_chart(fig)

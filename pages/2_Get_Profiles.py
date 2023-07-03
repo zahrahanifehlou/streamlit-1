@@ -22,7 +22,7 @@ conn_profileDB = psycopg2.connect(
     )
 
 
-list_tables = ["gene", "cpd", "pathway", "disease"]
+list_tables = ["gene", "cpd", "pathway", "disease","cpdbatchs"]
 col1, col2 = st.columns(2)
 with col1:
     option = st.selectbox("Pick one table", list_tables)
@@ -88,9 +88,9 @@ def get_sql_jump(table_name="cpdgene", col_name="geneid"):
     if table_name == "keggcpddis":
         st.write(table_name)
         sql = f"{sql_first_line}, keggcpddis.disid FROM cpdbatchs INNER JOIN cpd ON cpdbatchs.pubchemid=cpd.pubchemid INNER JOIN keggcpddis ON keggcpddis.keggid=cpd.keggid {sql_last_line}"
-    elif table_name == "cpd":
+    elif table_name in[ "cpd","cpdbatchs" ]:
         st.write(table_name)
-        sql = f"{sql_first_line} FROM cpdbatchs INNER JOIN cpd ON cpd.pubchemid=cpdbatchs.pubchemid {sql_last_line}"
+        sql = f"{sql_first_line} FROM cpdbatchs right JOIN cpd ON cpd.pubchemid=cpdbatchs.pubchemid {sql_last_line}"
     else:
         st.write(table_name)
         sql = f"{sql_first_line}, {table_name}.{col_name} FROM cpdbatchs INNER JOIN {table_name} ON {table_name}.pubchemid=cpdbatchs.pubchemid INNER JOIN cpd ON cpdbatchs.pubchemid=cpd.pubchemid {sql_last_line} GROUP BY cpd.pubchemid, cpdbatchs.batchid, cpd.synonyms, cpd.keggid, cpd.name, cpd.smile, {table_name}.{col_name}"
@@ -113,6 +113,7 @@ table_mapping = {
         "pathway": ("cpdpath", "pathid"),
         "disease": ("keggcpddis", "disid"),
         "cpd": ("cpd", "pubchemid"),
+        "cpdbatchs": ("cpdbatchs", "batchid"),
     },
 }
 
@@ -130,6 +131,7 @@ if len(df_res) > 0:
 
         else:
             sql_query = get_sql_jump(table_name=table_name, col_name=col_name)
+           
             df_cpds = pd.read_sql(sql_query, conn).drop_duplicates(subset=["batchid"]).reset_index(drop=True)
 
 # get crisper profiles when search gene
@@ -220,6 +222,44 @@ if len(df_cpds) > 0:
         tab3.write(df_prof_crisper)
         tab4.write(df_prof_crisper.describe().T)
 
+    #-------------------------------------------------------------
+    
+
+    list_sources = df_prof.metasource.unique().tolist()
+
+    options = st.multiselect('Select Code', list_sources )
+    st.write(options)
+    tmp=pd.DataFrame()
+    if options:
+       
+        tmp = df_prof.query('metasource in @options')
+    
+    
+    
+    if len(tmp)>0:
+        import matplotlib.pyplot as plt
+        import seaborn as sns
+        list_col = [col for col in tmp.columns if not col.startswith("meta")]
+        plt_src = pd.DataFrame()
+        plt_src = tmp[list_col]
+        plt_src["name"] = tmp["metabatchid"] + "_" + tmp["metasource"]
+        plt_src.set_index("name", inplace=True)
+        fig_clusmap, ax1 = plt.subplots()
+        fig_clusmap = sns.clustermap(
+                    plt_src,
+                    metric="cosine",
+                # method="ward",
+                    xticklabels=False,
+                    yticklabels=True,
+                    col_cluster=False,
+                    cmap="vlag",
+                    center=0,
+                    vmin=-5,
+                    vmax=5,
+                )
+            
+        st.pyplot(fig_clusmap)
+            
     st.session_state["df_profiles"] = df_prof
     st.session_state["df_cpds"] = df_cpds
     st.session_state["df_cpdGene"] = df_cpdGene
