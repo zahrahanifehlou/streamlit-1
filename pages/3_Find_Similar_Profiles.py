@@ -119,7 +119,7 @@ else:
         .sort_values(by="sim", ascending=False)
         .reset_index(drop=True)
     )
-    df_keep_cpd.loc[len(df_keep_cpd.index)] = [1, choix]
+    #df_keep_cpd.loc[len(df_keep_cpd.index)] = [1, choix]
     batch_list_cpd = df_keep_cpd["metabatchid"].tolist()
     b_list_cpd = [f"'{b}'" for b in batch_list_cpd if "jcp2022_800" not in b]
     df_results_cpd = pd.DataFrame()

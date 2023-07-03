@@ -25,9 +25,9 @@ st.markdown(
     ### Want to learn more?
 
     - [Load Data](http://192.168.2.131:8501/Load_Data) : just load fth/csv files, filter them and makes some basic displays
-    - [Connect DB](http://192.168.2.131:8501/Get_Profile) connect to DB and Get_Profile
-    - [Plot Profiles](http://192.168.2.131:8501/Find_Similar_Profiles) find profiles close to the ones selected in connect DB from a selected source
-    - [Get structures](http://192.168.2.131:8501/Find_Similar_Structures) find the structures and names of the closest profiles
+    - [Get Profiles](http://192.168.2.131:8501/Get_Profiles) connect to DB and Get Profiles
+    - [Find Profiles](http://192.168.2.131:8501/Find_Similar_Profiles) find profiles close to the ones selected in connect DB from a selected source
+    - [Find structures](http://192.168.2.131:8501/Find_Similar_Structures) find the structures and names of the closest profiles
     - [Get Bio Infos](http://192.168.2.131:8501/Get_Biological_Infos) compute the overrepresentation in pathways and connect to >50 Libraries
     - [Pathway Interaction](http://192.168.2.131:8501/Pathway_Interaction) display the involved genes in a specific pathway
     - [CRISPR & CPDS](http://192.168.2.131:8501/CRISPR_&_CPDS) compute the similarities between crispr and cpds.

@@ -229,13 +229,12 @@ if len(df_cpds) > 0:
 
     options = st.multiselect('Select Code', list_sources )
     st.write(options)
-    tmp=pd.DataFrame()
-    if options:
-       
-        tmp = df_prof.query('metasource in @options')
-    
-    
-    
+    if not options:
+        tmp = df_prof.copy()
+    else:
+        tmp = df_prof.loc[data["metasource"].isin(options)]
+  
+
     if len(tmp)>0:
         import matplotlib.pyplot as plt
         import seaborn as sns
