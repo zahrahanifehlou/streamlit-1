@@ -226,13 +226,18 @@ if len(df_cpds) > 0:
 
 
     list_sources = df_prof.metasource.unique().tolist()
+    options = st.text_area("Enter sources")
+    var_t=options.split('\n')
+    var_t = [t.strip() for t in var_t]
 
-    options = st.multiselect('Select Sources:', list_sources )
-    st.write(options)
+    # options = st.multiselect('Select Sources:', list_sources)
+    # st.write(options)
+    # options=['Ksilink_625','Ksilink_25']
+
     if not options:
         tmp = df_prof.copy()
     else:
-        tmp = df_prof.loc[df_prof["metasource"].isin(options)]
+        tmp = df_prof.loc[df_prof["metasource"].isin(var_t)]
 
 
     if len(tmp)>0:
