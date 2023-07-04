@@ -44,9 +44,10 @@ def clean_pubchemid(pubchemid):
     return str(pubchemid).split('.')[0]
 
 def sel_code(option, conn):
-    #sql = f"SELECT cpdbatchs.pubchemid, cpdbatchs.batchid, platemap.plate, platemap.ctrltype, platemap.well FROM platemap INNER JOIN cpdbatchs ON cpdbatchs.batchid = platemap.batchid WHERE platemap.source = '{option}' "
+    # sql = f"SELECT cpdbatchs.pubchemid, cpdbatchs.batchid, platemap.plate, platemap.ctrltype, platemap.well \
+    # FROM platemap INNER JOIN cpdbatchs ON cpdbatchs.batchid = platemap.batchid " # WHERE platemap.source = '{option}' "
     sql = f"SELECT cpdbatchs.pubchemid, cpdbatchs.batchid, platemap.plate, platemap.ctrltype, platemap.well FROM platemap \
-    INNER JOIN cpdbatchs ON cpdbatchs.batchid = platemap.batchid and platemap.ctrltype= 'poscon_diverse' "
+    INNER JOIN cpdbatchs ON cpdbatchs.batchid = platemap.batchid and platemap.ctrltype= '{option}' "
     df = pd.read_sql(sql, conn)
     df['pubchemid'] = df['pubchemid'].apply(clean_pubchemid)
     df=df.drop_duplicates(subset=[ "plate", "well"]).reset_index(drop=True)
@@ -68,8 +69,12 @@ def sel_code(option, conn):
 # st.write(df_src2[df_src2["ctrltype"]=="poscon_cp"])
 
 # df=pd.concat([df_src2,df_src1])
-df = sel_code('titi',conn)
+list_cont=['poscon_diverse','poscon_cp','trt','poscon_orf']
+option1 = st.selectbox("Pick one ctrl", list_cont, key='src1')
+df = sel_code(option1,conn)
 # df=df[df["ctrltype"]=="poscon_cp"]
+# st.write(df)
+# exit(0)
 
 
 batch_list = [f"'{batchid}'" for batchid in df["batchid"].unique()]
@@ -78,9 +83,17 @@ batch_list = [f"'{batchid}'" for batchid in df["batchid"].unique()]
 sql_profile = f"SELECT * FROM aggcombatprofile WHERE metabatchid IN ({','.join(batch_list)})"
 df_prof = pd.read_sql(sql_profile, conn_profileDB)
 df_prof=df_prof.drop_duplicates(subset=[ "metabatchid","metasource"]).reset_index(drop=True)
+st.write(df_prof["metasource"].value_counts())
+if option1=='trt':
+
+
+    samp = st.number_input('sample per source :snail:',min_value=100,max_value=1000,value=200,step=100)
+    if samp>200:
+        df_prof=df_prof[df_prof["metasource"]!='Broad']
+    df_prof=df_prof.groupby('metasource').sample(n=samp).reset_index()
 df_prof.reset_index(drop=True, inplace=True)
-st.write("profile")
-st.write(df_prof)
+# st.write("profile")
+
 
 
 
@@ -94,8 +107,8 @@ df_all_umap["X_umap"] = emb[:, 0]
 df_all_umap["Y_umap"] = emb[:, 1]
 df_all_umap["source"] = df_prof["metasource"]
 # df_all_umap["location"] = df_prof_drug_meta_genes["meta_mainlocation"]
-st.write(df_all_umap)
-st.write(df_all_umap["source"].value_counts())
+# st.write(df_all_umap)
+# st.write(df_all_umap["source"].value_counts())
 fig3 = px.scatter(
     df_all_umap,
     x="X_umap",
@@ -105,4 +118,44 @@ fig3 = px.scatter(
     color="source",
 )
 st.plotly_chart(fig3, theme="streamlit", use_container_width=True)#
+
+
+from sklearn.manifold import TSNE
+
+emb = TSNE(n_components=2, learning_rate='auto',init='random', perplexity=10).fit_transform(df_prof[num_col])
+df_tsne = pd.DataFrame()
+df_tsne["X_Tsne"] = emb[:, 0]
+df_tsne["Y_Tsne"] = emb[:, 1]
+df_tsne["source"] = df_prof["metasource"]
+
+fig4 = px.scatter(
+    df_tsne,
+    x="X_Tsne",
+    y="Y_Tsne",
+    title="T-SNE",
+    hover_data=["source"],
+    color="source",
+)
+st.plotly_chart(fig4, theme="streamlit", use_container_width=True)#
+
+import pacmap
+
+embedding = pacmap.PaCMAP(n_components=2, n_neighbors=None, MN_ratio=0.5, FP_ratio=2.0)
+X_transformed = embedding.fit_transform(df_prof[num_col], init="pca")
+
+df_pacmap = pd.DataFrame()
+df_pacmap["X_PacMap"] = X_transformed[:, 0]
+df_pacmap["Y_PacMap"] = X_transformed[:, 1]
+df_pacmap["source"] = df_prof["metasource"]
+
+fig5 = px.scatter(
+    df_pacmap,
+    x="X_PacMap",
+    y="Y_PacMap",
+    title="PacMap",
+    hover_data=["source"],
+    color="source",
+)
+st.plotly_chart(fig5, theme="streamlit", use_container_width=True)#
+
 conn_profileDB.close()

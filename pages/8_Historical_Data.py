@@ -1,8 +1,8 @@
 
 
 import pandas as pd
-import streamlit as st
 import psycopg2
+import streamlit as st
 
 profile_conn = psycopg2.connect(
     host="192.168.2.131",
@@ -14,8 +14,8 @@ profile_conn = psycopg2.connect(
 
 cols1= st.columns(2)
 with cols1[0]:
-    to_find = st.text_input("Enter your search",help='cpd_id')
-with cols1[1]:    
+    to_find = st.text_input("Enter your search",help='FCCP')
+with cols1[1]:
     project_name = st.text_input("Enter Project name",help='DM1')
 if project_name!="":
     sql_profile = f"SELECT * from projectsprofile WHERE projectsprofile.project='{project_name}' AND ( batchid='{to_find}' OR UPPER(projectsprofile.name) LIKE UPPER('{to_find}%'))"
@@ -24,13 +24,16 @@ else:
 
 df_pro = pd.read_sql(sql_profile, profile_conn)
 st.write(df_pro)
-original_columns = ['name', 'batchid', 'concentration', 'tags', 'plate','well']
-for g, data in df_pro.groupby('project'):
-    pivot_df = pd.pivot_table(data, index=original_columns, columns='feature', values='value').reset_index()
-    st.write(f"Profiles in {g}")
-    st.write(pivot_df)
 
-    
+original_columns = ['name', 'batchid', 'concentration', 'tags', 'plate','well','assay']
+for g, data in df_pro.groupby('assay'):
+    pivot_df = pd.pivot_table(data, index=original_columns, columns='feature', values='value').reset_index()
+    tab1,tab2=st.tabs([f"Profiles in {g}", f"Summary in {g}"])
+    tab1.write(pivot_df)
+    tab2.write(pivot_df.describe())
+    # st.write(pivot_df)
+
+
 # for g in df_pro_gr.groups.keys:
 
 #     pivot_df = pd.pivot_table(df_pro, index=original_columns, columns='feature', values='value').reset_index()

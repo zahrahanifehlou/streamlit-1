@@ -42,7 +42,7 @@ st.write(f"\n")
 col3, col4 = st.columns(2)
 with col3:
     var_text = st.text_area("Enter your search",help='Name or ID separated by enter')
-    
+
 var_t=var_text.split('\n')
 var_t = [t.strip().upper() for t in var_t]
 
@@ -131,7 +131,7 @@ if len(df_res) > 0:
 
         else:
             sql_query = get_sql_jump(table_name=table_name, col_name=col_name)
-           
+
             df_cpds = pd.read_sql(sql_query, conn).drop_duplicates(subset=["batchid"]).reset_index(drop=True)
 
 # get crisper profiles when search gene
@@ -146,14 +146,14 @@ if str(option) == "gene" and len(df_res)>0:
     crisper_dic = df_crisperBatchs.set_index("batchid")["geneid"].to_dict()
     df_prof_crisper["metageneid"] = df_prof_crisper["metabatchid"].map(crisper_dic)
 
-    
-    
-    
+
+
+
 
 if len(df_cpds) > 0:
     list_pubchemid = [f"'{t}'" for t in df_cpds["pubchemid"]]
     list_batchid = [f"'{batch}'" for batch in df_cpds["batchid"]]
-    
+
 
     # compounds GENE info
     sql = f"SELECT cpdgene.pubchemid, gene.geneid, gene.symbol, cpdgene.server FROM gene INNER JOIN cpdgene ON cpdgene.geneid=gene.geneid WHERE cpdgene.pubchemid IN ({','.join(list_pubchemid)})"
@@ -195,7 +195,7 @@ if len(df_cpds) > 0:
     df_prof = pd.DataFrame()
 
 
-    
+
     sql_profile = (
         "select * from aggcombatprofile where metabatchid in ("
         + ",".join(list_batchid)
@@ -223,17 +223,17 @@ if len(df_cpds) > 0:
         tab4.write(df_prof_crisper.describe().T)
 
     #-------------------------------------------------------------
-    
+
 
     list_sources = df_prof.metasource.unique().tolist()
 
-    options = st.multiselect('Select Code', list_sources )
+    options = st.multiselect('Select Sources:', list_sources )
     st.write(options)
     if not options:
         tmp = df_prof.copy()
     else:
-        tmp = df_prof.loc[data["metasource"].isin(options)]
-  
+        tmp = df_prof.loc[df_prof["metasource"].isin(options)]
+
 
     if len(tmp)>0:
         import matplotlib.pyplot as plt
@@ -256,9 +256,9 @@ if len(df_cpds) > 0:
                     vmin=-5,
                     vmax=5,
                 )
-            
+
         st.pyplot(fig_clusmap)
-            
+
     st.session_state["df_profiles"] = df_prof
     st.session_state["df_cpds"] = df_cpds
     st.session_state["df_cpdGene"] = df_cpdGene
