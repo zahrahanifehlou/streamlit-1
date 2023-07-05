@@ -11,7 +11,20 @@ from rdkit import Chem, DataStructs
 from rdkit.Chem import AllChem, Draw
 
 
-    
+def plot_smile(mol_list,df_str):
+    ik = 0
+    cpt = 0
+    cols = st.columns(5)
+    for mol in mol_list:
+        if cpt == 5:
+            cpt = 0
+        try:
+            cols[cpt].image(Draw.MolToImage(mol), df_str["pubchemid"][ik])
+            ik = ik + 1
+            cpt = cpt + 1
+        except:
+            st.write("")
+   
     
 def get_struc(mol_list):
     similarity_matrix = []
@@ -173,18 +186,8 @@ if len(df_cpds)>0:
                 st.plotly_chart(fig)
 
                 # plot smile-----------------------------------------------------------------------------------
-                ik = 0
-                cpt = 0
-                cols = st.columns(5)
-                for mol in mol_list:
-                    if cpt == 5:
-                        cpt = 0
-                    try:
-                        cols[cpt].image(Draw.MolToImage(mol), df_str["pubchemid"][ik])
-                        ik = ik + 1
-                        cpt = cpt + 1
-                    except:
-                        st.write("")
+                plot_smile(mol_list,df_str)
+      
 
     with mainTabs[1]:
         conn = init_connection()
@@ -215,16 +218,57 @@ if len(df_cpds)>0:
         search_tbl=pd.DataFrame() 
         df_sim_result=pd.DataFrame()
         df_sim_result["pubchemid"]=jump_df.pubchemid
-        
+        #17397405
+       
         for pubchemid  in list_pubchem:
+          
             try:
                 mol=Chem.MolFromSmiles(pcp.Compound.from_cid(pubchemid).canonical_smiles)
                 fp=AllChem.GetMorganFingerprintAsBitVect(mol, useChirality=True, radius=3, nBits=bits)
-                similarities = DataStructs.BulkTanimotoSimilarity(fp, mol_list_jump)  
+                similarities = DataStructs.BulkTanimotoSimilarity(fp, mol_list_jump) 
+               
+                sim_df=pd.DataFrame()
+                name_list=[]
+                value_list=[]
+                mol_list2=[]
+                for name, value in zip(jump_df.pubchemid, similarities):
+                    
+                    if value > 0.45:
+                        name_list.append(name)
+                        value_list.append(value)
+                        smiles_2 = pcp.Compound.from_cid(name).canonical_smiles
+                        mol_list2.append(Chem.MolFromSmiles(smiles_2))
+               
+                        #st.write(f"pubchemid: {name} , similarity:{value}")
+                       
+                sim_df["pubchemid"]=name_list
+                sim_df["sim"]=value_list
+                st.write("\n")
+                
+                if len(mol_list2) >0:
+                    
+                        s_mail = pcp.Compound.from_cid(pubchemid).canonical_smiles
+                        mol_main=Chem.MolFromSmiles(s_mail)
+                        st.write(f" similar compounds of {pubchemid} with  structure :")
+                        st.image(Draw.MolToImage(mol_main), pubchemid)
+                        plot_smile(mol_list2,sim_df) 
+                        st.write(f"************************************************\n")
+                
+       
+                        
                 df_sim_result[pubchemid]=similarities 
+              
             except:
                 print("cant find this pubchemid", pubchemid)
-        st.write(df_sim_result)       
+        #st.write(df_sim_result)
+        # for index, row in df_sim_result.iterrows():
+        #     pubchemid = row['pubchemid']
+        #     print(f"pubchemid: {pubchemid}")
+            
+        #     for column, value in row.items():
+        #         if column != 'pubchemid' and value > 0.1:
+        #             print(f"Column '{column}' has a value greater than 0.5: {value}")
+
             
     # with mainTabs[0]:
     #     df_str=df_cpds.copy()
