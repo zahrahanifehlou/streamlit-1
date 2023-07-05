@@ -11,6 +11,9 @@ profile_conn = psycopg2.connect(
     database="ksilink_cpds",
     password="12345",
 )
+st.set_page_config(
+    layout="wide",
+)
 
 cols1= st.columns(2)
 with cols1[0]:
@@ -23,7 +26,7 @@ else:
     sql_profile = f"SELECT * from projectsprofile WHERE ( batchid='{to_find}' OR UPPER(projectsprofile.name) LIKE UPPER('{to_find}%'))"
 
 df_pro = pd.read_sql(sql_profile, profile_conn)
-st.write(df_pro)
+st.write(df_pro.assay.unique())
 st.write("--------------------------------------")
 if len(df_pro)>0:
  
@@ -33,8 +36,9 @@ if len(df_pro)>0:
         tab1,tab2=st.tabs([f"Profiles in {g}", f"Summary in {g}"])
         tab1.write(pivot_df)
         tab2.write(pivot_df.describe())
-        # st.write(pivot_df)
+      
 
+profile_conn.close()
 
 # for g in df_pro_gr.groups.keys:
 

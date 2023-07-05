@@ -158,4 +158,3 @@ fig5 = px.scatter(
 )
 st.plotly_chart(fig5, theme="streamlit", use_container_width=True)#
 
-conn_profileDB.close()

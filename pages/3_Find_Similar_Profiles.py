@@ -8,7 +8,9 @@ import seaborn as sns
 import streamlit as st
 from pqdm.processes import pqdm
 from sklearn.metrics.pairwise import cosine_similarity
-
+st.set_page_config(
+    layout="wide",
+)
 
 # @st.cache_data
 def find_sim_cpds(df1, df2):
@@ -64,14 +66,14 @@ else:
     df_prof_crisper = pd.read_sql(sql_crisper_profile, profile_conn)
 
     # umap--------------------------------------------------------
-    sql_umqpemd_crips = f"select * from umapemd where metasource='CRISPER'"
+    sql_umqpemd_crips = f"select * from umapemd where source='CRISPER'"
     df_crisper_emd = pd.read_sql(sql_umqpemd_crips, profile_conn)
-    sql_umqpemd = f"select * from umapemd where metasource='{choix_source}'"
+    sql_umqpemd = f"select * from umapemd where source='{choix_source}'"
     df_src_emd = pd.read_sql(sql_umqpemd, profile_conn)
     
     
     df_src_emd["color"] = "others"
-    df_src_emd.loc[df_src_emd["metabatchid"].isin(batchs), "color"] = "selected compounds"
+    df_src_emd.loc[df_src_emd["batchid"].isin(batchs), "color"] = "selected compounds"
     
     
         
@@ -156,8 +158,8 @@ else:
                 st.write(df_keep_cpd)
             with tab_list[2]:
                 df_src_emd["color"] = "others"
-                df_src_emd.loc[df_src_emd["metabatchid"].isin(batch_list_cpd), "color"] = "similar compounds"
-                df_src_emd.loc[df_src_emd["metabatchid"] == choix, "color"] = "selected compounds"
+                df_src_emd.loc[df_src_emd["batchid"].isin(batch_list_cpd), "color"] = "similar compounds"
+                df_src_emd.loc[df_src_emd["batchid"] == choix, "color"] = "selected compounds"
                 fig = px.scatter(
                     df_src_emd,
                     x="umap1",
@@ -165,7 +167,7 @@ else:
                     color="color",
                     color_discrete_sequence=["blue", "red","green" ],
                     title=f"similar cpds to {choix} profiles  ",
-                    hover_data=["metabatchid"],
+                    hover_data=["batchid"],
                 )
                 st.plotly_chart(fig, theme="streamlit", use_container_width=True)
 
@@ -196,7 +198,7 @@ else:
             
         with tab_list[2]: #UMAP
             df_crisper_emd["color"] = "others"
-            df_crisper_emd.loc[df_crisper_emd["metabatchid"].isin(batch_list_crisper), "color"] = "similar profile"
+            df_crisper_emd.loc[df_crisper_emd["batchid"].isin(batch_list_crisper), "color"] = "similar profile"
             fig = px.scatter(
                     df_crisper_emd,
                     x="umap1",
@@ -204,7 +206,7 @@ else:
                     color="color",
                     color_discrete_sequence=["blue", "red","green" ],
                     title=f"similar cpds to {choix} CRISPER profiles  ",
-                    hover_data=["metabatchid"],
+                    hover_data=["batchid"],
                 )
             st.plotly_chart(fig, theme="streamlit", use_container_width=True)
         if len(df_results_cripser) > 0:
@@ -247,6 +249,7 @@ else:
         with cols[0]:
             find_umap(df_keep_prof_cpd, "UMAP in CPD profile")
         with cols[1]:
+            
             find_umap(df_keep_prof_crisper, "UMAP in Crisper profile")
         with cols[2]:
             df = pd.concat([df_keep_prof_cpd, df_keep_prof_crisper]).reset_index(drop=True)
@@ -282,3 +285,7 @@ else:
         with sim_cols[1]: 
             fig = px.imshow(sim_df)
             st.plotly_chart(fig)
+
+
+
+conn.close()

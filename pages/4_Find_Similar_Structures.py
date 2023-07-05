@@ -9,7 +9,9 @@ import pubchempy as pcp
 import streamlit as st
 from rdkit import Chem, DataStructs
 from rdkit.Chem import AllChem, Draw
-
+st.set_page_config(
+    layout="wide",
+)
 
 def plot_smile(mol_list,df_str):
     ik = 0
@@ -80,7 +82,7 @@ def load_data():
 
 
 # Plot TMAP
-def plot_tmap(df_tmap, color_col):
+def plot_tmap(df_tmap, color_col,l ):
     
     fig = px.scatter(
         df_tmap,
@@ -94,7 +96,7 @@ def plot_tmap(df_tmap, color_col):
             "disname",
             "keggid"
         ],
-       color_discrete_sequence=px.colors.qualitative.G10,
+       color_discrete_sequence  =l ,
         opacity=0.3,
         color=color_col,
         width=1500,
@@ -122,7 +124,7 @@ color_col = st.radio(
         horizontal=True,
     )
 st.write("TMAP plt of all compounds")
-plot_tmap(df_tmap, color_col)
+plot_tmap(df_tmap, color_col, px.colors.qualitative.D3)
 
 
 #-----------------------------------------------------------------------------------------------------------------------
@@ -137,6 +139,7 @@ cols1 = st.columns(3)
 with cols1[0]:
     if not df_cpds.empty:
         st.write("Results from previous step")
+        df_cpds.drop_duplicates(subset=["pubchemid"],inplace=True)
         st.write(df_cpds)
 
 with cols1[1]:
@@ -174,7 +177,7 @@ if len(df_cpds)>0:
                 df_tmap["selected compounds"]="others"
                 df_tmap.loc[df_tmap['pubchemid'].isin(df_str.pubchemid), 'selected compounds'] = "selected compounds"
                 st.write("TMAP plt of selected compounds")
-                plot_tmap(df_tmap, "selected compounds",)
+                plot_tmap(df_tmap, "selected compounds",["red","blue"])
 
              # plot similarity-----------------------------------------------------------------------------------
                 st.write("DATA frame",df_str)
@@ -342,6 +345,7 @@ if len(df_cpds)>0:
     #         except:
     #             print("cant find this pubchemid", pubchemid)
     #     st.write(df_sim_result)       
+
 
 
  

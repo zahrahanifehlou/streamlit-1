@@ -83,3 +83,5 @@ else:
             df = pd.concat(list_df)
             st.write("Data from file:", df)
             get_infos(df)
+
+

@@ -5,7 +5,9 @@ import numpy as np
 import pandas as pd
 import psycopg2
 import streamlit as st
-
+st.set_page_config(
+    layout="wide",
+)
 warnings.filterwarnings("ignore")
 
 
@@ -22,7 +24,7 @@ conn_profileDB = psycopg2.connect(
     )
 
 
-list_tables = ["gene", "cpd", "pathway", "disease","cpdbatchs"]
+list_tables = ["gene", "cpd",  "pathway", "disease","cpdbatchs"]
 col1, col2 = st.columns(2)
 with col1:
     option = st.selectbox("Pick one table", list_tables)
@@ -69,6 +71,7 @@ db_name = st.radio(
 
 
 def get_sql_kegg(table_name="keggcpdgene", col_name="geneid"):
+    st.write(table_name)
     list_geneid = [f"'{t}'" for t in df_res[col_name]]
     sql_last_line = f" WHERE UPPER({table_name}.{col_name} ) IN ({','.join(list_geneid)})"
 
@@ -84,6 +87,7 @@ def get_sql_jump(table_name="cpdgene", col_name="geneid"):
     list_geneid = [f"'{t}'" for t in df_res[col_name]]
     sql_last_line = f" WHERE UPPER({table_name}.{col_name}) IN ({','.join(list_geneid)})"
     sql_first_line = "SELECT cpd.pubchemid, cpdbatchs.batchid, cpd.synonyms, cpd.keggid, cpd.name, cpd.smile"
+    
 
     if table_name == "keggcpddis":
         st.write(table_name)
@@ -105,7 +109,6 @@ table_mapping = {
         "gene": ("keggcpdgene", "geneid"),
         "pathway": ("keggcpdpath", "pathid"),
         "disease": ("keggcpddis", "disid"),
-
         "cpd": ("keggcpd", "keggid"),
     },
     "SelectChem and Jump DataSet": {
@@ -281,3 +284,4 @@ sql = "SELECT * FROM tmap"
 df_tmap = pd.read_sql(sql, conn_profileDB).reset_index(drop=True)
 st.session_state["df_tmap"] = df_tmap
 conn_profileDB.close()
+conn.close()

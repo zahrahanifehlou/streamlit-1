@@ -44,25 +44,25 @@ else:
         fig = px.scatter(df_emb, x="x", y="y", hover_data=["target"], color="efficacy", title=title)
         st.plotly_chart(fig, theme="streamlit", use_container_width=True)
 
-    cols = st.columns(3)
-    with cols[0]:
-        find_umap(df_source, "UMAP in CPD profile")
-    with cols[1]:
-        find_umap(df_crisper, "UMAP in Crisper profile")
-    with cols[2]:
-        df = pd.concat([df_source, df_crisper]).reset_index(drop=True)
-        find_umap(df, "UMAP in CPD and Crisper profile")
+    # cols = st.columns(3)
+    # with cols[0]:
+    #     find_umap(df_source, "UMAP in CPD profile")
+    # with cols[1]:
+    #     find_umap(df_crisper, "UMAP in Crisper profile")
+    # with cols[2]:
+    #     df = pd.concat([df_source, df_crisper]).reset_index(drop=True)
+    #     find_umap(df, "UMAP in CPD and Crisper profile")
 
-    st.write("## UMAP")
+    # st.write("## UMAP")
 
     
-    st.write("## Similarity")
-    filter_cols = [col for col in df.columns if not col.startswith("meta")]
-    simi = cosine_similarity(df[filter_cols])
+    # st.write("## Similarity")
+    # filter_cols = [col for col in df.columns if not col.startswith("meta")]
+    # simi = cosine_similarity(df[filter_cols])
 
-    sim_df = pd.DataFrame(simi)
-    sim_df['target']=df['metageneid'] +' _ ' + df['metatype']
-    st.write('sim_df',sim_df)
-    fig = px.imshow(sim_df, title="Profiles Similarities")
-    st.plotly_chart(fig)
+    # sim_df = pd.DataFrame(simi)
+    # sim_df['target']=df['metageneid'] +' _ ' + df['metatype']
+    # st.write('sim_df',sim_df)
+    # fig = px.imshow(sim_df, title="Profiles Similarities")
+    # st.plotly_chart(fig)
 
