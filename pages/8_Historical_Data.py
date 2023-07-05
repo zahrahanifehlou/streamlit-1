@@ -24,14 +24,16 @@ else:
 
 df_pro = pd.read_sql(sql_profile, profile_conn)
 st.write(df_pro)
-
-original_columns = ['name', 'batchid', 'concentration', 'tags', 'plate','well','assay']
-for g, data in df_pro.groupby('assay'):
-    pivot_df = pd.pivot_table(data, index=original_columns, columns='feature', values='value').reset_index()
-    tab1,tab2=st.tabs([f"Profiles in {g}", f"Summary in {g}"])
-    tab1.write(pivot_df)
-    tab2.write(pivot_df.describe())
-    # st.write(pivot_df)
+st.write("--------------------------------------")
+if len(df_pro)>0:
+ 
+    original_columns = ["project","assay", "name", "batchid","concentration", "tags", "plate", "well"]
+    for g, data in df_pro.groupby('assay'):
+        pivot_df = pd.pivot_table(data, index=original_columns, columns='feature', values='value').reset_index()
+        tab1,tab2=st.tabs([f"Profiles in {g}", f"Summary in {g}"])
+        tab1.write(pivot_df)
+        tab2.write(pivot_df.describe())
+        # st.write(pivot_df)
 
 
 # for g in df_pro_gr.groups.keys:
