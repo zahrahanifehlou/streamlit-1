@@ -11,6 +11,8 @@ st.set_page_config(
     layout="wide",
 )
 
+def convert_df(df):
+       return df.to_csv(index=False).encode('utf-8')
 def init_connection():
     return psycopg2.connect(**st.secrets["postgres"])
 conn = init_connection()
@@ -28,8 +30,7 @@ def find_sim_cpds(df1, df2):
     filter_col = list(set(filter_col1) & set(filter_col2))
     simi = cosine_similarity(df1[filter_col], df2[filter_col])
     return simi
-def convert_df(df):
-       return df.to_csv(index=False).encode('utf-8')
+
 def find_umap(df, title):
     filter_cols = [col for col in df.columns if not col.startswith("meta")]
     meta_cols = [col for col in df.columns if  col.startswith("meta")]
@@ -37,7 +38,7 @@ def find_umap(df, title):
     embedding = reducer.fit_transform(df[filter_cols])
     df_emb = pd.DataFrame({"x": embedding[:, 0], "y": embedding[:, 1]})
     df_emb[meta_cols] = df[meta_cols]
-    fig = px.scatter(df_emb, x="x", y="y", hover_data=meta_cols, color="metatype", title=title)
+    fig = px.scatter(df_emb, x="x", y="y", hover_data=meta_cols, color="metasource", title=title)
     st.plotly_chart(fig, theme="streamlit", use_container_width=True)
 
 def get_col_colors(df):
@@ -84,7 +85,7 @@ def get_col_colors(df):
     
 
     list_fin.append("name")
-    df["name"] = df["metabatchid"] + "_" + df["metasource"]
+    df["name"] = df["metaname"] + "_" + df["metasource"]
 
     df_plt = df[list_fin]
     df_plt.set_index("name", inplace=True)
@@ -106,6 +107,8 @@ def get_col_colors(df):
         else:
             col_colors.append("white")
     return df_plt,col_colors
+
+
 #-----------------------------------------------------------------------------------------------------------------------------------------
 if "df_profiles" not in st.session_state:
     st.write("Connect DB First")
@@ -113,7 +116,8 @@ else:
     df_cpds = st.session_state["df_cpds"]
     cpd_pro = st.session_state["df_profiles"]
     list_sources = cpd_pro["metasource"].unique().tolist()
-    
+   
+
     cols1= st.columns(2)
     with cols1[0]:
         choix_source = st.selectbox ("Select the Source", list_sources)
@@ -139,10 +143,6 @@ else:
     sql_umqpemd = f"select * from umapemd where source='{choix_source}'"
     df_src_emd = pd.read_sql(sql_umqpemd, profile_conn)
     
-    
-    df_src_emd["color"] = "others"
-    df_src_emd.loc[df_src_emd["batchid"].isin(batchs), "color"] = "selected compounds"
-    
      
     ## --------------------------------------------------------------------
     tab1, tab2 = st.tabs(["Similar profiles in compounds", "Similar profiles in Cripser"])
@@ -151,7 +151,7 @@ else:
     with tab1: # cpds -------------------
         cols_cpds = st.columns(2)
         with cols_cpds[0]:
-            thres_cpd = st.slider("Threshold cpd", -1.0, 1.0, 0.85)
+            thres_cpd = st.slider("Threshold cpd", -1.0, 1.0, 0.75)
         with cols_cpds[1]:
             thresq_cpd = st.slider("Cardinal Threshold cpd", 0, 1000, 10)
         sim_cpds = find_sim_cpds(df_source, df_sel)
@@ -182,14 +182,17 @@ else:
             df_results_cpd.drop_duplicates(subset=["pubchemid"], inplace=True)
             if len(df_results_cpd) > 0:
                 st.session_state["df_cpds"] = pd.concat([df_results_cpd, df_cpds])
+                
+    
                 df_keep_prof_cpd = df_source[df_source["metabatchid"].isin(df_keep_cpd["metabatchid"].values)]
                 df_keep_prof_cpd.reset_index(inplace=True,drop=True)
-                dic_gene = df_results_cpd.set_index("batchid").to_dict()["geneid"]
-                dic_efficacy= df_results_cpd.set_index("batchid").to_dict()["efficacy"]
-                df_keep_prof_cpd["metageneid"] = df_keep_prof_cpd["metabatchid"].map(dic_gene)
-                df_keep_prof_cpd["metaefficacy"] = df_keep_prof_cpd["metabatchid"].map(dic_efficacy)
-                df_keep_prof_cpd["metatype"] = "CPD"  
-                st.session_state["df_cpds_profile"] = df_keep_prof_cpd
+                df_keep_prof_cpd = df_keep_prof_cpd.merge(df_results_cpd.add_prefix('meta'),left_on='metabatchid',right_on='metabatchid').reset_index(drop=True)
+                df_keep_prof_cpd.loc[df_keep_prof_cpd.metaname =="No result", 'metaname'] = None
+                df_keep_prof_cpd['metaname'] = df_keep_prof_cpd['metaname'].str[:30]
+                df_keep_prof_cpd['metaname'] = df_keep_prof_cpd['metaname'].fillna(df_keep_prof_cpd['metabatchid'])
+              
+           
+                
                 
         fig_clusmap_cpd = px.histogram(df_hist_cpd, x="sim")
         fig_clusmap_cpd.add_vline(x=thres_cpd)
@@ -226,8 +229,8 @@ else:
                 st.write(df_keep_prof_cpd)
 
             if len(df_keep_prof_cpd) < 11:
-                cpd_names = df_keep_prof_cpd.metabatchid.values
-                df_plt = df_keep_prof_cpd.set_index("metabatchid")
+                cpd_names = df_keep_prof_cpd.metaname.values
+                df_plt = df_keep_prof_cpd.set_index("metaname")
                 filter_col = [col for col in df_plt.columns if not col.startswith("meta")]
                 df_plt = df_plt[filter_col].T
                 fig_clusmap = px.line(df_plt, x=filter_col, y=cpd_names, width=1400, height=1000)
@@ -269,7 +272,7 @@ else:
                 df_keep_prof_crisper.reset_index(inplace=True,drop=True)
                 dic_gene = df_results_cripser.set_index("batchid").to_dict()["geneid"]
                 df_keep_prof_crisper["metageneid"] = df_keep_prof_crisper["metabatchid"].map(dic_gene)
-                df_keep_prof_crisper["metatype"] = "CRISPER"   
+                df_keep_prof_crisper["metaname"] = df_keep_prof_crisper["metabatchid"]
                 df_keep_prof_crisper["metaefficacy"]=None
                 st.session_state["df_crisper_profile"] = df_keep_prof_crisper
             
@@ -314,13 +317,15 @@ else:
         st.write("## compare CPD and CRISPER")
        
         compare_cols = st.columns(2)
-        meta_cols = [col for col in df_keep_prof_cpd.columns if  col.startswith("meta")]
+       
         with compare_cols[0]:
             st.write("compounds profile")
+            meta_cols = [col for col in df_keep_prof_cpd.columns if  col.startswith("meta")]
             st.write(df_keep_prof_cpd[meta_cols].describe().T)
         with compare_cols[1]:
             st.write("Crisper profile")
-            st.write(df_keep_prof_crisper[meta_cols].describe().T)
+            meta_cols_crs = [col for col in df_keep_prof_crisper.columns if  col.startswith("meta")]
+            st.write(df_keep_prof_crisper[meta_cols_crs].describe().T)
     
 
         
@@ -340,11 +345,12 @@ else:
             find_umap(tmp, "UMAP in CPD and Crisper profile")
             
     elif len(df_keep_prof_cpd) > 0:
+        st.session_state["df_cpds_profile"] = df_keep_prof_cpd
         tmp = df_keep_prof_cpd.copy()
     elif len(df_keep_prof_crisper) > 0:
         tmp = df_keep_prof_crisper.copy()
     
-    if len(tmp)>0:
+    if len(tmp)>1:
         import matplotlib.pyplot as plt
         import seaborn as sns
         plt_src,col_colors=get_col_colors(tmp)
