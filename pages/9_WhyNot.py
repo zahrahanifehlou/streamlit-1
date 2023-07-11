@@ -3,13 +3,13 @@ import warnings
 
 import numpy as np
 import pandas as pd
-
 import psycopg2
 import streamlit as st
+
 st.set_page_config(
 
     layout="wide",
-  
+
 )
 
 def init_connection():
@@ -17,11 +17,12 @@ def init_connection():
 conn = init_connection()
 cols=st.columns(2)
 with cols[0]:
-    
+
     sql = st.text_area("write your SQL")
     st.write(" example")
-    st.write("SELECT cpdgene.geneid, cpdgene.pubchemid, gene.symbol FROM cpdgene INNER JOIN gene ON  gene.geneid=cpdgene.geneid WHERE UPPER(gene.symbol) LIKE UPPER( 'H%')")
-    
+    st.write("SELECT cpdgene.geneid, cpdgene.pubchemid, gene.symbol FROM cpdgene\
+             INNER JOIN gene ON  gene.geneid=cpdgene.geneid WHERE UPPER(gene.symbol) LIKE UPPER( 'H%')")
+
 with cols[1]:
      st.image("DB.png")
 if len(sql)>0:

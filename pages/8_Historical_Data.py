@@ -4,6 +4,9 @@ import pandas as pd
 import psycopg2
 import streamlit as st
 
+
+def convert_df(df):
+       return df.to_csv(index=False).encode('utf-8')
 profile_conn = psycopg2.connect(
     host="192.168.2.131",
     port="5432",
@@ -21,22 +24,26 @@ with cols1[0]:
 with cols1[1]:
     project_name = st.text_input("Enter Project name",help='DM1')
 if project_name!="":
-    sql_profile = f"SELECT * from projectsprofile WHERE projectsprofile.project='{project_name}' AND ( batchid='{to_find}' OR UPPER(projectsprofile.name) LIKE UPPER('{to_find}%'))"
+    sql_profile = f"SELECT * from projectsprofile WHERE projectsprofile.project='{project_name}' \
+    AND ( batchid='{to_find}' OR UPPER(projectsprofile.name) LIKE UPPER('{to_find}%'))"
 else:
-    sql_profile = f"SELECT * from projectsprofile WHERE ( batchid='{to_find}' OR UPPER(projectsprofile.name) LIKE UPPER('{to_find}%'))"
+    sql_profile = f"SELECT * from projectsprofile WHERE ( batchid='{to_find}'\
+    OR UPPER(projectsprofile.name) LIKE UPPER('{to_find}%'))"
 
 df_pro = pd.read_sql(sql_profile, profile_conn)
 st.write(df_pro.assay.unique())
 st.write("--------------------------------------")
 if len(df_pro)>0:
- 
+
     original_columns = ["project","assay", "name", "batchid","concentration", "tags", "plate", "well"]
     for g, data in df_pro.groupby('assay'):
         pivot_df = pd.pivot_table(data, index=original_columns, columns='feature', values='value').reset_index()
         tab1,tab2=st.tabs([f"Profiles in {g}", f"Summary in {g}"])
         tab1.write(pivot_df)
+        st.download_button(
+            label="Save",data=convert_df(pivot_df),file_name=f"{g}.csv",mime='csv',)
         tab2.write(pivot_df.describe())
-      
+
 
 profile_conn.close()
 

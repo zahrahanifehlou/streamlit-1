@@ -5,12 +5,14 @@ import numpy as np
 import pandas as pd
 import psycopg2
 import streamlit as st
+import pathlib
 st.set_page_config(
     layout="wide",
 )
 warnings.filterwarnings("ignore")
-
-
+#-------------------------------------------------------------------------
+def convert_df(df):
+       return df.to_csv(index=False).encode('utf-8')
 def init_connection():
     return psycopg2.connect(**st.secrets["postgres"])
 conn = init_connection()
@@ -23,53 +25,6 @@ conn_profileDB = psycopg2.connect(
         password="12345",
     )
 
-
-list_tables = ["gene", "cpd",  "pathway", "disease","cpdbatchs"]
-col1, col2 = st.columns(2)
-with col1:
-    option = st.selectbox("Pick one table", list_tables)
-    x = st.slider("Number of rows to display", 1, 20)
-    st.write("You selected the table: ", option)
-
-data = pd.read_sql("select * from " + str(option), conn)
-data = data.apply(lambda x: x.astype(str).str.upper())
-
-with col2:
-    tab1, tab2 = st.tabs(["Dataframe", "Summary"])
-    tab1.write(data.sample(x))
-    tab2.write(data.describe().T)
-st.write(f"\n")
-# -------------------------------------------------------------------------------------------------------------------
-
-col3, col4 = st.columns(2)
-with col3:
-    var_text = st.text_area("Enter your search",help='Name or ID separated by enter')
-
-var_t=var_text.split('\n')
-var_t = [t.strip().upper() for t in var_t]
-
-df_res=pd.DataFrame()
-
-# for var_text in var_t:
-#     mask = np.column_stack([data[col].str.match(var_text.upper(), na=False) for col in data])
-# df_res= data.loc[mask.any(axis=1)]
-
-if len(var_t)>0 and var_t[0]!="":
-    mask = np.column_stack([data[col].str.match(v.upper(), na=False) for col in data.columns for v in var_t if v!=''])
-    df_res= data.loc[mask.any(axis=1)]
-    with col4:
-        st.write(f"Result in  {str(option)} table:", df_res)
-    st.write(f"\n")
-# -------------------------------------------------------------------------------------------------------------------
-
-db_name = st.radio(
-    "Find compounds in which DataSet",
-    ("SelectChem and Jump DataSet", "KEGG"),
-    horizontal=True,
-)
-
-
-
 def get_sql_kegg(table_name="keggcpdgene", col_name="geneid"):
     st.write(table_name)
     list_geneid = [f"'{t}'" for t in df_res[col_name]]
@@ -79,7 +34,6 @@ def get_sql_kegg(table_name="keggcpdgene", col_name="geneid"):
         sql = f"SELECT * FROM keggcpd {sql_last_line}"
     else:
         sql = f"SELECT  keggcpd.keggid,keggcpd.name , {table_name}.{col_name} FROM keggcpd INNER JOIN {table_name} ON {table_name}.keggid=keggcpd.keggid {sql_last_line} GROUP BY keggcpd.name, keggcpd.keggid, {table_name}.{col_name}"
-
     return sql
 
 
@@ -87,7 +41,6 @@ def get_sql_jump(table_name="cpdgene", col_name="geneid"):
     list_geneid = [f"'{t}'" for t in df_res[col_name]]
     sql_last_line = f" WHERE UPPER({table_name}.{col_name}) IN ({','.join(list_geneid)})"
     sql_first_line = "SELECT cpd.pubchemid, cpdbatchs.batchid, cpd.synonyms, cpd.keggid, cpd.name, cpd.smile"
-    
 
     if table_name == "keggcpddis":
         st.write(table_name)
@@ -98,9 +51,7 @@ def get_sql_jump(table_name="cpdgene", col_name="geneid"):
     else:
         st.write(table_name)
         sql = f"{sql_first_line}, {table_name}.{col_name} FROM cpdbatchs INNER JOIN {table_name} ON {table_name}.pubchemid=cpdbatchs.pubchemid INNER JOIN cpd ON cpdbatchs.pubchemid=cpd.pubchemid {sql_last_line} GROUP BY cpd.pubchemid, cpdbatchs.batchid, cpd.synonyms, cpd.keggid, cpd.name, cpd.smile, {table_name}.{col_name}"
-
     return sql
-
 
 
 
@@ -119,6 +70,111 @@ table_mapping = {
         "cpdbatchs": ("cpdbatchs", "batchid"),
     },
 }
+
+def get_col_colors(df):
+    list_col = [col for col in df.columns if not col.startswith("Meta")]
+    ER = [
+        x
+        for x in list_col
+        if "ER" in x and all(y not in x for y in ["RNA", "Mito", "AGP", "DNA"])
+    ]
+    RNA = [
+        x
+        for x in list_col
+        if "RNA" in x and all(y not in x for y in ["ER", "Mito", "AGP", "DNA"])
+    ]
+    Mito = [
+        x
+        for x in list_col
+        if "Mito" in x and all(y not in x for y in ["ER", "RNA", "AGP", "DNA"])
+    ]
+    mito = [
+        x
+        for x in list_col
+        if "mito" in x and all(y not in x for y in ["ER", "RNA", "AGP", "DNA"])
+    ]
+    AGP = [
+        x
+        for x in list_col
+        if "AGP" in x and all(y not in x for y in ["ER", "RNA", "Mito", "DNA"])
+    ]
+    DNA = [
+        x
+        for x in list_col
+        if "DNA" in x and all(y not in x for y in ["ER", "RNA", "Mito", "AGP"])
+    ]
+    list_fin = []
+    list_fin.extend(DNA)
+    list_fin.extend(RNA)
+    list_fin.extend(ER)
+    list_fin.extend(AGP)
+    list_fin.extend(Mito)
+    list_fin.extend(mito)
+
+    list_fin = list(dict.fromkeys(list_fin))
+    
+
+    list_fin.append("name")
+    df["name"] = df["metaname"] + "_" + df["metasource"]
+
+    df_plt = df[list_fin]
+    df_plt.set_index("name", inplace=True)
+
+    col_colors = []
+
+
+    for col in  df_plt.columns:
+        if col in ER:
+            col_colors.append("red")
+        elif col in DNA:
+            col_colors.append("blue")
+        elif col in RNA:
+            col_colors.append("green")
+        elif col in AGP:
+            col_colors.append("orange")
+        elif col in Mito or col in mito:
+            col_colors.append("pink")
+        else:
+            col_colors.append("white")
+    return df_plt,col_colors
+
+#-------------------------------------------------------------------------
+list_tables = ["gene", "cpd",  "pathway", "disease","cpdbatchs"]
+col1, col2 = st.columns(2)
+with col1:
+    option = st.selectbox("Pick one table", list_tables)
+    x = st.slider("Number of rows to display", 1, 20)
+    st.write("You selected the table: ", option)
+
+data = pd.read_sql("select * from " + str(option), conn)
+data = data.apply(lambda x: x.astype(str).str.upper())
+
+with col2:
+    tab1, tab2 = st.tabs(["Dataframe", "Summary"])
+    tab1.write(data.sample(x))
+    tab2.write(data.describe().T)
+st.write(f"\n")
+
+# -------------------------------------------------------------------------------------------------------------------
+col3, col4 = st.columns(2)
+with col3:
+    var_text = st.text_area("Enter your search",help='Name or ID separated by enter')
+var_t=var_text.split('\n')
+var_t = [t.strip().upper() for t in var_t]
+df_res=pd.DataFrame()
+if len(var_t)>0 and var_t[0]!="":
+    mask = np.column_stack([data[col].str.match(v.upper(), na=False) for col in data.columns for v in var_t if v!=''])
+    df_res= data.loc[mask.any(axis=1)]
+    with col4:
+        st.write(f"Result in  {str(option)} table:", df_res)
+    st.write(f"\n")
+
+# -------------------------------------------------------------------------------------------------------------------
+db_name = st.radio(
+    "Find compounds in which DataSet",
+    ("SelectChem and Jump DataSet", "KEGG"),
+    horizontal=True,
+)
 
 
 df_cpds = []
@@ -150,9 +206,7 @@ if str(option) == "gene" and len(df_res)>0:
     df_prof_crisper["metageneid"] = df_prof_crisper["metabatchid"].map(crisper_dic)
 
 
-
-
-
+# get cpd gene/target info-------------------------------------------------------------------------------------------------------------------
 if len(df_cpds) > 0:
     list_pubchemid = [f"'{t}'" for t in df_cpds["pubchemid"]]
     list_batchid = [f"'{batch}'" for batch in df_cpds["batchid"]]
@@ -161,44 +215,40 @@ if len(df_cpds) > 0:
     # compounds GENE info
     sql = f"SELECT cpdgene.pubchemid, gene.geneid, gene.symbol, cpdgene.server FROM gene INNER JOIN cpdgene ON cpdgene.geneid=gene.geneid WHERE cpdgene.pubchemid IN ({','.join(list_pubchemid)})"
     df_cpdGene = pd.read_sql(sql, conn).drop_duplicates(subset=["pubchemid", "geneid", "server"]).reset_index(drop=True)
-    df_cpdGene = df_cpdGene.merge(df_cpds[["batchid","pubchemid"]],left_on='pubchemid',right_on='pubchemid').reset_index(drop=True)
+    df_cpdGene = df_cpdGene.merge(df_cpds[["name","batchid","pubchemid"]],left_on='pubchemid',right_on='pubchemid').reset_index(drop=True)
 
 
     # compounds efficacy info
     sql = f"SELECT cpd.pubchemid, keggcpd.efficacy, keggcpd.keggid FROM keggcpd INNER JOIN cpd ON keggcpd.keggid=cpd.keggid WHERE cpd.pubchemid IN ({','.join(list_pubchemid)})"
     df_efficacy = pd.read_sql(sql, conn).drop_duplicates(subset=["pubchemid", "efficacy", "keggid"]).reset_index(drop=True)
-    df_efficacy = df_efficacy.merge(df_cpds[["batchid","pubchemid"]],left_on='pubchemid',right_on='pubchemid').reset_index(drop=True)
+    df_efficacy = df_efficacy.merge(df_cpds[["name","batchid","pubchemid"]],left_on='pubchemid',right_on='pubchemid').reset_index(drop=True)
 
     # compounds PATHWAY info
     sql = f"SELECT cpdpath.pubchemid, pathway.pathid, pathway.name, cpdpath.server FROM pathway INNER JOIN cpdpath ON cpdpath.pathid=pathway.pathid WHERE cpdpath.pubchemid IN ({','.join(list_pubchemid)})"
     df_cpdPath = pd.read_sql(sql, conn).drop_duplicates(subset=["pubchemid", "pathid", "server"]).reset_index(drop=True)
-    df_cpdPath = df_cpdPath.merge(df_cpds[["batchid","pubchemid"]],left_on='pubchemid',right_on='pubchemid').reset_index(drop=True)
+    df_cpdPath = df_cpdPath.merge(df_cpds[["name","batchid","pubchemid"]],left_on='pubchemid',right_on='pubchemid').reset_index(drop=True)
 
     tabs = st.tabs(["compounds info", "compounds GENE info", "compounds PATHWAY info", "compounds efficacy info"])
     tabs[0].write(df_cpds)
+    st.download_button(
+        label="Save compounds",data=convert_df(df_cpds.drop_duplicates(subset=["pubchemid"])),file_name="cpds.csv",mime='csv',)
     with tabs[1]:
         server_name = st.radio(
         "select server",
         ("all", "pubchem", "KEGG"),
         horizontal=True,
     )
-        df = df_cpdGene
+        df_cpdGene_tmp = df_cpdGene.copy()
         if server_name != "all":
-            df = df_cpdGene[df_cpdGene["server"] == server_name]
+            df_cpdGene_tmp = df_cpdGene[df_cpdGene["server"] == server_name]
 
-    tabs[1].write(df)
+    tabs[1].write(df_cpdGene_tmp)
     tabs[2].write(df_cpdPath)
     tabs[3].write(df_efficacy)
 
-
-
-
+# get profile------------------------------------------------------------------------------------------------------------------
     st.write(f"Profiles in JUMP CP DATA SET")
-
     df_prof = pd.DataFrame()
-
-
-
     sql_profile = (
         "select * from aggcombatprofile where metabatchid in ("
         + ",".join(list_batchid)
@@ -209,8 +259,10 @@ if len(df_cpds) > 0:
 
     dic_efficacy = df_efficacy.set_index("batchid").to_dict()["efficacy"]
     dic_Gene = df_cpdGene.set_index("batchid").to_dict()["geneid"]
+    dic_Name = df_cpds.set_index("batchid").to_dict()["name"]
     df_prof["metageneid"] = df_prof["metabatchid"].map(dic_Gene)
     df_prof["metaefficacy"] = df_prof["metabatchid"].map(dic_efficacy)
+    df_prof["metaname"] = df_prof["metabatchid"].map(dic_Name)
     df_prof["metaefficacy"].fillna("Unknown", inplace=True)
     df_prof["metatype"] = "CPDS"
 
@@ -218,6 +270,8 @@ if len(df_cpds) > 0:
 
     tab1, tab2,tab3,tab4 = st.tabs(["compounds Profiles", "compounds Summary","Crisper Profiles", "Crisper Summary"])
     tab1.write(df_prof)
+    st.download_button(
+        label="Save Profile",data=convert_df(df_prof),file_name="df_prof.csv",mime='csv',)
     tab2.write(df_prof.describe().T)
     if str(option)=="gene":
         df_prof_crisper["metatype"] = "CRISPR"
@@ -225,17 +279,12 @@ if len(df_cpds) > 0:
         tab3.write(df_prof_crisper)
         tab4.write(df_prof_crisper.describe().T)
 
-    #-------------------------------------------------------------
 
-
+# plot------------------------------------------------------------------------------------------------------------------
     list_sources = df_prof.metasource.unique().tolist()
     options = st.text_area("Enter sources")
     var_t=options.split('\n')
     var_t = [t.strip() for t in var_t]
-
-    # options = st.multiselect('Select Sources:', list_sources)
-    # st.write(options)
-    # options=['Ksilink_625','Ksilink_25']
 
     if not options:
         tmp = df_prof.copy()
@@ -246,15 +295,13 @@ if len(df_cpds) > 0:
     if len(tmp)>0:
         import matplotlib.pyplot as plt
         import seaborn as sns
-        list_col = [col for col in tmp.columns if not col.startswith("meta")]
-        plt_src = pd.DataFrame()
-        plt_src = tmp[list_col]
-        plt_src["name"] = tmp["metabatchid"] + "_" + tmp["metasource"]
-        plt_src.set_index("name", inplace=True)
+        plt_src,col_colors=get_col_colors(tmp)
+        
         fig_clusmap, ax1 = plt.subplots()
         fig_clusmap = sns.clustermap(
                     plt_src,
                     metric="cosine",
+                    col_colors=col_colors,
                 # method="ward",
                     xticklabels=False,
                     yticklabels=True,
@@ -279,9 +326,14 @@ if len(df_cpds) > 0:
 else:
     st.warning(" No Luck!! ")
 
-# tmap
-sql = "SELECT * FROM tmap"
-df_tmap = pd.read_sql(sql, conn_profileDB).reset_index(drop=True)
-st.session_state["df_tmap"] = df_tmap
+# cleas cache
+# data=None
+# df_res=None
+# df_cpds=None
+# df_prof_crisper=None
+# df_cpdGene=None
+# df_efficacy=None
+# df_cpdPath=None
+# df_prof=None
 conn_profileDB.close()
 conn.close()

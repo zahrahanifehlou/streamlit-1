@@ -1,7 +1,7 @@
 import os
 from urllib.parse import urlencode
 from urllib.request import urlretrieve
-
+from sklearn.metrics.pairwise import cosine_similarity
 import pandas as pd
 import plotly.express as px
 import psycopg2
@@ -12,6 +12,32 @@ from rdkit.Chem import AllChem, Draw
 st.set_page_config(
     layout="wide",
 )
+
+def convert_df(df):
+       return df.to_csv(index=False).encode('utf-8')
+def init_connection():
+    return psycopg2.connect(**st.secrets["postgres"])
+
+
+def find_sim_cpds(df1, df2):
+    filter_col1 = [col for col in df1.columns if not col.startswith("meta")]
+    filter_col2 = [col for col in df2.columns if not col.startswith("meta")]
+    filter_col = list(set(filter_col1) & set(filter_col2))
+    simi = cosine_similarity(df1[filter_col], df2[filter_col])
+    return simi
+
+
+def find_umap(df, title):
+            filter_cols = [col for col in df.columns if not col.startswith("meta")]
+            meta_cols = [col for col in df.columns if  col.startswith("meta")]
+            reducer = umap.UMAP(densmap=True, random_state=42, verbose=True)
+            embedding = reducer.fit_transform(df[filter_cols])
+            df_emb = pd.DataFrame({"x": embedding[:, 0], "y": embedding[:, 1]})
+            df_emb[meta_cols] = df[meta_cols]
+           
+        
+            fig = px.scatter(df_emb, x="x", y="y", hover_data=meta_cols, color="Type", title=title)
+            st.plotly_chart(fig, theme="streamlit", use_container_width=True)
 
 def plot_smile(mol_list,df_str):
     ik = 0
@@ -101,6 +127,7 @@ def plot_tmap(df_tmap, color_col,l ):
         color=color_col,
         width=1500,
         height=1000,
+        
     )
     st.plotly_chart(fig, theme="streamlit", use_container_width=True)
     st.write("\n")
