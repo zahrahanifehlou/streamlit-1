@@ -256,17 +256,12 @@ if len(df_cpds) > 0:
     )
 
     df_prof = pd.read_sql(sql_profile, conn_profileDB)
-
-    dic_efficacy = df_efficacy.set_index("batchid").to_dict()["efficacy"]
-    dic_Gene = df_cpdGene.set_index("batchid").to_dict()["geneid"]
-    dic_Name = df_cpds.set_index("batchid").to_dict()["name"]
-    df_prof["metageneid"] = df_prof["metabatchid"].map(dic_Gene)
-    df_prof["metaefficacy"] = df_prof["metabatchid"].map(dic_efficacy)
-    df_prof["metaname"] = df_prof["metabatchid"].map(dic_Name)
-    df_prof["metaefficacy"].fillna("Unknown", inplace=True)
-    df_prof["metatype"] = "CPDS"
-
-
+    df_prof.reset_index(inplace=True,drop=True)
+    df_prof = df_prof.merge(df_cpds.add_prefix('meta'),left_on='metabatchid',right_on='metabatchid').reset_index(drop=True)
+    df_prof.loc[df_prof.metaname =="No result", 'metaname'] = None
+    df_prof['metaname'] = df_prof['metaname'].str[:30]
+    df_prof['metaname'] = df_prof['metaname'].fillna(df_prof['metabatchid'])
+              
 
     tab1, tab2,tab3,tab4 = st.tabs(["compounds Profiles", "compounds Summary","Crisper Profiles", "Crisper Summary"])
     tab1.write(df_prof)
