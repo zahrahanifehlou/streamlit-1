@@ -1,0 +1,4 @@
+geneid	hexcolor
+HSA:3091	#0202ff
+HSA:2034	#0202ff
+HSA:7048	#0202ff

@@ -1,14 +1,21 @@
 
+import sys
 import warnings
 
 import numpy as np
 import pandas as pd
 import psycopg2
 import streamlit as st
-import pathlib
+
+sys.path.append('/mnt/shares/L/PROJECTS/JUMP-CRISPR/Code/streamlit-1/lib/')
+from streamlib import sql_df
+
 st.set_page_config(
     layout="wide",
 )
+st.header("Search for Jump profiles",divider='rainbow')
+
+
 warnings.filterwarnings("ignore")
 #-------------------------------------------------------------------------
 def convert_df(df):
@@ -33,7 +40,9 @@ def get_sql_kegg(table_name="keggcpdgene", col_name="geneid"):
     if table_name == "keggcpd":
         sql = f"SELECT * FROM keggcpd {sql_last_line}"
     else:
-        sql = f"SELECT  keggcpd.keggid,keggcpd.name , {table_name}.{col_name} FROM keggcpd INNER JOIN {table_name} ON {table_name}.keggid=keggcpd.keggid {sql_last_line} GROUP BY keggcpd.name, keggcpd.keggid, {table_name}.{col_name}"
+        sql = f"SELECT  keggcpd.keggid,keggcpd.name , {table_name}.{col_name} FROM keggcpd\
+                INNER JOIN {table_name} ON {table_name}.keggid=keggcpd.keggid {sql_last_line}\
+                GROUP BY keggcpd.name, keggcpd.keggid, {table_name}.{col_name}"
     return sql
 
 
@@ -43,14 +52,19 @@ def get_sql_jump(table_name="cpdgene", col_name="geneid"):
     sql_first_line = "SELECT cpd.pubchemid, cpdbatchs.batchid, cpd.synonyms, cpd.keggid, cpd.name, cpd.smile"
 
     if table_name == "keggcpddis":
-        st.write(table_name)
-        sql = f"{sql_first_line}, keggcpddis.disid FROM cpdbatchs INNER JOIN cpd ON cpdbatchs.pubchemid=cpd.pubchemid INNER JOIN keggcpddis ON keggcpddis.keggid=cpd.keggid {sql_last_line}"
+        # st.write(table_name)
+        sql = f"{sql_first_line}, keggcpddis.disid FROM cpdbatchs\
+                INNER JOIN cpd ON cpdbatchs.pubchemid=cpd.pubchemid\
+                INNER JOIN keggcpddis ON keggcpddis.keggid=cpd.keggid {sql_last_line}"
     elif table_name in[ "cpd","cpdbatchs" ]:
-        st.write(table_name)
+        # st.write(table_name)
         sql = f"{sql_first_line} FROM cpdbatchs right JOIN cpd ON cpd.pubchemid=cpdbatchs.pubchemid {sql_last_line}"
     else:
-        st.write(table_name)
-        sql = f"{sql_first_line}, {table_name}.{col_name} FROM cpdbatchs INNER JOIN {table_name} ON {table_name}.pubchemid=cpdbatchs.pubchemid INNER JOIN cpd ON cpdbatchs.pubchemid=cpd.pubchemid {sql_last_line} GROUP BY cpd.pubchemid, cpdbatchs.batchid, cpd.synonyms, cpd.keggid, cpd.name, cpd.smile, {table_name}.{col_name}"
+        # st.write(table_name)
+        sql = f"{sql_first_line}, {table_name}.{col_name} FROM cpdbatchs\
+                INNER JOIN {table_name} ON {table_name}.pubchemid=cpdbatchs.pubchemid\
+                INNER JOIN cpd ON cpdbatchs.pubchemid=cpd.pubchemid {sql_last_line}\
+                GROUP BY cpd.pubchemid, cpdbatchs.batchid, cpd.synonyms, cpd.keggid, cpd.name, cpd.smile, {table_name}.{col_name}"
     return sql
 
 
@@ -112,7 +126,7 @@ def get_col_colors(df):
     list_fin.extend(mito)
 
     list_fin = list(dict.fromkeys(list_fin))
-    
+
 
     list_fin.append("name")
     df["name"] = df["metaname"] + "_" + df["metasource"]
@@ -146,7 +160,7 @@ with col1:
     x = st.slider("Number of rows to display", 1, 20)
     st.write("You selected the table: ", option)
 
-data = pd.read_sql("select * from " + str(option), conn)
+data = sql_df("select * from " + str(option), conn)
 data = data.apply(lambda x: x.astype(str).str.upper())
 
 with col2:
@@ -177,31 +191,34 @@ db_name = st.radio(
 )
 
 
-df_cpds = []
+df_cpds = pd.DataFrame()
 sql_query = []
 if len(df_res) > 0:
-    if str(option) in table_mapping[db_name]:
-        table_name, col_name = table_mapping[db_name][str(option)]
+    if str(option) in table_mapping["SelectChem and Jump DataSet"]:
+        table_name, col_name = table_mapping["SelectChem and Jump DataSet"][str(option)]
+        sql_query = get_sql_jump(table_name=table_name, col_name=col_name)
+        df_cpds = sql_df(sql_query, conn).drop_duplicates(subset=["batchid"]).reset_index(drop=True)
         if db_name == "KEGG":
-            sql_query = get_sql_kegg(table_name=table_name, col_name=col_name)
+            # sql_query = get_sql_kegg(table_name=table_name, col_name=col_name)
 
-            df_kegg = pd.read_sql(sql_query, conn).drop_duplicates(subset=["keggid"]).reset_index(drop=True)
-            st.write(df_kegg)
 
-        else:
-            sql_query = get_sql_jump(table_name=table_name, col_name=col_name)
+            df_cpds = df_cpds.dropna(subset=['keggid']).reset_index(drop=True)
+            # st.write(df_cpds)
 
-            df_cpds = pd.read_sql(sql_query, conn).drop_duplicates(subset=["batchid"]).reset_index(drop=True)
+        # else:
+        #     # sql_query = get_sql_jump(table_name=table_name, col_name=col_name)
+
+        #     df_cpds = sql_df(sql_query, conn).drop_duplicates(subset=["batchid"]).reset_index(drop=True)
 
 # get crisper profiles when search gene
 df_prof_crisper = None
 if str(option) == "gene" and len(df_res)>0:
     geneid_lis = [f"'{geneid}'" for geneid in df_res["geneid"]]
     sql_crisper = f"SELECT * FROM crisperbatchs WHERE crisperbatchs.geneid IN ({','.join(geneid_lis)})"
-    df_crisperBatchs = pd.read_sql(sql_crisper, conn).drop_duplicates(subset=["batchid"])
+    df_crisperBatchs = sql_df(sql_crisper, conn).drop_duplicates(subset=["batchid"])
     batch_list = [f"'{batchid}'" for batchid in df_crisperBatchs["batchid"]]
     sql_crisper_profile = f"SELECT * FROM aggcombatprofile WHERE metabatchid IN ({','.join(batch_list)})"
-    df_prof_crisper = pd.read_sql(sql_crisper_profile, conn_profileDB)
+    df_prof_crisper = sql_df(sql_crisper_profile, conn_profileDB)
     crisper_dic = df_crisperBatchs.set_index("batchid")["geneid"].to_dict()
     df_prof_crisper["metageneid"] = df_prof_crisper["metabatchid"].map(crisper_dic)
 
@@ -213,20 +230,30 @@ if len(df_cpds) > 0:
 
 
     # compounds GENE info
-    sql = f"SELECT cpdgene.pubchemid, gene.geneid, gene.symbol, cpdgene.server FROM gene INNER JOIN cpdgene ON cpdgene.geneid=gene.geneid WHERE cpdgene.pubchemid IN ({','.join(list_pubchemid)})"
-    df_cpdGene = pd.read_sql(sql, conn).drop_duplicates(subset=["pubchemid", "geneid", "server"]).reset_index(drop=True)
+    sql = f"SELECT cpdgene.pubchemid, gene.geneid, gene.symbol, cpdgene.server FROM gene\
+            INNER JOIN cpdgene ON cpdgene.geneid=gene.geneid\
+            WHERE cpdgene.pubchemid IN ({','.join(list_pubchemid)})"
+
+    df_cpdGene = sql_df(sql, conn).drop_duplicates(subset=["pubchemid", "geneid", "server"]).reset_index(drop=True)
     df_cpdGene = df_cpdGene.merge(df_cpds[["name","batchid","pubchemid"]],left_on='pubchemid',right_on='pubchemid').reset_index(drop=True)
 
 
     # compounds efficacy info
-    sql = f"SELECT cpd.pubchemid, keggcpd.efficacy, keggcpd.keggid FROM keggcpd INNER JOIN cpd ON keggcpd.keggid=cpd.keggid WHERE cpd.pubchemid IN ({','.join(list_pubchemid)})"
-    df_efficacy = pd.read_sql(sql, conn).drop_duplicates(subset=["pubchemid", "efficacy", "keggid"]).reset_index(drop=True)
-    df_efficacy = df_efficacy.merge(df_cpds[["name","batchid","pubchemid"]],left_on='pubchemid',right_on='pubchemid').reset_index(drop=True)
+    sql = f"SELECT cpd.pubchemid, keggcpd.efficacy, keggcpd.keggid FROM keggcpd\
+            INNER JOIN cpd ON keggcpd.keggid=cpd.keggid\
+            WHERE cpd.pubchemid IN ({','.join(list_pubchemid)})"
 
+    df_efficacy = sql_df(sql, conn).drop_duplicates(subset=["pubchemid", "efficacy", "keggid"]).reset_index(drop=True)
+    df_efficacy = df_efficacy.merge(df_cpds[["name","batchid","pubchemid"]],left_on='pubchemid',right_on='pubchemid').reset_index(drop=True)
+    df_efficacy = df_efficacy.drop_duplicates(subset=["pubchemid", "efficacy", "keggid"]).reset_index(drop=True)
     # compounds PATHWAY info
-    sql = f"SELECT cpdpath.pubchemid, pathway.pathid, pathway.name, cpdpath.server FROM pathway INNER JOIN cpdpath ON cpdpath.pathid=pathway.pathid WHERE cpdpath.pubchemid IN ({','.join(list_pubchemid)})"
-    df_cpdPath = pd.read_sql(sql, conn).drop_duplicates(subset=["pubchemid", "pathid", "server"]).reset_index(drop=True)
+    sql = f"SELECT cpdpath.pubchemid, pathway.pathid, pathway.name, cpdpath.server FROM pathway\
+            INNER JOIN cpdpath ON cpdpath.pathid=pathway.pathid\
+            WHERE cpdpath.pubchemid IN ({','.join(list_pubchemid)})"
+
+    df_cpdPath = sql_df(sql, conn).drop_duplicates(subset=["pubchemid", "pathid", "server"]).reset_index(drop=True)
     df_cpdPath = df_cpdPath.merge(df_cpds[["name","batchid","pubchemid"]],left_on='pubchemid',right_on='pubchemid').reset_index(drop=True)
+    df_cpdPath = df_cpdPath.drop_duplicates(subset=["pubchemid", "pathid", "server"]).reset_index(drop=True)
 
     tabs = st.tabs(["compounds info", "compounds GENE info", "compounds PATHWAY info", "compounds efficacy info"])
     tabs[0].write(df_cpds)
@@ -240,8 +267,9 @@ if len(df_cpds) > 0:
     )
         df_cpdGene_tmp = df_cpdGene.copy()
         if server_name != "all":
-            df_cpdGene_tmp = df_cpdGene[df_cpdGene["server"] == server_name]
-
+            df_cpdGene_tmp = df_cpdGene[df_cpdGene["server"] == server_name].drop_duplicates(subset=["pubchemid","geneid","batchid"])
+        # if server_name == "KEGG":
+        #     df_cpdGene_tmp = df_cpds[df_cpdGene["server"] == server_name].drop_duplicates(subset=["pubchemid","geneid"])
     tabs[1].write(df_cpdGene_tmp)
     tabs[2].write(df_cpdPath)
     tabs[3].write(df_efficacy)
@@ -249,19 +277,24 @@ if len(df_cpds) > 0:
 # get profile------------------------------------------------------------------------------------------------------------------
     st.write(f"Profiles in JUMP CP DATA SET")
     df_prof = pd.DataFrame()
+    if server_name=='KEGG':
+        list_batchid = [f"'{batch}'" for batch in df_cpdGene_tmp["batchid"]]
+    else:
+        list_batchid = [f"'{batch}'" for batch in df_cpds["batchid"]]
     sql_profile = (
         "select * from aggcombatprofile where metabatchid in ("
         + ",".join(list_batchid)
         + ")"
     )
 
-    df_prof = pd.read_sql(sql_profile, conn_profileDB)
+    df_prof = sql_df(sql_profile, conn_profileDB)
     df_prof.reset_index(inplace=True,drop=True)
+
     df_prof = df_prof.merge(df_cpds.add_prefix('meta'),left_on='metabatchid',right_on='metabatchid').reset_index(drop=True)
     df_prof.loc[df_prof.metaname =="No result", 'metaname'] = None
     df_prof['metaname'] = df_prof['metaname'].str[:30]
     df_prof['metaname'] = df_prof['metaname'].fillna(df_prof['metabatchid'])
-              
+
 
     tab1, tab2,tab3,tab4 = st.tabs(["compounds Profiles", "compounds Summary","Crisper Profiles", "Crisper Summary"])
     tab1.write(df_prof)
@@ -287,11 +320,11 @@ if len(df_cpds) > 0:
         tmp = df_prof.loc[df_prof["metasource"].isin(var_t)]
 
 
-    if len(tmp)>0:
+    if len(tmp)>1:
         import matplotlib.pyplot as plt
         import seaborn as sns
         plt_src,col_colors=get_col_colors(tmp)
-        
+
         fig_clusmap, ax1 = plt.subplots()
         fig_clusmap = sns.clustermap(
                     plt_src,

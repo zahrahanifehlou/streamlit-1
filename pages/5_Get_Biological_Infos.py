@@ -1,12 +1,17 @@
+import sys
+
 import gseapy as gp
 import numpy as np
 import pandas as pd
 import plotly.express as px
-import psycopg2
 import streamlit as st
 
+sys.path.append('/mnt/shares/L/PROJECTS/JUMP-CRISPR/Code/streamlit-1/lib/')
+from streamlib import sql_df
 
-
+st.header("Get biological infos from multiple databases",divider='rainbow')
+def convert_df(df):
+       return df.to_csv(index=False).encode('utf-8')
 def get_infos(dftiti):
     list_cols = df.columns.tolist()
 
@@ -32,9 +37,13 @@ def get_infos(dftiti):
     # st.write(gene_list)
     df_enr = enr.results
 
+
     df_enr["Log_10_Pv"] = -np.log10(df_enr["Adjusted P-value"])
     df_enr.rename(columns={"Term": "Pathways"}, inplace=True)
     st.write(df_enr)
+    st.download_button(
+                        label="Save",data=convert_df(df_enr),file_name=f"enrich.csv",mime='csv',)
+
 
     fig = px.bar(df_enr, x="Pathways", y="Log_10_Pv")
     st.plotly_chart(fig, theme="streamlit", use_container_width=True)

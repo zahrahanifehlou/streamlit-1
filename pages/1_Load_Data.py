@@ -5,9 +5,12 @@ import streamlit as st
 from sklearn.feature_selection import VarianceThreshold
 from sklearn.preprocessing import MinMaxScaler
 
+st.header("Get a quick overview of your dataset",divider='rainbow')
+
 uploaded_files = st.file_uploader("Choose files", accept_multiple_files=True)
 numerics = ["int16", "int32", "int64", "float16", "float32", "float64"]
 # data=pd.DataFrame()
+
 
 
 def load_files(uploaded_files):
@@ -48,9 +51,9 @@ def filter_data(list_dfs):
         tab3.write(data.describe())
     return data
 
+
+
 list_df = load_files(uploaded_files)
-
-
 
 if len(list_df) > 0:
     data = filter_data(list_df)
@@ -60,9 +63,10 @@ if len(list_df) > 0:
         if g == "no":
 
 
-                desc = st.selectbox("Select descriptor", col_sel)
+                desc = st.multiselect("Select some descriptors", col_sel)
+                # st.write(desc)
                 fig1 = px.box(data, x="tags", y=desc, notched=True)
-                st.plotly_chart(fig1, theme="streamlit", use_container_width=True)
+                st.plotly_chart(fig1, theme="streamlit", use_container_width=False)
 
                 col1, col2 = st.columns(2)
                 desc1 = col1.multiselect("Select descriptors", col_sel)
@@ -78,7 +82,7 @@ if len(list_df) > 0:
                         color="tags",
                         title="Raw Scatter",
                     )
-                    st.plotly_chart(fig2, theme="streamlit", use_container_width=True)
+                    st.plotly_chart(fig2, theme="streamlit", use_container_width=False)
 
 
 
@@ -95,9 +99,9 @@ if len(list_df) > 0:
         df_plt = df_agg.set_index("tags")
         df_plt = df_plt[col_sel].T
         fig3 = px.line(
-            df_plt, x=col_sel, y=cpd_names, width=1400, height=1000, title="MinMax profiles"
+            df_plt, x=col_sel, y=cpd_names, width=800, height=800, title="MinMax profiles"
         )
-        st.plotly_chart(fig3, theme="streamlit", use_container_width=True)
+        st.plotly_chart(fig3, theme="streamlit", use_container_width=False)
 
         if g == "yes":
             scaler = MinMaxScaler()
@@ -107,9 +111,9 @@ if len(list_df) > 0:
             )
 
             data_scaled["tags"] = data["tags"]
-            desc = st.selectbox("Select descriptor", col_sel)
+            desc = st.multiselect("Select some descriptors", col_sel)
             fig1 = px.box(data_scaled, x="tags", y=desc, notched=True)
-            st.plotly_chart(fig1, theme="streamlit", use_container_width=True)
+            st.plotly_chart(fig1, theme="streamlit", use_container_width=False)
 
             col1, col2 = st.columns(2)
             desc1 = col1.multiselect("Select descriptors", col_sel)
@@ -124,7 +128,7 @@ if len(list_df) > 0:
                     color="tags",
                     title="MinMax Scatter",
                 )
-                st.plotly_chart(fig2, theme="streamlit", use_container_width=True)
+                st.plotly_chart(fig2, theme="streamlit", use_container_width=False)
             import umap
 #
             model = umap.UMAP(random_state=42, verbose=False).fit(data_scaled[col_sel])
@@ -143,7 +147,7 @@ if len(list_df) > 0:
                 hover_data=["tags"],
                 color="tags",
             )
-            st.plotly_chart(fig3, theme="streamlit", use_container_width=True)#
+            st.plotly_chart(fig3, theme="streamlit", use_container_width=False)#
     else:
         st.warning('No column tags in your dataset')
         g = st.radio("MinMax", ["yes", "no"])
@@ -151,7 +155,7 @@ if len(list_df) > 0:
                 col_sel=data.select_dtypes(include=numerics).columns.to_list()
                 desc = st.selectbox("Select descriptor", col_sel)
                 fig1 = px.box(data, y=desc, notched=True)
-                st.plotly_chart(fig1, theme="streamlit", use_container_width=True)
+                st.plotly_chart(fig1, theme="streamlit", use_container_width=False)
 
                 col1, col2 = st.columns(2)
                 desc1 = col1.multiselect("Select descriptors", col_sel)
@@ -166,7 +170,7 @@ if len(list_df) > 0:
 
                         title="Raw Scatter",
                     )
-                    st.plotly_chart(fig2, theme="streamlit", use_container_width=True)
+                    st.plotly_chart(fig2, theme="streamlit", use_container_width=False)
 
 
         if g == "yes":
@@ -178,7 +182,7 @@ if len(list_df) > 0:
 
             desc = st.selectbox("Select descriptor", col_sel)
             fig1 = px.box(data_scaled, y=desc, notched=True)
-            st.plotly_chart(fig1, theme="streamlit", use_container_width=True)
+            st.plotly_chart(fig1, theme="streamlit", use_container_width=False)
 
             col1, col2 = st.columns(2)
             desc1 = col1.multiselect("Select descriptors", col_sel)
@@ -192,7 +196,7 @@ if len(list_df) > 0:
                     y=desc1[1],
                     title="MinMax Scatter",
                 )
-                st.plotly_chart(fig2, theme="streamlit", use_container_width=True)
+                st.plotly_chart(fig2, theme="streamlit", use_container_width=False)
             import umap
 
             model = umap.UMAP(random_state=42, verbose=False).fit(data_scaled[col_sel])
@@ -211,4 +215,4 @@ if len(list_df) > 0:
                 title="umap",
                 hover_data=cols_alpha
             )
-            st.plotly_chart(fig3, theme="streamlit", use_container_width=True)
+            st.plotly_chart(fig3, theme="streamlit", use_container_width=False)

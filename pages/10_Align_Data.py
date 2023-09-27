@@ -1,13 +1,18 @@
 
-import warnings
+
+
+import sys
 
 import bbknn
-import numpy as np
 import pandas as pd
 import plotly.express as px
 import psycopg2
+import scanpy as sc
 import streamlit as st
 import umap
+
+sys.path.append('/mnt/shares/L/PROJECTS/JUMP-CRISPR/Code/streamlit-1/lib/')
+from streamlib import sql_df
 
 conn_profileDB = psycopg2.connect(
         host="192.168.2.131",
@@ -48,7 +53,7 @@ def sel_code(option, conn):
     # FROM platemap INNER JOIN cpdbatchs ON cpdbatchs.batchid = platemap.batchid " # WHERE platemap.source = '{option}' "
     sql = f"SELECT cpdbatchs.pubchemid, cpdbatchs.batchid, platemap.plate, platemap.ctrltype, platemap.well FROM platemap \
     INNER JOIN cpdbatchs ON cpdbatchs.batchid = platemap.batchid and platemap.ctrltype= '{option}' "
-    df = pd.read_sql(sql, conn)
+    df = sql_df(sql, conn)
     df['pubchemid'] = df['pubchemid'].apply(clean_pubchemid)
     df=df.drop_duplicates(subset=[ "plate", "well"]).reset_index(drop=True)
     return df
@@ -81,7 +86,7 @@ batch_list = [f"'{batchid}'" for batchid in df["batchid"].unique()]
 # src_list = [f"'{s}'" for s in [option2, option1]]
 #sql_profile = f"SELECT * FROM aggcombatprofile WHERE metabatchid IN ({','.join(batch_list)}) and metasource IN ({','.join(src_list)})"
 sql_profile = f"SELECT * FROM aggcombatprofile WHERE metabatchid IN ({','.join(batch_list)})"
-df_prof = pd.read_sql(sql_profile, conn_profileDB)
+df_prof = sql_df(sql_profile, conn_profileDB)
 df_prof=df_prof.drop_duplicates(subset=[ "metabatchid","metasource"]).reset_index(drop=True)
 st.write(df_prof["metasource"].value_counts())
 if option1=='trt':
@@ -92,13 +97,18 @@ if option1=='trt':
         df_prof=df_prof[df_prof["metasource"]!='Broad']
     df_prof=df_prof.groupby('metasource').sample(n=samp).reset_index()
 df_prof.reset_index(drop=True, inplace=True)
+# st.write(df_prof[["metasource","metabatchid"]])
 # st.write("profile")
-
-
+num_col=[col for col in df_prof if 'meta' not in col]
+adata=sc.AnnData(df_prof[num_col],obs=df_prof[["metasource"]])
+# adata = sc.read('pancreas.h5ad', backup_url='https://www.dropbox.com/s/qj1jlm9w10wmt0u/pancreas.h5ad?dl=1')
+sc.tl.pca(adata,svd_solver='arpack')
+bbknn.bbknn(adata, batch_key='metasource')
+# df_prof=sc.AnnData.to_df(adata)
 
 
 #df_conc= pd.concat([df_src1,df_src2]).reset_index()
-num_col=[col for col in df_prof if 'meta' not in col]
+
 model = umap.UMAP(random_state=42, verbose=False).fit(df_prof[num_col])
 emb = model.transform(df_prof[num_col])
 

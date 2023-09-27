@@ -1,0 +1,2 @@
+geneid	hexcolor
+HSA:7048	#0202ff

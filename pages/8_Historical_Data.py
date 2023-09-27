@@ -1,8 +1,13 @@
 
 
+import sys
+
 import pandas as pd
 import psycopg2
 import streamlit as st
+
+sys.path.append('/mnt/shares/L/PROJECTS/JUMP-CRISPR/Code/streamlit-1/lib/')
+from streamlib import sql_df
 
 
 def convert_df(df):
@@ -17,10 +22,10 @@ profile_conn = psycopg2.connect(
 st.set_page_config(
     layout="wide",
 )
-
+st.header("In house Dataset",divider='rainbow')
 cols1= st.columns(2)
 with cols1[0]:
-    to_find = st.text_input("Enter your search",help='FCCP')
+    to_find = st.text_input("Enter your search (Batchid)",help='FCCP')
 with cols1[1]:
     project_name = st.text_input("Enter Project name",help='DM1')
 if project_name!="":
@@ -30,19 +35,23 @@ else:
     sql_profile = f"SELECT * from projectsprofile WHERE ( batchid='{to_find}'\
     OR UPPER(projectsprofile.name) LIKE UPPER('{to_find}%'))"
 
-df_pro = pd.read_sql(sql_profile, profile_conn)
+df_pro = sql_df(sql_profile, profile_conn)
 st.write(df_pro.assay.unique())
 st.write("--------------------------------------")
-if len(df_pro)>0:
+
+disp = st.sidebar.toggle("Display Data")
+if len(df_pro)>0 and (to_find or project_name):
+
 
     original_columns = ["project","assay", "name", "batchid","concentration", "tags", "plate", "well"]
     for g, data in df_pro.groupby('assay'):
         pivot_df = pd.pivot_table(data, index=original_columns, columns='feature', values='value').reset_index()
         tab1,tab2=st.tabs([f"Profiles in {g}", f"Summary in {g}"])
-        tab1.write(pivot_df)
-        st.download_button(
-            label="Save",data=convert_df(pivot_df),file_name=f"{g}.csv",mime='csv',)
-        tab2.write(pivot_df.describe())
+        if disp:
+            tab1.write(pivot_df)
+            st.download_button(
+                label="Save",data=convert_df(pivot_df),file_name=f"{g}.csv",mime='csv',)
+            tab2.write(pivot_df.describe())
 
 
 profile_conn.close()
