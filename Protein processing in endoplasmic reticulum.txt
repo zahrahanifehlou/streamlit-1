@@ -1,2 +1,0 @@
-geneid	hexcolor
-HSA:823	#0202ff

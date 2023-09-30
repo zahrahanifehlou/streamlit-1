@@ -336,11 +336,14 @@ if len(df_cpds) > 0:
                     col_cluster=False,
                     cmap="vlag",
                     center=0,
-                    vmin=-5,
-                    vmax=5,
+                    vmin=-10,
+                    vmax=10,
+                    figsize=(16, len(plt_src)/2),
                 )
 
         st.pyplot(fig_clusmap)
+        # st.write(len(plt_src)/2)
+      
 
     st.session_state["df_profiles"] = df_prof
     st.session_state["df_cpds"] = df_cpds

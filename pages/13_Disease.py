@@ -8,7 +8,7 @@ import streamlit as st
 from Bio.KEGG.REST import *
 sys.path.append('/mnt/shares/L/PROJECTS/JUMP-CRISPR/Code/streamlit-1/lib/')
 from streamlib import sql_df
-
+import urllib
 conn_meta = psycopg2.connect(
     host="192.168.2.131",
     port="5432",
@@ -22,6 +22,28 @@ def head(text):
     """
     stre =  (text.split('\n'))
     return stre
+def pub(sel_dis):
+    keg_dis =  head(kegg_get(sel_dis).read())
+    list_ref=[]
+    list_auth=[]
+    list_title=[]
+    list_jour=[]
+    for item in keg_dis:
+        if 'REFERENCE' in item:
+            list_ref.append('https://pubmed.ncbi.nlm.nih.gov/'+item.split('REFERENCE')[1].split(':')[1])
+        if 'AUTHORS' in item:
+            list_auth.append(item.split('AUTHORS')[1])
+        if 'TITLE' in item:
+            list_title.append(item.split('TITLE')[1])
+        if 'JOURNAL' in item:
+            list_jour.append(item.split('JOURNAL')[1])
+    df_pub=pd.DataFrame()
+    df_pub['REFERENCE']=list_ref
+    df_pub['AUTHORS']=list_auth
+    df_pub['TITLE']=list_title
+    df_pub['JOURNAL']=list_jour
+    return df_pub
+
 
 st.title('Diseases Information')
 st.subheader("From Disease to CPDS/Genes", divider='rainbow')
@@ -35,6 +57,10 @@ sel_disease = st.selectbox('Chose the disease:', df_dis["name"].unique())
 code_dis =df_dis[df_dis["name"]==sel_disease]['disid'].values[0]
 st.write("---")
 st.write('Kegg Code for selected disease: ',code_dis)
+tog_ref = st.sidebar.toggle('Get References',help='retrieve main litterature')
+if tog_ref:
+    df_pubmed=pub(code_dis)
+    st.write('REFERENCES:', df_pubmed)
 st.write("---")
 
 col1,col2=st.columns(2)
@@ -120,11 +146,14 @@ if not df_gene_of_int.empty:
     # st.write(symbol)
     sql_known_gene_in_dis=f"select * from genedis where geneid='{geneid}'"
     df_gene_in_dis=sql_df(sql_known_gene_in_dis,conn_meta)
-    disid=df_gene_in_dis["disid"].values
-    df_list_dis = df_dis[df_dis["disid"].isin(disid)].reset_index(drop=True)
-    st.write("known diseases involving this gene",df_list_dis)
-    keg_dis =  head(kegg_get('H00292').read())
-    st.write(keg_dis)
+    if not df_gene_in_dis.empty:
+        disid=df_gene_in_dis["disid"].values
+        df_list_dis = df_dis[df_dis["disid"].isin(disid)].reset_index(drop=True)
+        st.write("known diseases involving this gene",df_list_dis)
+        sel_dis = st.selectbox('select the disease for references', df_list_dis['disid'].to_list())
+        if tog_ref:
+            df_pub = pub(sel_dis)
+            st.write('REFERENCES',df_pub)
 else:
     st.warning("Unknown gene")
 

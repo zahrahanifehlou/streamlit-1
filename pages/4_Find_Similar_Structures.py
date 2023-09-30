@@ -48,10 +48,12 @@ def plot_smile(mol_list,df_str):
     ik = 0
     cpt = 0
     cols = st.columns(5)
+    # df_str=df_str.sort_values('sim', ascending=False)
     for mol in mol_list:
         if cpt == 5:
             cpt = 0
         try:
+            
             cols[cpt].image(Draw.MolToImage(mol), df_str["pubchemid"][ik])
             ik = ik + 1
             cpt = cpt + 1
@@ -155,8 +157,9 @@ color_col = st.radio(
         ("source", "genetarget", "efficacy", "disname"),
         horizontal=True,
     )
-st.write("TMAP plt of all compounds")
-plot_tmap(df_tmap, color_col, px.colors.qualitative.D3)
+tmap1 = st.toggle("TMAP plt of all compounds")
+if tmap1:
+    plot_tmap(df_tmap, color_col, px.colors.qualitative.D3)
 
 
 #-----------------------------------------------------------------------------------------------------------------------
@@ -208,18 +211,19 @@ if len(df_cpds)>0:
                 df_str = df_cpds.copy()
                 df_tmap["selected compounds"]="others"
                 df_tmap.loc[df_tmap['pubchemid'].isin(df_str.pubchemid), 'selected compounds'] = "selected compounds"
-                st.write("TMAP plt of selected compounds")
-                plot_tmap(df_tmap, "selected compounds",["red","blue"])
+                tmap2 = st.toggle("TMAP plt of selected compounds")
+                if tmap2:
+                    plot_tmap(df_tmap, "selected compounds",["red","blue"])
 
              # plot similarity-----------------------------------------------------------------------------------
-                st.write("DATA frame",df_str)
+                # st.write("DATA frame",df_str)
 
                 df_c = get_struc(mol_list)
                 name_list = [f"`{t}`" for t in df_str["pubchemid"]]
                 df_c = df_c.rename(index=dict(enumerate(name_list, 0)), columns=dict(enumerate(name_list, 0)))
                 fig = px.imshow(df_c, color_continuous_scale='RdBu_r')
                 st.plotly_chart(fig)
-
+                # df_str['sim']=1
                 # plot smile-----------------------------------------------------------------------------------
                 plot_smile(mol_list,df_str)
 
@@ -266,9 +270,9 @@ if len(df_cpds)>0:
                 name_list=[]
                 value_list=[]
                 mol_list2=[]
-
+                # thre_sim = st.sidebar.slider('Similarity Threshold',min_value=0.3,max_value=1.0,value=0.49,step=0.1)
                 for name, value in zip(jump_df.pubchemid, similarities):
-
+                    
                     if value > 0.49:
                         name_list.append(name)
                         value_list.append(value)
@@ -292,7 +296,7 @@ if len(df_cpds)>0:
 
 
 
-                df_sim_result[pubchemid]=similarities
+                # df_sim_result[pubchemid]=similarities
 
             except:
                 print("cant find this pubchemid", pubchemid)

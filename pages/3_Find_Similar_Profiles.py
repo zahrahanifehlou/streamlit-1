@@ -374,6 +374,7 @@ else:
                     center=0,
                     vmin=-5,
                     vmax=5,
+                    figsize=(16, len(plt_src)/2),
                 )
 
         st.pyplot(fig_clusmap)

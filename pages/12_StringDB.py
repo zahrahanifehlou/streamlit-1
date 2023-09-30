@@ -238,7 +238,7 @@ if not df_inter.empty:
     categ = st.selectbox("Select Category", list_cat)
     df_go_ento = get_stringDB_enr(df_umap_cluster,'symbol',categ)
     st.write(f'{categ} Enrichment',df_go_ento)
-    df_go_ento['log_p_val']=np.log10(df_go_ento['p_val'].apply(str_to_float))
+    df_go_ento['log_p_val']=-np.log10(df_go_ento['p_val'].apply(str_to_float))
     fig_bar=px.bar(df_go_ento,x='Description',y='log_p_val')
     st.plotly_chart(fig_bar)
 
@@ -271,9 +271,11 @@ if not df_inter.empty:
     df_umap["target"] = df_umap_cluster['symbol']
     df_umap['size']=5
     df_umap["cluster"] = df_umap_cluster['cluster']
-    df_umap["keggid"] = df_umap_cluster['keggid']
-    fig1 = px.scatter(df_umap, x="X", y="Y",color='cluster',text='target',size='size',width=800,height=800,hover_data=['target','keggid'])
-
+    if choice=='Cpds':
+        df_umap["keggid"] = df_umap_cluster['keggid']
+        fig1 = px.scatter(df_umap, x="X", y="Y",color='cluster',text='target',size='size',width=800,height=800,hover_data=['target','keggid'])
+    else:
+        fig1 = px.scatter(df_umap, x="X", y="Y",color='cluster',text='target',size='size',width=800,height=800,hover_data=['target'])
     st.plotly_chart(fig1, theme="streamlit", use_container_width=False)
 
 
