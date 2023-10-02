@@ -232,7 +232,9 @@ if not df_inter.empty:
     # df_umap_cluster['chromosome']=df_umap_cluster['chromosome'].apply(int_to_str)
     if disp:
         st.write(df_umap_cluster)
-
+    # list_enr=[]
+    # for grpName, rows in df_clust.groupby('cluster'):
+    #     list_enr.append(get_stringDB_enr())
     ################################### ENRICHMENT ##############################################
     list_cat=get_list_category(df_umap_cluster,'symbol')
     categ = st.selectbox("Select Category", list_cat)
