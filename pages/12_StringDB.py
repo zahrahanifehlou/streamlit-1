@@ -236,7 +236,7 @@ if not df_inter.empty:
     for grpName, rows in df_clust.groupby('cluster'):
         # df_temp = get_stringDB_enr(rows['']))
         st.write('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbb')
-        st.write(rows)
+        st.write(rows['symbol'])
     ################################### ENRICHMENT ##############################################
     list_cat=get_list_category(df_umap_cluster,'symbol')
     categ = st.selectbox("Select Category", list_cat)
