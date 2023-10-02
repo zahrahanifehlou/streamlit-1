@@ -232,12 +232,19 @@ if not df_inter.empty:
     # df_umap_cluster['chromosome']=df_umap_cluster['chromosome'].apply(int_to_str)
     if disp:
         st.write(df_umap_cluster)
-    list_enr=[]
+    list_enr={}
     for grpName, rows in df_clust.groupby('cluster'):
-        # df_temp = get_stringDB_enr(rows['']))
-        st.write('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbb')
-        st.write(rows['symbol'])
+        df_temp = get_stringDB_enr(rows['symbol'].unique())
+        # st.write(df_temp['Description'], grpName)
+        
+        # list_enr['cluster'].append(grpName)
+        if len(df_temp['Description'])>0:
+            list_enr.update({grpName:df_temp['Description'][0]})
+            
+        else:
+             list_enr.update({grpName:'Null'})
     ################################### ENRICHMENT ##############################################
+    st.write(list_enr)
     list_cat=get_list_category(df_umap_cluster,'symbol')
     categ = st.selectbox("Select Category", list_cat)
     df_go_ento = get_stringDB_enr(df_umap_cluster,'symbol',categ)
@@ -275,6 +282,7 @@ if not df_inter.empty:
     df_umap["target"] = df_umap_cluster['symbol']
     df_umap['size']=5
     df_umap["cluster"] = df_umap_cluster['cluster']
+    df_umap['cluster'] = df_umap['cluster'].replace(list_enr)
     if choice=='Cpds':
         df_umap["keggid"] = df_umap_cluster['keggid']
         fig1 = px.scatter(df_umap, x="X", y="Y",color='cluster',text='target',size='size',width=800,height=800,hover_data=['target','keggid'])
