@@ -73,7 +73,11 @@ def get_stringDB(df_all_umap,thresh=0.7,genecol='target'):
 
 ################################### STRING DB ENRICHMENT ##############################################
 def get_stringDB_enr(df_all_umap,genecol='target',cat='KEGG',fdra=0.01):    
-
+    if not isinstance(df_all_umap,pd.DataFrame):
+        list_genes=df_all_umap
+        df_all_umap=pd.DataFrame()
+        df_all_umap[genecol]=list_genes
+        
     string_api_url = "https://version-11-5.string-db.org/api"
     output_format = "json"
     method = "enrichment" 
