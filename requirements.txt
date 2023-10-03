@@ -6,7 +6,7 @@ gseapy
 bs4
 biopython
 bioservices
-sklearn
 umap-learn
 seaborn
+scikit-learn
 
