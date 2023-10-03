@@ -11,7 +11,7 @@ uploaded_files = st.file_uploader("Choose files", accept_multiple_files=True)
 numerics = ["int16", "int32", "int64", "float16", "float32", "float64"]
 # data=pd.DataFrame()
 
-
+st.write("aaa")
 
 def load_files(uploaded_files):
 

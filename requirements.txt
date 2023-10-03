@@ -1,6 +1,6 @@
 plotly
 pymongo
-psycopg2
+psycopg2-binary
 rdkit
 gseapy
 bs4
