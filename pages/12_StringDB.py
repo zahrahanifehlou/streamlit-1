@@ -89,8 +89,8 @@ if on:
         gene_col = st.text_input('Write the column name with gene symbols',value='symbol')
     if gene_col:
         unique_gene=df_genes[gene_col].unique()
-        st.write(f'### You entered : {len(unique_gene)} genes' )
-
+        
+st.write(f'### You entered : {len(unique_gene)} genes' )
 disp= st.sidebar.toggle('Display Data')
 if disp:
     st.write(df_genes)
@@ -261,7 +261,7 @@ if not df_inter.empty:
     # col1, col2,col3 = st.columns(3)
 
     vert_size = st.sidebar.slider('vertex size',min_value=0.2,max_value=20.0,step=0.1,value=1.0)
-    lab_size = st.sidebar.slider('label size',min_value=0.2,max_value=20.0,step=0.1,value=1.0)
+    lab_size = st.sidebar.slider('label size',min_value=0.2,max_value=20.0,step=0.1,value=2.4)
     box_size = st.sidebar.slider('box size',min_value=400,max_value=1600,step=50,value=600)
     ig.config['plotting.backend'] = 'matplotlib'
     subax1=ig.plot(partition,vertex_label=partition.graph.vs['_nx_name'],vertex_label_size=lab_size,vertex_size=vert_size,
