@@ -12,5 +12,5 @@ scikit-learn
 sklearn
 plotly
 rdkit
-numpy=1.25
+numpy==1.25
 
