@@ -25,7 +25,7 @@ def init_connection():
 conn = init_connection()
 
 conn_profileDB = psycopg2.connect(
-        host="192.168.2.131",
+        host="localhost",
         port="5432",
         user="arno",
         database="ksilink_cpds",
