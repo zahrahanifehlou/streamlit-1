@@ -7,7 +7,7 @@ import pandas as pd
 import psycopg2
 import streamlit as st
 
-sys.path.append('/mnt/shares/L/PROJECTS/JUMP-CRISPR/Code/streamlit-1/lib/')
+sys.path.append('../lib/')
 from streamlib import sql_df
 
 st.set_page_config(

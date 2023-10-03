@@ -1,8 +1,12 @@
+streamlit==1.26.0
+umap-learn
 plotly
 pymongo
-psycopg2
+psycopg2-binary
 rdkit
 gseapy
 bs4
 biopython
 bioservices
+seaborn
+scikit-learn
