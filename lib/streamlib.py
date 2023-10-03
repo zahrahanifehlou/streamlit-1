@@ -30,12 +30,12 @@ def str_to_float(strs):
     return float(strs)
 
 def sql_df(sql_str,conn=conn_meta):
-    conn = init_connection()
+   
     cur = conn.cursor()
     cur.execute(sql_str)
     rows = cur.fetchall()
     df_d = pd.DataFrame(rows, columns=[desc[0] for desc in cur.description])
-    conn.close()
+   
     return df_d
 
 ################################### STRINGDB PPI ##############################################
