@@ -229,12 +229,15 @@ if not df_inter.empty:
     if disp:
         st.write("DF_CLUST",df_clust)
     df_umap_cluster=df_inter.merge(df_clust,left_on='symbol',right_on='symbol').reset_index(drop=True)
+    list_cat=get_list_category(df_umap_cluster,'symbol')
+    categ = st.selectbox("Select Category", list_cat)
+    df_go_ento = get_stringDB_enr(df_umap_cluster,'symbol',categ)
     # df_umap_cluster['chromosome']=df_umap_cluster['chromosome'].apply(int_to_str)
     if disp:
         st.write(df_umap_cluster)
     list_enr={}
     for grpName, rows in df_clust.groupby('cluster'):
-        df_temp = get_stringDB_enr(rows['symbol'].unique())
+        df_temp = get_stringDB_enr(rows['symbol'].unique(),cat=categ)
         # st.write(df_temp['Description'], grpName)
         
         # list_enr['cluster'].append(grpName)
@@ -244,10 +247,8 @@ if not df_inter.empty:
         else:
              list_enr.update({grpName:'Null'})
     ################################### ENRICHMENT ##############################################
-    st.write(list_enr)
-    list_cat=get_list_category(df_umap_cluster,'symbol')
-    categ = st.selectbox("Select Category", list_cat)
-    df_go_ento = get_stringDB_enr(df_umap_cluster,'symbol',categ)
+    # st.write(list_enr)
+
     st.write(f'{categ} Enrichment',df_go_ento)
     df_go_ento['log_p_val']=-np.log10(df_go_ento['p_val'].apply(str_to_float))
     fig_bar=px.bar(df_go_ento,x='Description',y='log_p_val')
@@ -288,7 +289,7 @@ if not df_inter.empty:
         fig1 = px.scatter(df_umap, x="X", y="Y",color='cluster',text='target',size='size',width=800,height=800,hover_data=['target','keggid'])
     else:
         fig1 = px.scatter(df_umap, x="X", y="Y",color='cluster',text='target',size='size',width=800,height=800,hover_data=['target'])
-    st.plotly_chart(fig1, theme="streamlit", use_container_width=False)
+    st.plotly_chart(fig1, theme="streamlit", use_container_width=True)
 
 
     ################################### SIMILARITY ##############################################
