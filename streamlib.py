@@ -4,7 +4,7 @@ import json
 import requests
 ################################### CONNECTION DBs ##############################################
 conn_meta = psycopg2.connect(
-    host="localhost",
+    host="192.168.2.131",
     port="5432",
     user="arno",
     database="ksi_cpds",
@@ -12,7 +12,7 @@ conn_meta = psycopg2.connect(
 )
 
 conn_prof = psycopg2.connect(
-    host="localhost",
+    host="192.168.2.131",
     port="5432",
     user="arno",
     database="ksilink_cpds",
