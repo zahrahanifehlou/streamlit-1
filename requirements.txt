@@ -1,4 +1,4 @@
-numpy<=1.25
+umap-learn
 plotly
 pymongo
 psycopg2-binary
@@ -7,9 +7,5 @@ gseapy
 bs4
 biopython
 bioservices
-umap-learn
 seaborn
 scikit-learn
-sklearn
-plotly
-rdkit
