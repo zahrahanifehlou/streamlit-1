@@ -8,7 +8,7 @@ import streamlit as st
 
 sys.path.append('/mnt/shares/L/PROJECTS/JUMP-CRISPR/Code/streamlit-1/lib/')
 from streamlib import sql_df
-
+from streamlib import sql_df
 
 def convert_df(df):
        return df.to_csv(index=False).encode('utf-8')
