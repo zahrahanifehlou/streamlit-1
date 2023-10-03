@@ -1,6 +1,5 @@
+streamlit==1.26.0
 umap-learn
-numpy==1.23
-numba==0.56.4
 plotly
 pymongo
 psycopg2-binary
