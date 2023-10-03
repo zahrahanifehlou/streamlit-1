@@ -9,4 +9,7 @@ bioservices
 umap-learn
 seaborn
 scikit-learn
+sklearn
+plotly
+rdkit
 
