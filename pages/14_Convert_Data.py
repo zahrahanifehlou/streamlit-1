@@ -41,9 +41,14 @@ st.write("Example in Cpds", df_cpd_meta.sample(5))
 len_df = len(df_cpd_meta['pubchemid'].unique())
 
 
+sql_kegg="select keggcpdgene.*, gene.*, keggcpd.* from keggcpdgene \
+  INNER join gene on keggcpdgene.geneid=gene.geneid \
+  INNER join keggcpd on keggcpdgene.keggid=keggcpd.keggid"
+df_kegg = sql_df(sql_kegg,conn_meta)
+df_kegg = df_kegg.loc[:, ~df_kegg.columns.duplicated()]
+st.write("Kegg", df_kegg)
 
-
-st.write(f'{len_df} Unique Cpds Registered')
+st.write(f'{len_df} Unique Cpds with geneid Registered')
 uploaded_files = st.file_uploader("Choose files", accept_multiple_files=True)
 # st.write(uploaded_file)
 list_df = []
