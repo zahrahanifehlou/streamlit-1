@@ -234,12 +234,14 @@ if str(option) == "gene" and len(df_res) > 0:
     sql_crisper = f"SELECT * FROM crisperbatchs WHERE crisperbatchs.geneid IN ({','.join(geneid_lis)})"
     df_crisperBatchs = sql_df(sql_crisper, conn).drop_duplicates(subset=["batchid"])
     batch_list = [f"'{batchid}'" for batchid in df_crisperBatchs["batchid"]]
-    sql_crisper_profile = (
-        f"SELECT * FROM aggcombatprofile WHERE metabatchid IN ({','.join(batch_list)})"
-    )
-    df_prof_crisper = sql_df(sql_crisper_profile, conn_profileDB)
-    crisper_dic = df_crisperBatchs.set_index("batchid")["geneid"].to_dict()
-    df_prof_crisper["metageneid"] = df_prof_crisper["metabatchid"].map(crisper_dic)
+    if len(batch_list) >0:
+        sql_crisper_profile = (
+            f"SELECT * FROM aggcombatprofile WHERE metabatchid IN ({','.join(batch_list)})"
+        )
+       
+        df_prof_crisper = sql_df(sql_crisper_profile, conn_profileDB)
+        crisper_dic = df_crisperBatchs.set_index("batchid")["geneid"].to_dict()
+        df_prof_crisper["metageneid"] = df_prof_crisper["metabatchid"].map(crisper_dic)
 
 
 # get cpd gene/target info-------------------------------------------------------------------------------------------------------------------
