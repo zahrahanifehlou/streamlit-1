@@ -229,6 +229,11 @@ if not df_inter.empty:
     if disp:
         st.write("DF_CLUST",df_clust)
     df_umap_cluster=df_inter.merge(df_clust,left_on='symbol',right_on='symbol').reset_index(drop=True)
+    # df_umap_cluster['chromosome']=df_umap_cluster['chromosome'].apply(int_to_str)
+    if disp:
+        st.write(df_umap_cluster)
+
+    ################################### ENRICHMENT ##############################################
     list_cat=get_list_category(df_umap_cluster,'symbol')
     categ = st.selectbox("Select Category", list_cat)
     df_go_ento = get_stringDB_enr(df_umap_cluster,'symbol',categ)
