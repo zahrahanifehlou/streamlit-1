@@ -2,6 +2,11 @@ import psycopg2
 import pandas as pd
 import json
 import requests
+import streamlib as st
+
+def init_connection():
+    return psycopg2.connect(**st.secrets["postgres"])
+
 ################################### CONNECTION DBs ##############################################
 conn_meta = psycopg2.connect(
     host="192.168.2.131",
@@ -25,10 +30,12 @@ def str_to_float(strs):
     return float(strs)
 
 def sql_df(sql_str,conn=conn_meta):
+   
     cur = conn.cursor()
     cur.execute(sql_str)
     rows = cur.fetchall()
     df_d = pd.DataFrame(rows, columns=[desc[0] for desc in cur.description])
+   
     return df_d
 
 ################################### STRINGDB PPI ##############################################

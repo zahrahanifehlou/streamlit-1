@@ -15,7 +15,7 @@ def convert_df(df):
 def get_infos(dftiti):
     list_cols = df.columns.tolist()
 
-    dftiti.dropna(subset="symbol", axis=0, inplace=True)
+    # dftiti.dropna(subset="symbol", axis=0, inplace=True)
 
     human = gp.get_library_name(organism="Human")
     col1, col2 = st.columns(2)
@@ -26,7 +26,8 @@ def get_infos(dftiti):
     with col2:
         sel = st.selectbox(":green[Choose DB]", human)
 
-    gene_list = dftiti["symbol"].squeeze().str.strip().to_list()
+    dftiti.dropna(subset=sel_col, axis=0, inplace=True)
+    gene_list = dftiti[sel_col].squeeze().str.strip().to_list()
 
     enr = gp.enrichr(
         gene_list=gene_list,  # or "./tests/data/gene_list.txt",
@@ -39,19 +40,19 @@ def get_infos(dftiti):
 
 
     df_enr["Log_10_Pv"] = -np.log10(df_enr["Adjusted P-value"])
-    df_enr.rename(columns={"Term": "Pathways"}, inplace=True)
+    # df_enr.rename(columns={"Term": "Pathways"}, inplace=True)
     st.write(df_enr)
     st.download_button(
                         label="Save",data=convert_df(df_enr),file_name=f"enrich.csv",mime='csv',)
 
 
-    fig = px.bar(df_enr, x="Pathways", y="Log_10_Pv")
+    fig = px.bar(df_enr, x="Term", y="Log_10_Pv")
     st.plotly_chart(fig, theme="streamlit", use_container_width=True)
 
 
 def upload_files():
     uploaded_files = st.file_uploader(
-        "## Choose files with keggid in cols, if df null", accept_multiple_files=True
+        "## Choose files with symbol or geneid in cols, if df null", accept_multiple_files=True
     )
     # st.write(uploaded_file)
     list_df = []

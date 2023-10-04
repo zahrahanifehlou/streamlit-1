@@ -9,6 +9,7 @@ import sys
 sys.path.append('/mnt/shares/L/PROJECTS/JUMP-CRISPR/Code/streamlit-1/lib/')
 from streamlib import conn_meta, sql_df
 
+# conn_meta.close()
 
 def convert_df(df):
        return df.to_csv(index=False).encode('utf-8')
@@ -23,11 +24,22 @@ len_df = len(df_meta['geneid'].unique())
 
 st.write(f'{len_df} Unique Genes Registered')
 
-sql_cpd = "select cpd.*, cpdbatchs.batchid from cpd \
-  INNER join cpdbatchs on cpd.pubchemid=cpdbatchs.pubchemid"
+# sql_cpd = "select cpd.*, cpdbatchs.batchid, keggcpdgne.geneid from cpd \
+#           INNER join cpdbatchs on cpd.pubchemid=cpdbatchs.pubchemid\
+#           INNER join keggcpdgene on cpd.keggid=keggcpdgene.keggid"
+        
+sql_cpd="select cpd.*, cpdbatchs.batchid, keggcpdgene.geneid, gene.* from cpd \
+        INNER join cpdbatchs on cpd.pubchemid=cpdbatchs.pubchemid \
+        INNER join keggcpdgene on cpd.keggid=keggcpdgene.keggid \
+        INNER join gene on gene.geneid=keggcpdgene.geneid"
+
+# st.write(sql_cpd)         
 df_cpd_meta = sql_df(sql_cpd, conn_meta)
+df_cpd_meta = df_cpd_meta.loc[:, ~df_cpd_meta.columns.duplicated()]
+# df_cpd_meta.drop_duplicates()
 st.write("Example in Cpds", df_cpd_meta.sample(5))
 len_df = len(df_cpd_meta['pubchemid'].unique())
+
 
 
 
