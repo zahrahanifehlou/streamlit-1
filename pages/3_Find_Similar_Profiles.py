@@ -315,23 +315,30 @@ else:
                     st.write(df_keep_crisper.describe())
             with tab_list[4]:
                     st.write(df_keep_prof_crisper)
+        if len(df_keep_prof_crisper) < 11:
+                cpd_names = df_keep_prof_crisper.metabatchid.values
+                df_plt = df_keep_prof_crisper.set_index("metabatchid")
+                filter_col = [col for col in df_plt.columns if not col.startswith("meta")]
+                df_plt = df_plt[filter_col].T
+                fig_clusmap = px.line(df_plt, x=filter_col, y=cpd_names, width=1400, height=1000)
+                st.plotly_chart(fig_clusmap, theme="streamlit", use_container_width=True)
 
 #compare CPD and CRISPER---------------------------------------------------------------------------------------------------------------
     st.write("\n")
 
-    if len(df_results_cripser) > 0:
-        st.write("## compare CPD and CRISPER")
+    # if len(df_results_cripser) > 0:
+    #     st.write("## compare CPD and CRISPER")
 
-        compare_cols = st.columns(2)
+    #     compare_cols = st.columns(2)
 
-        with compare_cols[0]:
-            st.write("compounds profile")
-            meta_cols = [col for col in df_keep_prof_cpd.columns if  col.startswith("meta")]
-            st.write(df_keep_prof_cpd[meta_cols].describe().T)
-        with compare_cols[1]:
-            st.write("Crisper profile")
-            meta_cols_crs = [col for col in df_keep_prof_crisper.columns if  col.startswith("meta")]
-            st.write(df_keep_prof_crisper[meta_cols_crs].describe().T)
+    #     with compare_cols[0]:
+    #         st.write("compounds profile")
+    #         meta_cols = [col for col in df_keep_prof_cpd.columns if  col.startswith("meta")]
+    #         st.write(df_keep_prof_cpd[meta_cols].describe().T)
+    #     with compare_cols[1]:
+    #         st.write("Crisper profile")
+    #         meta_cols_crs = [col for col in df_keep_prof_crisper.columns if  col.startswith("meta")]
+    #         st.write(df_keep_prof_crisper[meta_cols_crs].describe().T)
 
 
 
