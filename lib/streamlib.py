@@ -173,3 +173,67 @@ def get_cpds():
    
     return df_drug_meta  
 
+def get_col_colors(df):
+    list_col = [col for col in df.columns if not col.startswith("Meta")]
+    ER = [
+        x
+        for x in list_col
+        if "ER" in x and all(y not in x for y in ["RNA", "Mito", "AGP", "DNA"])
+    ]
+    RNA = [
+        x
+        for x in list_col
+        if "RNA" in x and all(y not in x for y in ["ER", "Mito", "AGP", "DNA"])
+    ]
+    Mito = [
+        x
+        for x in list_col
+        if "Mito" in x and all(y not in x for y in ["ER", "RNA", "AGP", "DNA"])
+    ]
+    mito = [
+        x
+        for x in list_col
+        if "mito" in x and all(y not in x for y in ["ER", "RNA", "AGP", "DNA"])
+    ]
+    AGP = [
+        x
+        for x in list_col
+        if "AGP" in x and all(y not in x for y in ["ER", "RNA", "Mito", "DNA"])
+    ]
+    DNA = [
+        x
+        for x in list_col
+        if "DNA" in x and all(y not in x for y in ["ER", "RNA", "Mito", "AGP"])
+    ]
+    list_fin = []
+    list_fin.extend(DNA)
+    list_fin.extend(RNA)
+    list_fin.extend(ER)
+    list_fin.extend(AGP)
+    list_fin.extend(Mito)
+    list_fin.extend(mito)
+
+    list_fin = list(dict.fromkeys(list_fin))
+
+    list_fin.append("name")
+    df["name"] = df["metacpdname"] + "_" + df["metasource"]
+
+    df_plt = df[list_fin]
+    df_plt.set_index("name", inplace=True)
+
+    col_colors = []
+
+    for col in df_plt.columns:
+        if col in ER:
+            col_colors.append("red")
+        elif col in DNA:
+            col_colors.append("blue")
+        elif col in RNA:
+            col_colors.append("green")
+        elif col in AGP:
+            col_colors.append("orange")
+        elif col in Mito or col in mito:
+            col_colors.append("pink")
+        else:
+            col_colors.append("white")
+    return df_plt, col_colors
