@@ -52,9 +52,9 @@ sql_dis = 'select * from disease'
 df_dis = sql_df(sql_dis,conn_meta)
 
 # st.write(df_dis)
-sel_disease = st.selectbox('Chose the disease:', df_dis["name"].unique())
+sel_disease = st.selectbox('Chose the disease:', df_dis["disname"].unique())
 
-code_dis =df_dis[df_dis["name"]==sel_disease]['disid'].values[0]
+code_dis =df_dis[df_dis["disname"]==sel_disease]['disid'].values[0]
 st.write("---")
 st.write('Kegg Code for selected disease: ',code_dis)
 tog_ref = st.sidebar.toggle('Get References',help='retrieve main litterature')
