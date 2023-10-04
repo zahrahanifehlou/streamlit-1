@@ -168,8 +168,9 @@ else:
         )
         df_keep_cpd = (
             df_hist_cpd[df_hist_cpd["sim"] > thres_cpd]
-            .head(thresq_cpd)
+           
             .sort_values(by="sim", ascending=False)
+            .head(thresq_cpd)
             .reset_index(drop=True)
         )
 
@@ -255,8 +256,8 @@ else:
         )
         df_keep_crisper = (
             df_hist_crisper[df_hist_crisper["sim"] > thres_crisper]
-            .head(thresq_crisper)
             .sort_values(by="sim", ascending=False)
+            .head(thresq_crisper)
             .reset_index(drop=True)
         )
         batch_list_crisper = df_keep_crisper["metabatchid"].tolist()
