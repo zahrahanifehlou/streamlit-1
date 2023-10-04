@@ -304,6 +304,8 @@ if len(df_cpds) > 0:
     if str(option)=="gene":
         df_prof_crisper["metatype"] = "CRISPR"
         df_prof_crisper["metaefficacy"] = "Unknown"
+        df_prof=pd.concat([df_prof,df_prof_crisper ])
+        df_prof['metaname'] = df_prof['metaname'].fillna(df_prof['metabatchid'])
         tab3.write(df_prof_crisper)
         tab4.write(df_prof_crisper.describe().T)
 
