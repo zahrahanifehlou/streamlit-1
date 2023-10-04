@@ -91,7 +91,7 @@ def get_col_colors(df):
 
 
     list_fin.append("name")
-    df["name"] = df["metaname"] + "_" + df["metasource"]
+    df["name"] = df["metacpdname"] + "_" + df["metasource"]
 
     df_plt = df[list_fin]
     df_plt.set_index("name", inplace=True)
@@ -179,11 +179,11 @@ else:
         df_keep_prof_cpd=pd.DataFrame()
         if len(b_list_cpd) > 0:
 
-            sql_cpds = f"select cpd.pubchemid,cpd.keggid, cpd.name, cpd.smile,cpdgene.geneid,cpdbatchs.batchid,keggcpd.efficacy from cpd \
+            sql_cpds = f"select cpd.pubchemid,cpd.keggid, cpd.cpdname, cpd.smile,cpdgene.geneid,cpdbatchs.batchid,keggcpd.efficacy from cpd \
             inner join cpdbatchs on cpd.pubchemid=cpdbatchs.pubchemid \
             left join cpdgene on cpdbatchs.pubchemid=cpdgene.pubchemid \
             left join keggcpd on cpd.keggid=keggcpd.keggid \
-            where cpdbatchs.batchid in ({','.join(b_list_cpd)}) group by cpd.pubchemid,cpd.keggid, cpd.name, cpd.smile,cpdgene.geneid,cpdbatchs.batchid,keggcpd.efficacy"
+            where cpdbatchs.batchid in ({','.join(b_list_cpd)}) group by cpd.pubchemid,cpd.keggid, cpd.cpdname, cpd.smile,cpdgene.geneid,cpdbatchs.batchid,keggcpd.efficacy"
             df_results_cpd = sql_df(sql_cpds, conn)
             df_results_cpd.drop_duplicates(subset=["pubchemid"], inplace=True)
             if len(df_results_cpd) > 0:
@@ -193,9 +193,9 @@ else:
                 df_keep_prof_cpd = df_source[df_source["metabatchid"].isin(df_keep_cpd["metabatchid"].values)]
                 df_keep_prof_cpd.reset_index(inplace=True,drop=True)
                 df_keep_prof_cpd = df_keep_prof_cpd.merge(df_results_cpd.add_prefix('meta'),left_on='metabatchid',right_on='metabatchid').reset_index(drop=True)
-                df_keep_prof_cpd.loc[df_keep_prof_cpd.metaname =="No result", 'metaname'] = None
-                df_keep_prof_cpd['metaname'] = df_keep_prof_cpd['metaname'].str[:30]
-                df_keep_prof_cpd['metaname'] = df_keep_prof_cpd['metaname'].fillna(df_keep_prof_cpd['metabatchid'])
+                df_keep_prof_cpd.loc[df_keep_prof_cpd.metacpdname =="No result", 'metacpdname'] = None
+                df_keep_prof_cpd['metacpdname'] = df_keep_prof_cpd['metacpdname'].str[:30]
+                df_keep_prof_cpd['metacpdname'] = df_keep_prof_cpd['metacpdname'].fillna(df_keep_prof_cpd['metabatchid'])
 
 
 
@@ -213,7 +213,7 @@ else:
                 df_keep_cpd=df_keep_cpd.drop(["metabatchid"],axis=1)
                 st.write(df_keep_cpd)
                 st.download_button(
-                        label="Save",data=convert_df(df_keep_cpd),file_name=f"{df_keep_cpd.name[0]}.csv",mime='csv',)
+                        label="Save",data=convert_df(df_keep_cpd),file_name=f"{df_keep_cpd.cpdname[0]}.csv",mime='csv',)
             with tab_list[2]:#UMAP
                 df_src_emd["color"] = "others"
                 df_src_emd.loc[df_src_emd["batchid"].isin(batch_list_cpd), "color"] = "similar compounds"
@@ -235,8 +235,8 @@ else:
                 st.write(df_keep_prof_cpd)
 
             if len(df_keep_prof_cpd) < 11:
-                cpd_names = df_keep_prof_cpd.metaname.values
-                df_plt = df_keep_prof_cpd.set_index("metaname")
+                cpd_names = df_keep_prof_cpd.metacpdname.values
+                df_plt = df_keep_prof_cpd.set_index("metacpdname")
                 filter_col = [col for col in df_plt.columns if not col.startswith("meta")]
                 df_plt = df_plt[filter_col].T
                 fig_clusmap = px.line(df_plt, x=filter_col, y=cpd_names, width=1400, height=1000)
@@ -278,7 +278,7 @@ else:
                 df_keep_prof_crisper.reset_index(inplace=True,drop=True)
                 dic_gene = df_results_cripser.set_index("batchid").to_dict()["geneid"]
                 df_keep_prof_crisper["metageneid"] = df_keep_prof_crisper["metabatchid"].map(dic_gene)
-                df_keep_prof_crisper["metaname"] = df_keep_prof_crisper["metabatchid"]
+                df_keep_prof_crisper["metacpdname"] = df_keep_prof_crisper["metabatchid"]
                 df_keep_prof_crisper["metaefficacy"]=None
                 st.session_state["df_crisper_profile"] = df_keep_prof_crisper
 

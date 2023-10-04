@@ -230,7 +230,7 @@ if len(df_cpds)>0:
 
     with mainTabs[1]:
         conn = init_connection()
-        sql_cpd = f"select cpd.pubchemid, cpd.name, cpd.smile from cpd  "
+        sql_cpd = f"select cpd.pubchemid, cpd.cpdname, cpd.smile from cpd  "
         jump_df=sql_df(sql_cpd,conn)
         conn.close()
         jump_df=jump_df[jump_df["smile"].notna()]
