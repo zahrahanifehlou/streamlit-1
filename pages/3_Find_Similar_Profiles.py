@@ -316,13 +316,13 @@ else:
                     st.write(df_keep_crisper.describe())
             with tab_list[4]:
                     st.write(df_keep_prof_crisper)
-        if len(df_keep_prof_crisper) < 11:
-                cpd_names = df_keep_prof_crisper.metabatchid.values
-                df_plt = df_keep_prof_crisper.set_index("metabatchid")
-                filter_col = [col for col in df_plt.columns if not col.startswith("meta")]
-                df_plt = df_plt[filter_col].T
-                fig_clusmap = px.line(df_plt, x=filter_col, y=cpd_names, width=1400, height=1000)
-                st.plotly_chart(fig_clusmap, theme="streamlit", use_container_width=True)
+            if len(df_keep_prof_crisper) < 11:
+                    cpd_names = df_keep_prof_crisper.metabatchid.values
+                    df_plt = df_keep_prof_crisper.set_index("metabatchid")
+                    filter_col = [col for col in df_plt.columns if not col.startswith("meta")]
+                    df_plt = df_plt[filter_col].T
+                    fig_clusmap = px.line(df_plt, x=filter_col, y=cpd_names, width=1400, height=1000)
+                    st.plotly_chart(fig_clusmap, theme="streamlit", use_container_width=True)
 
 #compare CPD and CRISPER---------------------------------------------------------------------------------------------------------------
     st.write("\n")
