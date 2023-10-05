@@ -252,7 +252,7 @@ if not df_inter.empty:
         else:
              list_enr.update({grpName:'Null'})
     ################################### ENRICHMENT ##############################################
-    # st.write(list_enr)
+    
 
     st.write(f'{categ} Enrichment',df_go_ento)
     df_go_ento['log_p_val']=-np.log10(df_go_ento['p_val'].apply(str_to_float))
