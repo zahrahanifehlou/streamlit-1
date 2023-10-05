@@ -99,7 +99,7 @@ for col in data.columns:
     data=data.rename(columns={col:'meta_'+col})
 # st.write(data.describe())
 data=data.reset_index(drop=True)
-st.write(data)
+st.write(data.sample(2))
 
 list_batch = [f"'{meta_batchid}'" for meta_batchid in data["meta_batchid"]]
 
@@ -125,7 +125,7 @@ for col in df_genes.columns:
 
 df_prof_drug_meta_genes =df_prof_drug_meta.merge(df_genes,left_on='meta_geneid',right_on='meta_geneid').reset_index(drop=True)
 df_prof_drug_meta_genes=df_prof_drug_meta_genes[df_prof_drug_meta_genes['metasource']==sel_source].reset_index(drop=True)
-st.write(df_prof_drug_meta_genes)
+st.write(df_prof_drug_meta_genes.sample(2))
 
 
 model = umap.UMAP(random_state=42, verbose=False).fit(df_prof_drug_meta_genes[num_col])
