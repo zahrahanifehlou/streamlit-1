@@ -251,7 +251,7 @@ if len(df_cpds) > 0:
             st.write(df_cpdGene_tmp)
         with fig_cols[1]:
             fig = px.pie(df_cpdGene_tmp,  names='symbol',
-                title='Population of symbol',
+                title=' symbol',
                 )
             fig.update_traces(textposition='inside', textinfo='percent+label')
             st.plotly_chart(fig, theme="streamlit", use_container_width=True)
@@ -261,7 +261,7 @@ if len(df_cpds) > 0:
             st.write(df_cpdPath)
         with fig_cols2[1]:
             fig = px.pie(df_cpdPath,  names='pathname',
-                title='Population of pathname',
+                title=' pathname',
                 )
             fig.update_traces(textposition='inside', textinfo='percent+label')
             st.plotly_chart(fig, theme="streamlit", use_container_width=True)  
@@ -271,7 +271,7 @@ if len(df_cpds) > 0:
             st.write(df_efficacy)
         with fig_cols3[1]:
             fig = px.pie(df_efficacy,  names='efficacy',
-                title='Population of efficacy',
+                title=' efficacy',
                 )
             fig.update_traces(textposition='inside', textinfo='percent+label')
             st.plotly_chart(fig, theme="streamlit", use_container_width=True)  
