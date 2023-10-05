@@ -12,7 +12,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 
 sys.path.append('/mnt/shares/L/PROJECTS/JUMP-CRISPR/Code/streamlit-1/lib/')
 from streamlib import sql_df
-
+#aaaaa
 st.set_page_config(
     layout="wide",
 )
@@ -136,7 +136,7 @@ else:
 
 
 
-    # ---- source and crisper profile ----------------------------------------------------------------------------
+    ################################# ---- source and crisper profile ----------------------------------------------------------------------------
     sql_profile = f"select * from aggcombatprofile where metasource='{choix_source}'"
     df_source = sql_df(sql_profile, profile_conn)
 
