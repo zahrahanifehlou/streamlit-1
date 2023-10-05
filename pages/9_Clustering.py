@@ -80,18 +80,21 @@ sql_source='select platemap.source from platemap'
 df_source=sql_df(sql_source,conn)
 
 sel_source=st.selectbox('Select the source',df_source['source'].unique())
-sql_data = f"select cpd.pubchemid,cpd.keggid,cpd.cpdname,cpdgene.geneid,cpdbatchs.batchid from cpd \
-                    inner join cpdbatchs on cpdbatchs. pubchemid=cpd.pubchemid \
-                    inner join platemap on platemap.batchid= cpdbatchs.batchid \
-                    left join cpdgene on cpdbatchs.pubchemid= cpdgene.pubchemid \
-                    where platemap.source='{sel_source}' and cpdgene.server='KEGG' \
-                    group by  cpdbatchs.batchid,cpd.pubchemid,cpd.keggid,cpd.cpdname,cpdgene.geneid"
+if 'CRISPER' not in sel_source: 
+    sql_data = f"select cpd.pubchemid,cpd.keggid,cpd.cpdname,cpdgene.geneid,cpdbatchs.batchid from cpd \
+                        inner join cpdbatchs on cpdbatchs. pubchemid=cpd.pubchemid \
+                        inner join platemap on platemap.batchid= cpdbatchs.batchid \
+                        left join cpdgene on cpdbatchs.pubchemid= cpdgene.pubchemid \
+                        where platemap.source='{sel_source}' and cpdgene.server='KEGG' \
+                        group by  cpdbatchs.batchid,cpd.pubchemid,cpd.keggid,cpd.cpdname,cpdgene.geneid"
 # sql_data="select * from platemap"
+else:
+    sql_data='select * from crisperbatchs'
 data = sql_df(sql_data, conn)
-
-data.dropna(subset='keggid',inplace=True)
-data.drop_duplicates(subset='pubchemid',inplace=True)
-data = data.loc[:,~data.columns.duplicated()].copy()
+if 'CRISPER' not in sel_source:
+    data.dropna(subset='keggid',inplace=True)
+    data.drop_duplicates(subset='pubchemid',inplace=True)
+    data = data.loc[:,~data.columns.duplicated()].copy()
 for col in data.columns:
     data=data.rename(columns={col:'meta_'+col})
 # st.write(data.describe())
