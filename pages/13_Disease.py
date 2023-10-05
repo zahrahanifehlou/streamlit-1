@@ -87,7 +87,7 @@ with col2:
     st.write('Known genes for this disease',df_link_genes)
     st.write("---")
 
-
+#
 
 on = st.sidebar.toggle('Retrieve Cpds Info',help='Will retrieve all infos')
 if on and not df_known_drug.empty:
