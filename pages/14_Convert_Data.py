@@ -65,7 +65,7 @@ if len(list_df) > 0:
     st.write('Your Data:', df)
    
 
-  # Create a cursor object
+
 # cur = conn_meta.cursor()
     col1,col2,col3=st.columns(3)
     sel_col = col1.selectbox("Choose your column", df.columns)
