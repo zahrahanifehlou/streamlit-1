@@ -44,7 +44,7 @@ st.write(f'{len_df} Unique Cpds in Jump with geneid Registered')
 sql_kegg="select keggcpdgene.*, gene.*, keggcpd.* from keggcpdgene \
   INNER join gene on keggcpdgene.geneid=gene.geneid \
   INNER join keggcpd on keggcpdgene.keggid=keggcpd.keggid"
-sql_kegg = "select * from keggcpd"
+# sql_kegg = "select * from keggcpd"
 df_kegg = sql_df(sql_kegg,conn_meta)
 df_kegg = df_kegg.loc[:, ~df_kegg.columns.duplicated()]
 st.write("Kegg Data", len(df_kegg['keggid'].unique()))
