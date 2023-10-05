@@ -65,7 +65,7 @@ if len(list_df) > 0:
     st.write('Your Data:', df)
    
 #test
-
+# test test
     col1,col2,col3=st.columns(3)
     sel_col = col1.selectbox("Choose your column", df.columns)
     sel_data = col2.selectbox("Choose dataset", ['genes', 'cpds in Jump with geneinfos', 'cpds in Kegg', 'cpds in Jump'])
