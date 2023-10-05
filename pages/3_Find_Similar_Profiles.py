@@ -136,14 +136,14 @@ else:
 
 
 
-    ################################# ---- source and crisper profile ----------------------------------------------------------------------------
+    ## ---- source and crisper profile ----------------------------------------------------------------------------
     sql_profile = f"select * from aggcombatprofile where metasource='{choix_source}'"
     df_source = sql_df(sql_profile, profile_conn)
 
     sql_crisper_profile = f"SELECT * FROM aggcombatprofile WHERE metasource='CRISPER'"
     df_prof_crisper = sql_df(sql_crisper_profile, profile_conn)
 
-    # umap--------------------------------------------------------
+    ## umap--------------------------------------------------------
     sql_umqpemd_crips = f"select * from umapemd where source='CRISPER'"
     df_crisper_emd = sql_df(sql_umqpemd_crips, profile_conn)
     sql_umqpemd = f"select * from umapemd where source='{choix_source}'"
@@ -262,7 +262,7 @@ else:
         )
         batch_list_crisper = df_keep_crisper["metabatchid"].tolist()
         b_list_crisper = [f"'{b}'" for b in batch_list_crisper ]
-    # b_list_crisper = [f"'{b}'" for b in batch_list_crisper if "jcp2022_800" not in b]
+    ## b_list_crisper = [f"'{b}'" for b in batch_list_crisper if "jcp2022_800" not in b]
         df_results_cripser = pd.DataFrame()
         df_keep_prof_crisper=pd.DataFrame()
         if len(b_list_crisper) > 0:
@@ -389,4 +389,4 @@ else:
 
 
 conn.close()
-#profile_conn.close()
+##profile_conn.close()
