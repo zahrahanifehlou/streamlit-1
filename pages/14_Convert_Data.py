@@ -44,9 +44,10 @@ st.write(f'{len_df} Unique Cpds in Jump with geneid Registered')
 sql_kegg="select keggcpdgene.*, gene.*, keggcpd.* from keggcpdgene \
   INNER join gene on keggcpdgene.geneid=gene.geneid \
   INNER join keggcpd on keggcpdgene.keggid=keggcpd.keggid"
+sql_kegg = "select * from keggcpd"
 df_kegg = sql_df(sql_kegg,conn_meta)
 df_kegg = df_kegg.loc[:, ~df_kegg.columns.duplicated()]
-st.write("Kegg Data", df_kegg)
+st.write("Kegg Data", len(df_kegg['keggid'].unique()))
 
 
 uploaded_files = st.file_uploader("Choose files", accept_multiple_files=True)
@@ -70,7 +71,7 @@ if len(list_df) > 0:
     sel_col = col1.selectbox("Choose your column", df.columns)
     sel_data = col2.selectbox("Choose dataset", ['genes', 'cpds in Jump with geneinfos', 'cpds in Kegg', 'cpds in Jump'])
 
-    b_list2 = df[sel_col].to_list()
+    b_list2 = df[sel_col].astype(str).to_list()
    
  
     bq = []
@@ -88,7 +89,7 @@ if len(list_df) > 0:
                 label="Save",data=convert_df(df_genes),file_name=f"{sel_data}.csv",mime='csv')
     if sel_data=='cpds in Jump with geneinfos':
       sel_match = col3.selectbox("Choose matching col", df_cpd_meta.columns)
-      df_cpds= df_cpd_meta[df_cpd_meta[sel_match].isin(b_list2)].drop_duplicates(subset='pubchemid').reset_index(drop=True)
+      df_cpds= df_cpd_meta[df_cpd_meta[sel_match].astype(str).str.contains('|'.join(b_list2))].drop_duplicates(subset='pubchemid').reset_index(drop=True)
       st.write(df_cpds)
       st.download_button(
                 label="Save",data=convert_df(df_cpds),file_name=f"{sel_data}.csv",mime='csv')
@@ -97,7 +98,7 @@ if len(list_df) > 0:
     
     if sel_data=='cpds in Kegg':
       sel_match = col3.selectbox("Choose matching col", df_kegg.columns)
-      df_kegg= df_kegg[df_kegg[sel_match].isin(b_list2)].drop_duplicates(subset=['keggid','geneid']).reset_index(drop=True)
+      df_kegg= df_kegg[df_kegg[sel_match].astype(str).str.contains('|'.join(b_list2))].drop_duplicates(subset=['keggid']).reset_index(drop=True)
       st.write(df_kegg)
       st.download_button(
                 label="Save",data=convert_df(df_kegg),file_name=f"{sel_data}.csv",mime='csv')
@@ -106,7 +107,7 @@ if len(list_df) > 0:
       sql_jump="select * from cpd"
       df_jump=sql_df(sql_jump,conn_meta)
       sel_match = col3.selectbox("Choose matching col", df_jump.columns)
-      df_jump= df_jump[df_jump[sel_match].isin(b_list2)].drop_duplicates(subset=['pubchemid']).reset_index(drop=True)
+      df_jump= df_jump[df_jump[sel_match].astype(str).str.contains('|'.join(b_list2))].drop_duplicates(subset=['pubchemid']).reset_index(drop=True)
       st.write(df_jump)
       st.download_button(
                 label="Save",data=convert_df(df_jump),file_name=f"{sel_data}.csv",mime='csv')
