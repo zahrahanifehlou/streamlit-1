@@ -32,7 +32,7 @@ sql_cpd="select cpd.*, cpdbatchs.batchid, keggcpdgene.geneid, gene.* from cpd \
         INNER join cpdbatchs on cpd.pubchemid=cpdbatchs.pubchemid \
         INNER join keggcpdgene on cpd.keggid=keggcpdgene.keggid \
         INNER join gene on gene.geneid=keggcpdgene.geneid"
-
+#test
 # st.write(sql_cpd)         
 df_cpd_meta = sql_df(sql_cpd, conn_meta)
 df_cpd_meta = df_cpd_meta.loc[:, ~df_cpd_meta.columns.duplicated()]
