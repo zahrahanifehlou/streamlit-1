@@ -72,7 +72,7 @@ if "df_cpdGene" not in st.session_state:
         st.write("Data from file:", df)
         get_infos(df)
 else:
-    df_all = st.session_state["df_cpdGene"]
+    df_all = st.session_state["df_crisper"]
     server_name = st.radio(
         "select server",
         ("all", "pubchem", "KEGG"),
