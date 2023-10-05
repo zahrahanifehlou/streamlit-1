@@ -80,12 +80,12 @@ sql_source='select platemap.source from platemap'
 df_source=sql_df(sql_source,conn)
 
 sel_source=st.selectbox('Select the source',df_source['source'].unique())
-sql_data = f"select cpd.pubchemid,cpd.keggid,cpd.name,cpdgene.geneid,cpdbatchs.batchid from cpd \
+sql_data = f"select cpd.pubchemid,cpd.keggid,cpd.cpdname,cpdgene.geneid,cpdbatchs.batchid from cpd \
                     inner join cpdbatchs on cpdbatchs. pubchemid=cpd.pubchemid \
                     inner join platemap on platemap.batchid= cpdbatchs.batchid \
                     left join cpdgene on cpdbatchs.pubchemid= cpdgene.pubchemid \
                     where platemap.source='{sel_source}' and cpdgene.server='KEGG' \
-                    group by  cpdbatchs.batchid,cpd.pubchemid,cpd.keggid,cpd.name,cpdgene.geneid"
+                    group by  cpdbatchs.batchid,cpd.pubchemid,cpd.keggid,cpd.cpdname,cpdgene.geneid"
 # sql_data="select * from platemap"
 data = sql_df(sql_data, conn)
 
