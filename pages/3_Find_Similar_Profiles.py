@@ -136,7 +136,7 @@ else:
 
 
 
-    # ---- source and crisper profile ----------------------------------------------------------------------------
+    ################################# ---- source and crisper profile ----------------------------------------------------------------------------
     sql_profile = f"select * from aggcombatprofile where metasource='{choix_source}'"
     df_source = sql_df(sql_profile, profile_conn)
 
