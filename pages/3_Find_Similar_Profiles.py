@@ -212,7 +212,23 @@ else:
 
                 df_keep_cpd = df_keep_cpd.merge(df_results_cpd,left_on='metabatchid',right_on='batchid').reset_index(drop=True)
                 df_keep_cpd=df_keep_cpd.drop(["metabatchid"],axis=1)
-                st.write(df_keep_cpd)
+                 
+                fig_cols2 = st.columns(3)
+                with fig_cols2[0]:
+                    st.write(df_keep_cpd)
+                with fig_cols2[1]:
+                    fig = px.pie(df_keep_cpd,  names='geneid',
+                        title=' geneid',
+                        )
+                    fig.update_traces(textposition='inside', textinfo='percent+label')
+                    st.plotly_chart(fig, theme="streamlit", use_container_width=True)  
+                with fig_cols2[2]:
+                    fig = px.pie(df_keep_cpd,  names='efficacy',
+                        title=' efficacy',
+                        )
+                    fig.update_traces(textposition='inside', textinfo='percent+label')
+                    st.plotly_chart(fig, theme="streamlit", use_container_width=True)  
+                
                 st.download_button(
                         label="Save",data=convert_df(df_keep_cpd),file_name=f"{df_keep_cpd.cpdname[0]}.csv",mime='csv',)
             with tab_list[2]:#UMAP
