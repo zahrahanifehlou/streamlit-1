@@ -177,7 +177,7 @@ from sklearn.neighbors import NearestNeighbors
 list_symb=df_all_umap['symbol'].to_list()
 sel_symb = st.selectbox('Select a gene:', list_symb)
 sel_card = st.slider('card of neighbours', min_value=2,max_value=30,value=5,step=1)
-neigh = NearestNeighbors(n_neighbors=sel_card)
+neigh = NearestNeighbors(n_neighbors=sel_card,n_jobs=-1)
 neigh.fit(df_all_umap.select_dtypes(include=numerics))
 neib =neigh.kneighbors(df_all_umap[df_all_umap['symbol']==sel_symb].select_dtypes(include=numerics))[1].tolist()
 df_neib = df_all_umap.iloc[neib[0]]
@@ -194,7 +194,8 @@ fig5 = px.scatter(
     hover_data=["symbol"],
     color_discrete_sequence=["blue", "red","green" ],
     title=f"similar CRISPER profiles to {sel_symb}   ",
-    color="color"
+    color="color",
+    opacity=0.5
 )
 st.plotly_chart(fig5, theme="streamlit", use_container_width=True)#
 # st.error('you failed!!!')
