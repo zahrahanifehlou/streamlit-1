@@ -197,8 +197,9 @@ fig5 = px.scatter(
     color="color",
     opacity=0.2
 )
-for i,trace in enumerate(fig5.data):
-    if i==0:
+for trace in fig5.data:
+    if trace.name=='similar profile':
+        # st.write(trace)
         trace.marker.opacity=0.9
         trace.marker.size=15
     # else:
