@@ -156,6 +156,7 @@ list_chr=[]
 for g in df_all_umap['Cluster']:
     list_chr.append(chr(g+97))
 df_all_umap['Clusterchr']=list_chr
+df_all_umap=df_all_umap.join(df_prof_drug_meta_genes.select_dtypes(exclude=numerics))
 df_all_umap =  df_all_umap.drop('Cluster',axis=1)
 fig4 = px.scatter(
     df_all_umap,
@@ -169,39 +170,45 @@ st.plotly_chart(fig4, theme="streamlit", use_container_width=True)#
 st.write('Unique Genes: ',len(df_prof_drug_meta_genes['meta_geneid'].unique()))
 st.write('Unique Symbols: ',len(df_prof_drug_meta_genes['meta_symbol'].unique()))
 st.write('Unique Drugs: ',len(df_prof_drug_meta_genes['metabatchid'].unique()))
+
 st.write(df_all_umap)
 
 from sklearn.neighbors import NearestNeighbors
 
-
-list_symb=df_all_umap['symbol'].to_list()
-sel_symb = st.selectbox('Select a gene:', list_symb)
+# sel_res = st.radio('select gene or cpd',['gene','cpd'])
+list_col_data =  df_all_umap.select_dtypes(exclude=numerics).columns.to_list()
+sel_col = st.selectbox('Select a col:', set(list_col_data))
+list_symb=df_all_umap[sel_col].to_list()
+sel_symb = st.selectbox(f'Select a {sel_col}:', set(list_symb))
+st.write(sel_symb)
 sel_card = st.slider('card of neighbours', min_value=2,max_value=30,value=5,step=1)
 neigh = NearestNeighbors(n_neighbors=sel_card,n_jobs=-1)
 neigh.fit(df_all_umap.select_dtypes(include=numerics))
-neib =neigh.kneighbors(df_all_umap[df_all_umap['symbol']==sel_symb].select_dtypes(include=numerics))[1].tolist()
+neib =neigh.kneighbors(df_all_umap[df_all_umap[sel_col]==sel_symb].select_dtypes(include=numerics))[1].tolist()
 df_neib = df_all_umap.iloc[neib[0]]
 
 st.write(df_neib)
 
 df_all_umap['color']='others'
-df_all_umap.loc[df_all_umap["symbol"].isin(df_neib['symbol'].tolist()), "color"] = "similar profile"
+df_all_umap.loc[df_all_umap[sel_col].isin(df_neib[sel_col].tolist()), "color"] = "similar profile"
 
 fig5 = px.scatter(
     df_all_umap,
     x="X_umap",
     y="Y_umap",    
-    hover_data=["symbol"],
+    hover_data=sel_col,
     color_discrete_sequence=["green", "red","blue" ],
     title=f"similar CRISPER profiles to {sel_symb}   ",
     color="color",
-    opacity=0.2
+    opacity=0.8,
+    # text=sel_col
 )
 for trace in fig5.data:
     if trace.name=='similar profile':
         # st.write(trace)
         trace.marker.opacity=0.9
         trace.marker.size=15
+        # trace.text=sel_col
     # else:
     #     trace.marker.line.color = 'rgba(0, 0, 0, 1.0)'
     #     trace.marker.line.width = 2
