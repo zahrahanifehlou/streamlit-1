@@ -188,7 +188,7 @@ neib =neigh.kneighbors(df_all_umap[df_all_umap[sel_col]==sel_symb].select_dtypes
 df_neib = df_all_umap.iloc[neib[0]]
 
 st.write(df_neib)
-
+#
 df_all_umap['color']='others'
 df_all_umap.loc[df_all_umap[sel_col].isin(df_neib[sel_col].tolist()), "color"] = "similar profile"
 
