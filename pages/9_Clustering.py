@@ -192,10 +192,18 @@ fig5 = px.scatter(
     x="X_umap",
     y="Y_umap",    
     hover_data=["symbol"],
-    color_discrete_sequence=["blue", "red","green" ],
+    color_discrete_sequence=["green", "red","blue" ],
     title=f"similar CRISPER profiles to {sel_symb}   ",
     color="color",
-    opacity=0.5
+    opacity=0.2
 )
+for i,trace in enumerate(fig5.data):
+    if i==0:
+        trace.marker.opacity=0.9
+        trace.marker.size=15
+    # else:
+    #     trace.marker.line.color = 'rgba(0, 0, 0, 1.0)'
+    #     trace.marker.line.width = 2
+        
 st.plotly_chart(fig5, theme="streamlit", use_container_width=True)#
 # st.error('you failed!!!')
