@@ -6,8 +6,7 @@ import streamlib as st
 from sklearn.metrics.pairwise import cosine_similarity
 import plotly.express as px
 import umap
-def init_connection():
-    return psycopg2.connect(**st.secrets["postgres"])
+
 
 
 ################################### CONNECTION DBs ##############################################

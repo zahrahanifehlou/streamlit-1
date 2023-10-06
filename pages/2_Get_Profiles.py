@@ -9,8 +9,9 @@ import streamlit as st
 import plotly.express as px
 warnings.filterwarnings("ignore")
 sys.path.append("/mnt/shares/L/PROJECTS/JUMP-CRISPR/Code/streamlit-1/lib/")
-from streamlib import sql_df, init_connection, get_sql_jump, convert_df, get_col_colors
-
+from streamlib import sql_df,  get_sql_jump, convert_df, get_col_colors
+def init_connection():
+    return psycopg2.connect(**st.secrets["postgres"])
 
 conn = init_connection()
 conn_profileDB = psycopg2.connect(

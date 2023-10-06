@@ -1,5 +1,5 @@
 # NMDA GSK2879552 Bay K
-from streamlib import sql_df, init_connection, find_sim_cpds, convert_df, find_umap, get_col_colors
+from streamlib import sql_df,  find_sim_cpds, convert_df, find_umap, get_col_colors
 import sys
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -11,7 +11,8 @@ import umap
 from sklearn.metrics.pairwise import cosine_similarity
 
 sys.path.append('/mnt/shares/L/PROJECTS/JUMP-CRISPR/Code/streamlit-1/lib/')
-
+def init_connection():
+    return psycopg2.connect(**st.secrets["postgres"])
 conn = init_connection()
 profile_conn = psycopg2.connect(
     host="192.168.2.131",
