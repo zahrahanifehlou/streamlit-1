@@ -9,63 +9,7 @@ import streamlit as st
 import plotly.express as px
 warnings.filterwarnings("ignore")
 sys.path.append("/mnt/shares/L/PROJECTS/JUMP-CRISPR/Code/streamlit-1/lib/")
-from streamlib import sql_df
-def convert_df(df):
-    return df.to_csv(index=False).encode("utf-8")
-
-
-def get_col_colors(df):
-    feat_cols = [col for col in df.columns if not col.startswith("meta")]
-    df_out = df[feat_cols]
-    prefix_colors = {
-        "ER": "red",
-        "DNA": "blue",
-        "RNA": "green",
-        "AGP": "orange",
-        "Mito": "pink",
-        "mito": "pink"
-    }
-    col_colors = [
-        prefix_colors.get(col.split("_")[0], "white") for col in df_out.columns
-    ]
-    if "name" not in df_out.columns:
-        df_out["name"] = df["metacpdname"] + "_" + df["metasource"]
-    df_plt = df_out.set_index("name")
-    return df_plt, col_colors
-
-
-def get_sql_kegg(table_name="keggcpdgene", col_name="geneid", list_geneid=["hdac6"]):
-    where_clause = f" WHERE UPPER({table_name}.{col_name}) IN ({','.join(list_geneid)})"
-
-    if table_name == "keggcpd":
-        sql = f"SELECT * FROM keggcpd{where_clause}"
-    else:
-        sql = f"SELECT keggcpd.keggid, keggcpd.keggcpdname, {table_name}.{col_name} FROM keggcpd\
-                INNER JOIN {table_name} ON {table_name}.keggid = keggcpd.keggid{where_clause}\
-                GROUP BY keggcpd.keggcpdname, keggcpd.keggid, {table_name}.{col_name}"
-
-    return sql
-
-
-def get_sql_jump(table_name="cpdgene", col_name="geneid", list_geneid=["hdac6"]):
-    select_clause = "SELECT cpd.pubchemid, cpdbatchs.batchid, cpd.synonyms, cpd.keggid, cpd.cpdname, cpd.smile"
-
-    if table_name == "keggcpddis":
-        sql = f"{select_clause}, keggcpddis.disid FROM cpdbatchs\
-                INNER JOIN cpd ON cpdbatchs.pubchemid=cpd.pubchemid\
-                INNER JOIN keggcpddis ON keggcpddis.keggid=cpd.keggid WHERE UPPER({table_name}.{col_name}) IN ({','.join(list_geneid)})"
-    elif table_name in ["cpd", "cpdbatchs"]:
-        sql = f"{select_clause} FROM cpdbatchs RIGHT JOIN cpd ON cpd.pubchemid=cpdbatchs.pubchemid WHERE UPPER({table_name}.{col_name}) IN ({','.join(list_geneid)})"
-    else:
-        sql = f"{select_clause}, {table_name}.{col_name} FROM cpdbatchs\
-                INNER JOIN {table_name} ON {table_name}.pubchemid=cpdbatchs.pubchemid\
-                INNER JOIN cpd ON cpdbatchs.pubchemid=cpd.pubchemid WHERE UPPER({table_name}.{col_name}) IN ({','.join(list_geneid)})\
-                GROUP BY cpd.pubchemid, cpdbatchs.batchid, cpd.synonyms, cpd.keggid, cpd.cpdname, cpd.smile, {table_name}.{col_name}"
-
-    return sql
-
-def init_connection():
-    return psycopg2.connect(**st.secrets["postgres"])
+from streamlib import sql_df, init_connection, get_sql_jump, convert_df, get_col_colors
 
 
 conn = init_connection()

@@ -1,6 +1,5 @@
 # NMDA GSK2879552 Bay K
 import sys
-
 import matplotlib.pyplot as plt
 import pandas as pd
 import plotly.express as px
@@ -11,16 +10,8 @@ import umap
 from sklearn.metrics.pairwise import cosine_similarity
 
 sys.path.append('/mnt/shares/L/PROJECTS/JUMP-CRISPR/Code/streamlit-1/lib/')
-from streamlib import sql_df
-#aaaaa
-st.set_page_config(
-    layout="wide",
-)
-st.header("Find Similar profiles",divider='rainbow')
-def convert_df(df):
-       return df.to_csv(index=False).encode('utf-8')
-def init_connection():
-    return psycopg2.connect(**st.secrets["postgres"])
+from streamlib import sql_df, init_connection, find_sim_cpds, convert_df, find_umap, get_col_colors
+
 conn = init_connection()
 profile_conn = psycopg2.connect(
     host="192.168.2.131",
@@ -30,107 +21,25 @@ profile_conn = psycopg2.connect(
     password="12345",
 )
 
-def find_sim_cpds(df1, df2):
-    filter_col1 = [col for col in df1.columns if not col.startswith("meta")]
-    filter_col2 = [col for col in df2.columns if not col.startswith("meta")]
-    filter_col = list(set(filter_col1) & set(filter_col2))
-    simi = cosine_similarity(df1[filter_col], df2[filter_col])
-    return simi
 
-def find_umap(df, title):
-    filter_cols = [col for col in df.columns if not col.startswith("meta")]
-    meta_cols = [col for col in df.columns if  col.startswith("meta")]
-    reducer = umap.UMAP(densmap=True, random_state=42, verbose=True)
-    embedding = reducer.fit_transform(df[filter_cols])
-    df_emb = pd.DataFrame({"x": embedding[:, 0], "y": embedding[:, 1]})
-    df_emb[meta_cols] = df[meta_cols]
-    fig = px.scatter(df_emb, x="x", y="y", hover_data=meta_cols, color="metasource", title=title)
-    st.plotly_chart(fig, theme="streamlit", use_container_width=True)
-
-def get_col_colors(df):
-    list_col = [col for col in df.columns if not col.startswith("Meta")]
-    ER = [
-        x
-        for x in list_col
-        if "ER" in x and all(y not in x for y in ["RNA", "Mito", "AGP", "DNA"])
-    ]
-    RNA = [
-        x
-        for x in list_col
-        if "RNA" in x and all(y not in x for y in ["ER", "Mito", "AGP", "DNA"])
-    ]
-    Mito = [
-        x
-        for x in list_col
-        if "Mito" in x and all(y not in x for y in ["ER", "RNA", "AGP", "DNA"])
-    ]
-    mito = [
-        x
-        for x in list_col
-        if "mito" in x and all(y not in x for y in ["ER", "RNA", "AGP", "DNA"])
-    ]
-    AGP = [
-        x
-        for x in list_col
-        if "AGP" in x and all(y not in x for y in ["ER", "RNA", "Mito", "DNA"])
-    ]
-    DNA = [
-        x
-        for x in list_col
-        if "DNA" in x and all(y not in x for y in ["ER", "RNA", "Mito", "AGP"])
-    ]
-    list_fin = []
-    list_fin.extend(DNA)
-    list_fin.extend(RNA)
-    list_fin.extend(ER)
-    list_fin.extend(AGP)
-    list_fin.extend(Mito)
-    list_fin.extend(mito)
-
-    list_fin = list(dict.fromkeys(list_fin))
-
-
-    list_fin.append("name")
-    df["name"] = df["metacpdname"] + "_" + df["metasource"]
-
-    df_plt = df[list_fin]
-    df_plt.set_index("name", inplace=True)
-
-    col_colors = []
-
-
-    for col in  df_plt.columns:
-        if col in ER:
-            col_colors.append("red")
-        elif col in DNA:
-            col_colors.append("blue")
-        elif col in RNA:
-            col_colors.append("green")
-        elif col in AGP:
-            col_colors.append("orange")
-        elif col in Mito or col in mito:
-            col_colors.append("pink")
-        else:
-            col_colors.append("white")
-    return df_plt,col_colors
-
-
-#-----------------------------------------------------------------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------------------------
+st.set_page_config(
+    layout="wide",
+)
+st.header("Find Similar profiles",divider='rainbow')
 if "df_profiles" not in st.session_state:
     st.write("Connect DB First")
 else:
     df_cpds = st.session_state["df_cpds"]
     cpd_pro = st.session_state["df_profiles"]
     list_sources = cpd_pro["metasource"].unique().tolist()
-
-
-    cols1= st.columns(2)
-    with cols1[0]:
+    mainCols= st.columns(2)
+    with mainCols[0]:
         choix_source = st.selectbox ("Select the Source", list_sources)
-        batchs = cpd_pro[cpd_pro["metasource"] == choix_source]["metabatchid"].values
-        choix = st.selectbox("Select the Profile", batchs)
-    df_sel = cpd_pro[(cpd_pro["metasource"] == choix_source) & (cpd_pro["metabatchid"] == choix)]
-    with cols1[1]:
+        cpdnames = cpd_pro[cpd_pro["metasource"] == choix_source]["metacpdname"].values
+        choix = st.selectbox("Select the Profile", cpdnames)
+    df_sel = cpd_pro[(cpd_pro["metasource"] == choix_source) & (cpd_pro["metacpdname"] == choix)]
+    with mainCols[1]:
         st.write("Selected Profile", df_sel)
 
 
@@ -179,7 +88,6 @@ else:
         df_results_cpd = pd.DataFrame()
         df_keep_prof_cpd=pd.DataFrame()
         if len(b_list_cpd) > 0:
-
             sql_cpds = f"select cpd.pubchemid,cpd.keggid, cpd.cpdname, cpd.smile,cpdgene.geneid,cpdbatchs.batchid,keggcpd.efficacy from cpd \
             inner join cpdbatchs on cpd.pubchemid=cpdbatchs.pubchemid \
             left join cpdgene on cpdbatchs.pubchemid=cpdgene.pubchemid \
@@ -189,16 +97,12 @@ else:
             df_results_cpd.drop_duplicates(subset=["pubchemid"], inplace=True)
             if len(df_results_cpd) > 0:
                 st.session_state["df_cpds"] = pd.concat([df_results_cpd, df_cpds])
-
-
                 df_keep_prof_cpd = df_source[df_source["metabatchid"].isin(df_keep_cpd["metabatchid"].values)]
                 df_keep_prof_cpd.reset_index(inplace=True,drop=True)
                 df_keep_prof_cpd = df_keep_prof_cpd.merge(df_results_cpd.add_prefix('meta'),left_on='metabatchid',right_on='metabatchid').reset_index(drop=True)
                 df_keep_prof_cpd.loc[df_keep_prof_cpd.metacpdname =="No result", 'metacpdname'] = None
                 df_keep_prof_cpd['metacpdname'] = df_keep_prof_cpd['metacpdname'].str[:30]
                 df_keep_prof_cpd['metacpdname'] = df_keep_prof_cpd['metacpdname'].fillna(df_keep_prof_cpd['metabatchid'])
-
-
 
 
         fig_clusmap_cpd = px.histogram(df_hist_cpd, x="sim")
@@ -213,16 +117,16 @@ else:
                 df_keep_cpd = df_keep_cpd.merge(df_results_cpd,left_on='metabatchid',right_on='batchid').reset_index(drop=True)
                 df_keep_cpd=df_keep_cpd.drop(["metabatchid"],axis=1)
                  
-                fig_cols2 = st.columns(3)
-                with fig_cols2[0]:
+                fig_cols1 = st.columns(3)
+                with fig_cols1[0]:
                     st.write(df_keep_cpd)
-                with fig_cols2[1]:
+                with fig_cols1[1]:
                     fig = px.pie(df_keep_cpd,  names='geneid',
                         title=' geneid',
                         )
                     fig.update_traces(textposition='inside', textinfo='percent+label')
                     st.plotly_chart(fig, theme="streamlit", use_container_width=True)  
-                with fig_cols2[2]:
+                with fig_cols1[2]:
                     fig = px.pie(df_keep_cpd,  names='efficacy',
                         title=' efficacy',
                         )
@@ -231,6 +135,7 @@ else:
                 
                 st.download_button(
                         label="Save",data=convert_df(df_keep_cpd),file_name=f"{df_keep_cpd.cpdname[0]}.csv",mime='csv',)
+                
             with tab_list[2]:#UMAP
                 df_src_emd["color"] = "others"
                 df_src_emd.loc[df_src_emd["batchid"].isin(batch_list_cpd), "color"] = "similar compounds"
@@ -342,25 +247,6 @@ else:
 
 #compare CPD and CRISPER---------------------------------------------------------------------------------------------------------------
     st.write("\n")
-
-    # if len(df_results_cripser) > 0:
-    #     st.write("## compare CPD and CRISPER")
-
-    #     compare_cols = st.columns(2)
-
-    #     with compare_cols[0]:
-    #         st.write("compounds profile")
-    #         meta_cols = [col for col in df_keep_prof_cpd.columns if  col.startswith("meta")]
-    #         st.write(df_keep_prof_cpd[meta_cols].describe().T)
-    #     with compare_cols[1]:
-    #         st.write("Crisper profile")
-    #         meta_cols_crs = [col for col in df_keep_prof_crisper.columns if  col.startswith("meta")]
-    #         st.write(df_keep_prof_crisper[meta_cols_crs].describe().T)
-
-
-
-
-
 
     tmp=pd.DataFrame()
     if len(df_keep_prof_crisper) > 0 and len(df_keep_prof_cpd) > 0:

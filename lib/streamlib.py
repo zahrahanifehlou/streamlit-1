@@ -3,8 +3,9 @@ import pandas as pd
 import json
 import requests
 import streamlib as st
-
-
+from sklearn.metrics.pairwise import cosine_similarity
+import plotly.express as px
+import umap
 def init_connection():
     return psycopg2.connect(**st.secrets["postgres"])
 
@@ -241,3 +242,77 @@ def get_sql_jump(table_name="cpdgene", col_name="geneid", list_geneid=["hdac6"])
                 GROUP BY cpd.pubchemid, cpdbatchs.batchid, cpd.synonyms, cpd.keggid, cpd.cpdname, cpd.smile, {table_name}.{col_name}"
 
     return sql
+
+########################################################################################
+def convert_df(df):
+    return df.to_csv(index=False).encode("utf-8")
+
+def get_col_colors(df):
+    feat_cols = [col for col in df.columns if not col.startswith("meta")]
+    df_out = df[feat_cols]
+    prefix_colors = {
+        "ER": "red",
+        "DNA": "blue",
+        "RNA": "green",
+        "AGP": "orange",
+        "Mito": "pink",
+        "mito": "pink"
+    }
+    col_colors = [
+        prefix_colors.get(col.split("_")[0], "white") for col in df_out.columns
+    ]
+    if "name" not in df_out.columns:
+        df_out["name"] = df["metacpdname"] + "_" + df["metasource"]
+    df_plt = df_out.set_index("name")
+    return df_plt, col_colors
+
+
+def get_sql_kegg(table_name="keggcpdgene", col_name="geneid", list_geneid=["hdac6"]):
+    where_clause = f" WHERE UPPER({table_name}.{col_name}) IN ({','.join(list_geneid)})"
+
+    if table_name == "keggcpd":
+        sql = f"SELECT * FROM keggcpd{where_clause}"
+    else:
+        sql = f"SELECT keggcpd.keggid, keggcpd.keggcpdname, {table_name}.{col_name} FROM keggcpd\
+                INNER JOIN {table_name} ON {table_name}.keggid = keggcpd.keggid{where_clause}\
+                GROUP BY keggcpd.keggcpdname, keggcpd.keggid, {table_name}.{col_name}"
+
+    return sql
+
+
+def get_sql_jump(table_name="cpdgene", col_name="geneid", list_geneid=["hdac6"]):
+    select_clause = "SELECT cpd.pubchemid, cpdbatchs.batchid, cpd.synonyms, cpd.keggid, cpd.cpdname, cpd.smile"
+
+    if table_name == "keggcpddis":
+        sql = f"{select_clause}, keggcpddis.disid FROM cpdbatchs\
+                INNER JOIN cpd ON cpdbatchs.pubchemid=cpd.pubchemid\
+                INNER JOIN keggcpddis ON keggcpddis.keggid=cpd.keggid WHERE UPPER({table_name}.{col_name}) IN ({','.join(list_geneid)})"
+    elif table_name in ["cpd", "cpdbatchs"]:
+        sql = f"{select_clause} FROM cpdbatchs RIGHT JOIN cpd ON cpd.pubchemid=cpdbatchs.pubchemid WHERE UPPER({table_name}.{col_name}) IN ({','.join(list_geneid)})"
+    else:
+        sql = f"{select_clause}, {table_name}.{col_name} FROM cpdbatchs\
+                INNER JOIN {table_name} ON {table_name}.pubchemid=cpdbatchs.pubchemid\
+                INNER JOIN cpd ON cpdbatchs.pubchemid=cpd.pubchemid WHERE UPPER({table_name}.{col_name}) IN ({','.join(list_geneid)})\
+                GROUP BY cpd.pubchemid, cpdbatchs.batchid, cpd.synonyms, cpd.keggid, cpd.cpdname, cpd.smile, {table_name}.{col_name}"
+
+    return sql
+
+def find_sim_cpds(df1, df2):
+    
+    filter_col1 = [col for col in df1.columns if not col.startswith("meta")]
+    filter_col2 = [col for col in df2.columns if not col.startswith("meta")]
+    filter_col = list(set(filter_col1) & set(filter_col2))
+    simi = cosine_similarity(df1[filter_col], df2[filter_col])
+    return simi
+
+def find_umap(df, title):
+    
+    filter_cols = [col for col in df.columns if not col.startswith("meta")]
+    meta_cols = [col for col in df.columns if  col.startswith("meta")]
+    reducer = umap.UMAP(densmap=True, random_state=42, verbose=True)
+    embedding = reducer.fit_transform(df[filter_cols])
+    df_emb = pd.DataFrame({"x": embedding[:, 0], "y": embedding[:, 1]})
+    df_emb[meta_cols] = df[meta_cols]
+    fig = px.scatter(df_emb, x="x", y="y", hover_data=meta_cols, color="metasource", title=title)
+    st.plotly_chart(fig, theme="streamlit", use_container_width=True)
+
