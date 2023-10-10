@@ -229,7 +229,9 @@ if len(df_cpds) > 0:
     df_prof_crisper = None
     if str(option) == "gene" and len(df_res) > 0:
         geneid_lis = [f"'{geneid}'" for geneid in df_res["geneid"]]
-        sql_crisper = f"SELECT * FROM crisperbatchs WHERE crisperbatchs.geneid IN ({','.join(geneid_lis)})"
+     
+        sql_crisper = f"SELECT gene.symbol, gene.geneid,crisperbatchs.batchid  FROM crisperbatchs  inner join gene \
+            on gene.geneid=crisperbatchs.geneid  WHERE crisperbatchs.geneid IN ({','.join(geneid_lis)})  group by gene.symbol, gene.geneid,crisperbatchs.batchid "
         df_crisperBatchs = sql_df(
             sql_crisper, conn).drop_duplicates(subset=["batchid"])
         batch_list = [f"'{batchid}'" for batchid in df_crisperBatchs["batchid"]]
@@ -239,9 +241,9 @@ if len(df_cpds) > 0:
             )
 
             df_prof_crisper = sql_df(sql_crisper_profile, conn_profileDB)
-            crisper_dic = df_crisperBatchs.set_index("batchid")["geneid"].to_dict()
-            df_prof_crisper["metageneid"] = df_prof_crisper["metabatchid"].map(
-                crisper_dic)
+            df_prof_crisper = df_prof_crisper.merge(df_crisperBatchs.add_prefix(
+                'meta'), left_on='metabatchid', right_on='metabatchid').reset_index(drop=True)
+      
         
     # get CPD profiles 
     df_prof = pd.DataFrame()
@@ -328,11 +330,11 @@ if len(df_cpds) > 0:
             st.pyplot(fig_clusmap)
 
         st.session_state["df_profiles"] = df_prof
-        st.session_state["df_cpds"] = df_cpds
-        st.session_state["df_cpdGene"] = df_cpdGene
-        st.session_state["df_cpdPath"] = df_cpdPath
-        st.session_state["df_efficacy"] = df_efficacy
-        st.session_state["df_crisper"] = df_prof_crisper
+        #st.session_state["df_cpds"] = df_cpds
+        st.session_state["df_cpds"] = df_cpdGene
+        st.session_state["df_crisper"] = df_crisperBatchs
+        # st.session_state["df_efficacy"] = df_efficacy
+        # st.session_state["df_crisper"] = df_prof_crisper
 
 
     else:

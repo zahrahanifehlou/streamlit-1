@@ -37,7 +37,7 @@ st.header("Find Similar profiles", divider='rainbow')
 if "df_profiles" not in st.session_state:
     st.write("Connect DB First")
 else:
-    df_cpds = st.session_state["df_cpds"]
+   
     cpd_pro = st.session_state["df_profiles"]
     list_sources = cpd_pro["metasource"].unique().tolist()
     mainCols = st.columns(2)
@@ -120,12 +120,12 @@ else:
 
         st.plotly_chart(fig_clusmap_cpd, theme="streamlit",
                         use_container_width=True)
-        st.session_state["df_sim_profiles"] = df_keep_prof_cpd
+        st.session_state["df_sim_cpd"] = df_results_cpd
         if choix_source == "CRISPER":
-            sql_crisper = f"SELECT gene.symbol, gene.geneid,crisperbatchs.batchid  FROM crisperbatchs  inner join gene \
+            sql_crisper2 = f"SELECT gene.symbol, gene.geneid,crisperbatchs.batchid  FROM crisperbatchs  inner join gene \
             on gene.geneid=crisperbatchs.geneid  where crisperbatchs.batchid in ({','.join(b_list_cpd)})  group by gene.symbol, gene.geneid,crisperbatchs.batchid "
             df_keep_cpd = sql_df(
-                sql_crisper, conn).drop_duplicates(subset=["batchid"])
+                sql_crisper2, conn).drop_duplicates(subset=["batchid"])
         
             df_prof_crisper = df_prof_crisper.merge(df_keep_cpd.add_prefix(
                 'meta'), left_on='metabatchid', right_on='metabatchid').reset_index(drop=True)
@@ -137,7 +137,7 @@ else:
             df_keep_cpd["metacpdname"] = df_keep_cpd["batchid"]
             df_keep_prof_cpd["metacpdname"] = df_keep_prof_cpd["metabatchid"]
             df_keep_cpd["efficacy"] = None
-            st.session_state["df_sim_crisper"] = df_keep_prof_cpd
+            st.session_state["df_sim_crisper"] = df_keep_cpd
 
         if len(df_keep_cpd) > 0:
             st.write("\n")

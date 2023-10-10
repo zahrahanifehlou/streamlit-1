@@ -117,7 +117,7 @@ def load_data():
         )
         df_tmap = sql_df(sql, conn_profileDB).reset_index(drop=True)
         conn_profileDB.close()
-        st.session_state["df_tmap"] = df_tmap
+       # st.session_state["df_tmap"] = df_tmap
     return df_tmap
 
 
