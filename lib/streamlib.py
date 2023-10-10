@@ -8,7 +8,6 @@ import plotly.express as px
 import umap
 
 
-
 ################################### CONNECTION DBs ##############################################
 conn_meta = psycopg2.connect(
     host="192.168.2.131",
@@ -243,26 +242,75 @@ def get_sql_jump(table_name="cpdgene", col_name="geneid", list_geneid=["hdac6"])
     return sql
 
 ########################################################################################
+
+
 def convert_df(df):
     return df.to_csv(index=False).encode("utf-8")
 
+
 def get_col_colors(df):
-    feat_cols = [col for col in df.columns if not col.startswith("meta")]
-    df_out = df[feat_cols]
-    prefix_colors = {
-        "ER": "red",
-        "DNA": "blue",
-        "RNA": "green",
-        "AGP": "orange",
-        "Mito": "pink",
-        "mito": "pink"
-    }
-    col_colors = [
-        prefix_colors.get(col.split("_")[0], "white") for col in df_out.columns
+    list_col = [col for col in df.columns if not col.startswith("Meta")]
+    ER = [
+        x
+        for x in list_col
+        if "ER" in x and all(y not in x for y in ["RNA", "Mito", "AGP", "DNA"])
     ]
-    if "name" not in df_out.columns:
-        df_out["name"] = df["metacpdname"] + "_" + df["metasource"]
-    df_plt = df_out.set_index("name")
+    RNA = [
+        x
+        for x in list_col
+        if "RNA" in x and all(y not in x for y in ["ER", "Mito", "AGP", "DNA"])
+    ]
+    Mito = [
+        x
+        for x in list_col
+        if "Mito" in x and all(y not in x for y in ["ER", "RNA", "AGP", "DNA"])
+    ]
+    mito = [
+        x
+        for x in list_col
+        if "mito" in x and all(y not in x for y in ["ER", "RNA", "AGP", "DNA"])
+    ]
+    AGP = [
+        x
+        for x in list_col
+        if "AGP" in x and all(y not in x for y in ["ER", "RNA", "Mito", "DNA"])
+    ]
+    DNA = [
+        x
+        for x in list_col
+        if "DNA" in x and all(y not in x for y in ["ER", "RNA", "Mito", "AGP"])
+    ]
+    list_fin = []
+    list_fin.extend(DNA)
+    list_fin.extend(RNA)
+    list_fin.extend(ER)
+    list_fin.extend(AGP)
+    list_fin.extend(Mito)
+    list_fin.extend(mito)
+
+    list_fin = list(dict.fromkeys(list_fin))
+    if "name" not in df.columns:
+        df["name"] = df["metacpdname"] + "_" + df["metasource"]
+
+    list_fin.append("name")
+
+    df_plt = df[list_fin]
+    df_plt.set_index("name", inplace=True)
+    col_colors = []
+
+    for col in df_plt.columns:
+        if col in ER:
+            col_colors.append("red")
+        elif col in DNA:
+            col_colors.append("blue")
+        elif col in RNA:
+            col_colors.append("green")
+        elif col in AGP:
+            col_colors.append("orange")
+        elif col in Mito or col in mito:
+            col_colors.append("pink")
+        else:
+            col_colors.append("white")
     return df_plt, col_colors
 
 
@@ -296,22 +344,24 @@ def get_sql_jump(table_name="cpdgene", col_name="geneid", list_geneid=["hdac6"])
 
     return sql
 
+
 def find_sim_cpds(df1, df2):
-    
+
     filter_col1 = [col for col in df1.columns if not col.startswith("meta")]
     filter_col2 = [col for col in df2.columns if not col.startswith("meta")]
     filter_col = list(set(filter_col1) & set(filter_col2))
     simi = cosine_similarity(df1[filter_col], df2[filter_col])
     return simi
 
+
 def find_umap(df, title):
-    
+
     filter_cols = [col for col in df.columns if not col.startswith("meta")]
-    meta_cols = [col for col in df.columns if  col.startswith("meta")]
+    meta_cols = [col for col in df.columns if col.startswith("meta")]
     reducer = umap.UMAP(densmap=True, random_state=42, verbose=True)
     embedding = reducer.fit_transform(df[filter_cols])
     df_emb = pd.DataFrame({"x": embedding[:, 0], "y": embedding[:, 1]})
     df_emb[meta_cols] = df[meta_cols]
-    fig = px.scatter(df_emb, x="x", y="y", hover_data=meta_cols, color="metasource", title=title)
+    fig = px.scatter(df_emb, x="x", y="y", hover_data=meta_cols,
+                     color="metasource", title=title)
     st.plotly_chart(fig, theme="streamlit", use_container_width=True)
-
