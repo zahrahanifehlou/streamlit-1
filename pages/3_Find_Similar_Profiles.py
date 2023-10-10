@@ -57,9 +57,9 @@ else:
     df_prof_crisper = sql_df(sql_crisper_profile, profile_conn)
 
     # umap--------------------------------------------------------
-    sql_umqpemd_crips = f"select * from umapemd where source='CRISPER'"
+    sql_umqpemd_crips = f"select * from umapemd where metasource='CRISPER'"
     df_crisper_emd = sql_df(sql_umqpemd_crips, profile_conn)
-    sql_umqpemd = f"select * from umapemd where source='{choix_source}'"
+    sql_umqpemd = f"select * from umapemd where metasource='{choix_source}'"
     df_src_emd = sql_df(sql_umqpemd, profile_conn)
 
     # --------------------------------------------------------------------
@@ -132,7 +132,7 @@ else:
                 fig_cols1 = st.columns(3)
                 with fig_cols1[0]:
                     st.write(df_keep_cpd)
-                    
+
                 with fig_cols1[1]:
                     fig = px.pie(df_keep_cpd,  names='geneid',
                                  title=' geneid',
@@ -150,12 +150,12 @@ else:
                     st.plotly_chart(fig, theme="streamlit",
                                     use_container_width=True)
                 st.download_button(
-                        label="Save", data=convert_df(df_keep_cpd), file_name=f"{df_keep_cpd.cpdname[0]}.csv", mime='csv',)
+                    label="Save", data=convert_df(df_keep_cpd), file_name=f"{df_keep_cpd.cpdname[0]}.csv", mime='csv',)
                 # ----------plot sim cpds in UMAP
                 df_src_emd["color"] = "others"
-                df_src_emd.loc[df_src_emd["batchid"].isin(
+                df_src_emd.loc[df_src_emd["metabatchid"].isin(
                     batch_list_cpd), "color"] = "similar compounds"
-                df_src_emd.loc[df_src_emd["name"] ==
+                df_src_emd.loc[df_src_emd["metacpdname"] ==
                                choix, "color"] = "selected compounds"
                 fig = px.scatter(
                     df_src_emd,
@@ -164,33 +164,35 @@ else:
                     color="color",
                     color_discrete_sequence=["blue", "red", "green"],
                     title=f"similar cpds to {choix} profiles  ",
-                    hover_data=["batchid"],
+                    hover_data=["metabatchid", "metaefficacy",
+                                "metageneid", "metakeggid"],
                 )
                 st.plotly_chart(fig, theme="streamlit",
                                 use_container_width=True)
 
             with tab_list[2]:  # Similar CPDs with UMAP
-         
+
                 from sklearn.neighbors import NearestNeighbors
                 nb_cluster = st.slider(
-                    'Number of neighbors', min_value=2, max_value=30, value=2, step=1)
-                X=df_src_emd[["umap1","umap2"]].to_numpy()
-             
+                    'Number of neighbors', min_value=2, max_value=30, value=10, step=1)
+                X = df_src_emd[["umap1", "umap2"]].to_numpy()
+
                 neigh = NearestNeighbors(n_neighbors=nb_cluster, n_jobs=-1)
                 neigh.fit(X)
-                # choix=choix.upper()
-                # st.write(df_src_emd)
-                points=df_src_emd[df_src_emd["name"]==choix][["umap1","umap2"]]
+                points = df_src_emd[df_src_emd["metacpdname"]
+                                    == choix][["umap1", "umap2"]]
                 # st.write(points)
                 distances, indices = neigh.kneighbors(points)
-                nearest_neighbor_name = df_src_emd.loc[indices[ 0,1:], 'name']
-                similar_df=df_src_emd[df_src_emd["name"].isin(nearest_neighbor_name)]
+                nearest_neighbor_name = df_src_emd.loc[indices[0,
+                                                               1:], 'metacpdname']
+                similar_df = df_src_emd[df_src_emd["metacpdname"].isin(
+                    nearest_neighbor_name)]
                 fig_cols2 = st.columns(3)
                 with fig_cols2[0]:
                     st.write(similar_df)
-                    
+
                 with fig_cols2[1]:
-                    fig = px.pie(similar_df,  names='symbol',
+                    fig = px.pie(similar_df,  names='metageneid',
                                  title=' geneid',
                                  )
                     fig.update_traces(textposition='inside',
@@ -198,44 +200,36 @@ else:
                     st.plotly_chart(fig, theme="streamlit",
                                     use_container_width=True)
                 with fig_cols2[2]:
-                    fig = px.pie(similar_df,  names='efficacy',
+                    fig = px.pie(similar_df,  names='metaefficacy',
                                  title=' efficacy',
                                  )
                     fig.update_traces(textposition='inside',
                                       textinfo='percent+label')
                     st.plotly_chart(fig, theme="streamlit",
                                     use_container_width=True)
-            
-                
-           
 
                 df_src_emd["color"] = "others"
-                df_src_emd.loc[df_src_emd["name"].isin(
+                df_src_emd.loc[df_src_emd["metacpdname"].isin(
                     nearest_neighbor_name), "color"] = "similar compounds"
-                df_src_emd.loc[df_src_emd["name"] ==
+                df_src_emd.loc[df_src_emd["metacpdname"] ==
                                choix, "color"] = "selected compounds"
                 figUMAP = px.scatter(
                     df_src_emd,
                     x="umap1",
                     y="umap2",
                     color="color",
-                   
+
                     title=f"similar cpds to {choix} profiles  ",
-                    hover_data=["batchid"],
+                    hover_data=["metabatchid", "metaefficacy",
+                                "metageneid", "metakeggid"]
                 )
                 for trace in figUMAP.data:
-                    if trace.name=='similar profile':
-                        trace.marker.opacity=0.9
-                        trace.marker.size=15
+                    if trace.name == 'similar profile':
+                        trace.marker.opacity = 0.9
+                        trace.marker.size = 15
 
                 st.plotly_chart(figUMAP, theme="streamlit",
                                 use_container_width=True)
-             
-        
-
-
-                
-
 
             with tab_list[3]:  # Summary
                 st.write(df_keep_cpd.describe())
@@ -392,5 +386,5 @@ else:
         st.pyplot(fig_clusmap)
 
 
-conn.close()
+#conn.close()
 # profile_conn.close()
