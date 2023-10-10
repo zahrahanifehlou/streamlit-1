@@ -120,7 +120,7 @@ else:
 
         st.plotly_chart(fig_clusmap_cpd, theme="streamlit",
                         use_container_width=True)
-        st.session_state["df_profiles"] = df_keep_prof_cpd
+        st.session_state["df_sim_profiles"] = df_keep_prof_cpd
         if choix_source == "CRISPER":
             sql_crisper = f"SELECT gene.symbol, gene.geneid,crisperbatchs.batchid  FROM crisperbatchs  inner join gene \
             on gene.geneid=crisperbatchs.geneid  where crisperbatchs.batchid in ({','.join(b_list_cpd)})  group by gene.symbol, gene.geneid,crisperbatchs.batchid "
@@ -137,7 +137,7 @@ else:
             df_keep_cpd["metacpdname"] = df_keep_cpd["batchid"]
             df_keep_prof_cpd["metacpdname"] = df_keep_prof_cpd["metabatchid"]
             df_keep_cpd["efficacy"] = None
-            st.session_state["df_crisper"] = df_keep_prof_cpd
+            st.session_state["df_sim_crisper"] = df_keep_prof_cpd
 
         if len(df_keep_cpd) > 0:
             st.write("\n")
