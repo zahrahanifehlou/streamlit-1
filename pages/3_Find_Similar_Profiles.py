@@ -285,7 +285,7 @@ else:
                 fig_cols4 = st.columns(2)
                 with fig_cols4[0]:
                     fig = px.pie(knn_sim_df,  names='metagenesymbol',
-                                 title=' {title}  : gene symbol',
+                                 title=f' {title}  : gene symbol',
                                  )
                     fig.update_traces(textposition='inside',
                                       textinfo='percent+label')
@@ -293,7 +293,7 @@ else:
                                     use_container_width=True)
                 with fig_cols4[1]:
                     fig = px.pie(knn_sim_df,  names='metaefficacy',
-                                 title=' {title} : efficacy',
+                                 title=f' {title} : efficacy',
                                  )
                     fig.update_traces(textposition='inside',
                                       textinfo='percent+label')
