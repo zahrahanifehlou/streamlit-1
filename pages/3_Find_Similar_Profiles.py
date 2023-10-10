@@ -41,6 +41,8 @@ else:
     cpd_pro = st.session_state["df_profiles"]
     list_sources = cpd_pro["metasource"].unique().tolist()
     mainCols = st.columns(2)
+    # st.write(list_sources)
+    
     with mainCols[0]:
         choix_source = st.selectbox("Select the Source", list_sources)
         cpdnames = cpd_pro[cpd_pro["metasource"]
@@ -120,7 +122,7 @@ else:
 
         st.plotly_chart(fig_clusmap_cpd, theme="streamlit",
                         use_container_width=True)
-        st.session_state["df_profiles"] = df_keep_prof_cpd
+        st.session_state["df_profiles_sim"] = df_keep_prof_cpd
         if choix_source == "CRISPER":
             sql_crisper = f"SELECT gene.symbol, gene.geneid,crisperbatchs.batchid  FROM crisperbatchs  inner join gene \
             on gene.geneid=crisperbatchs.geneid  where crisperbatchs.batchid in ({','.join(b_list_cpd)})  group by gene.symbol, gene.geneid,crisperbatchs.batchid "
