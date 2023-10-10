@@ -72,9 +72,9 @@ else:
     with cosine_sim_tab:  # Similar CPDs with cosine
         thr_cols = st.columns(2)
         with thr_cols[0]:
-            thres_cpd = st.slider("Threshold cpd", -1.0, 1.0, 0.75)
+            thres_cpd = st.slider("Threshold cpd", -1.0, 1.0, 0.85)
         with thr_cols[1]:
-            thresq_cpd = st.slider("Cardinal Threshold cpd", 0, 1000, 10)
+            thresq_cpd = st.slider("Cardinal Threshold cpd", 0, 1000, 15)
         sim_cpds = find_sim_cpds(df_source, df_sel)
 
         df_hist_cpd = pd.DataFrame(
@@ -312,7 +312,7 @@ else:
                     y="umap2",
                     color="color",
 
-                    title=" {title}  :UMAP ",
+                    title=f" {title}  :UMAP ",
                     hover_data=["metabatchid", "metaefficacy",
                                 "metageneid", "metakeggid"]
                 )
