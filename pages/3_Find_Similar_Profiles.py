@@ -178,7 +178,10 @@ else:
              
                 neigh = NearestNeighbors(n_neighbors=nb_cluster, n_jobs=-1)
                 neigh.fit(X)
+                # choix=choix.upper()
+                # st.write(df_src_emd)
                 points=df_src_emd[df_src_emd["name"]==choix][["umap1","umap2"]]
+                # st.write(points)
                 distances, indices = neigh.kneighbors(points)
                 nearest_neighbor_name = df_src_emd.loc[indices[ 0,1:], 'name']
                 similar_df=df_src_emd[df_src_emd["name"].isin(nearest_neighbor_name)]
