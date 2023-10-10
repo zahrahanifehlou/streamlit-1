@@ -19,7 +19,7 @@ def get_infos(dftiti):
 
     human = gp.get_library_name(organism="Human")
     col1, col2 = st.columns(2)
-    list_cols = ["geneid", "symbol"]
+    list_cols = dftiti.columns.tolist()
     with col1:
         sel_col = st.selectbox(":red[Choose column] :worried:", list_cols)
 
@@ -27,6 +27,7 @@ def get_infos(dftiti):
         sel = st.selectbox(":green[Choose DB]", human)
 
     dftiti.dropna(subset=sel_col, axis=0, inplace=True)
+  
     gene_list = dftiti[sel_col].squeeze().str.strip().to_list()
 
     enr = gp.enrichr(
@@ -63,28 +64,29 @@ def upload_files():
         if ".fth" in uploaded_file.name:
             list_df.append(pd.read_feather(uploaded_file))
     return list_df
+list_data=[]
+for key in st.session_state.keys():
+    list_data.append(key)
 
 
-if "df_cpdGene" not in st.session_state:
+
+
+if len(list_data)==0:
     list_df = upload_files()
     if len(list_df) > 0:
         df = pd.concat(list_df)
         st.write("Data from file:", df)
         get_infos(df)
-if "df_crispr" in st.session_state:
-    df_all = st.session_state["df_crisper"]
+        
+else:
+    sel_data = st.selectbox("select your data",list_data)
+    df_all=st.session_state[sel_data]
     server_name = st.radio(
         "select server",
         ("all", "pubchem", "KEGG"),
         horizontal=True,
     )
-if "df_cpdGene" in st.session_state:
-    df_all = st.session_state["df_cpdGene"]
-    server_name = st.radio(
-        "select server",
-        ("all", "pubchem", "KEGG"),
-        horizontal=True,
-    )
+
     df = df_all
     if server_name != "all":
         df = df_all[df_all["server"] == server_name]
