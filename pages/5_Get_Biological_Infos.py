@@ -19,7 +19,7 @@ def get_infos(dftiti):
 
     human = gp.get_library_name(organism="Human")
     col1, col2 = st.columns(2)
-    list_cols = ["metageneid", "symbol"]
+    list_cols = ["geneid", "symbol"]
     with col1:
         sel_col = st.selectbox(":red[Choose column] :worried:", list_cols)
 
@@ -27,7 +27,7 @@ def get_infos(dftiti):
         sel = st.selectbox(":green[Choose DB]", human)
 
     dftiti.dropna(subset=sel_col, axis=0, inplace=True)
-    gene_list = dftiti[sel_col].squeeze().strip().to_list()
+    gene_list = dftiti[sel_col].squeeze().str.strip().to_list()
 
     enr = gp.enrichr(
         gene_list=gene_list,  # or "./tests/data/gene_list.txt",
@@ -71,8 +71,15 @@ if "df_cpdGene" not in st.session_state:
         df = pd.concat(list_df)
         st.write("Data from file:", df)
         get_infos(df)
-else:
+if "df_crispr" in st.session_state:
     df_all = st.session_state["df_crisper"]
+    server_name = st.radio(
+        "select server",
+        ("all", "pubchem", "KEGG"),
+        horizontal=True,
+    )
+if "df_cpdGene" in st.session_state:
+    df_all = st.session_state["df_cpdGene"]
     server_name = st.radio(
         "select server",
         ("all", "pubchem", "KEGG"),
