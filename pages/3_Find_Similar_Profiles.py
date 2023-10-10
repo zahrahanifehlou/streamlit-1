@@ -173,7 +173,7 @@ else:
          
                 from sklearn.neighbors import NearestNeighbors
                 nb_cluster = st.slider(
-                    'Number of clusters', min_value=2, max_value=30, value=2, step=1)
+                    'Number of neighbors', min_value=2, max_value=30, value=2, step=1)
                 X=df_src_emd[["umap1","umap2"]].to_numpy()
              
                 neigh = NearestNeighbors(n_neighbors=nb_cluster, n_jobs=-1)
