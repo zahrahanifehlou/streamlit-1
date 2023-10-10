@@ -67,6 +67,7 @@ def upload_files():
 list_data=[]
 for key in st.session_state.keys():
     list_data.append(key)
+    st.write(f"{key}",st.session_state[key].head(2))
 
 
 
