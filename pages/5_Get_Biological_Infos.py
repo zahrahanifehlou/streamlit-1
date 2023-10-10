@@ -64,10 +64,14 @@ def upload_files():
         if ".fth" in uploaded_file.name:
             list_df.append(pd.read_feather(uploaded_file))
     return list_df
+
+disp_data = st.sidebar.toggle('Display Data')
+
 list_data=[]
 for key in st.session_state.keys():
     list_data.append(key)
-    st.write(f"{key}",st.session_state[key].head(2))
+    if disp_data:
+        st.write(f"{key}",st.session_state[key].head(2))    
 
 
 
