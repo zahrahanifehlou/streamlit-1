@@ -67,7 +67,7 @@ for uploaded_file in uploaded_files:
 
 if len(list_df) > 0:
     df = pd.concat(list_df)
-    st.write('Your Data:', df)
+    st.write('Your Data:', st.data_editor(df))
    
 #test
 # test test
