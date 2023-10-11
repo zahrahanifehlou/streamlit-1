@@ -27,29 +27,30 @@ def get_infos(dftiti):
         sel = st.selectbox(":green[Choose DB]", human)
 
     dftiti.dropna(subset=sel_col, axis=0, inplace=True)
-  
-    gene_list = dftiti[sel_col].squeeze().str.strip().to_list()
+    if len(dftiti)>1:
+        gene_list = dftiti[sel_col].squeeze().str.strip().to_list()
 
-    enr = gp.enrichr(
-        gene_list=gene_list,  # or "./tests/data/gene_list.txt",
-        gene_sets=[sel],
-        organism="human",  # don't forget to set organism to the one you desired! e.g. Yeast
-        outdir=None,  # don't write to disk
-    )
-    # st.write(gene_list)
-    df_enr = enr.results
-
-
-    df_enr["Log_10_Pv"] = -np.log10(df_enr["Adjusted P-value"])
-    # df_enr.rename(columns={"Term": "Pathways"}, inplace=True)
-    st.write(df_enr)
-    st.download_button(
-                        label="Save",data=convert_df(df_enr),file_name=f"enrich.csv",mime='csv',)
+        enr = gp.enrichr(
+            gene_list=gene_list,  # or "./tests/data/gene_list.txt",
+            gene_sets=[sel],
+            organism="human",  # don't forget to set organism to the one you desired! e.g. Yeast
+            outdir=None,  # don't write to disk
+        )
+        # st.write(gene_list)
+        df_enr = enr.results
 
 
-    fig = px.bar(df_enr, x="Term", y="Log_10_Pv")
-    st.plotly_chart(fig, theme="streamlit", use_container_width=True)
+        df_enr["Log_10_Pv"] = -np.log10(df_enr["Adjusted P-value"])
+        # df_enr.rename(columns={"Term": "Pathways"}, inplace=True)
+        st.write(df_enr)
+        st.download_button(
+                            label="Save",data=convert_df(df_enr),file_name=f"enrich.csv",mime='csv',)
 
+
+        fig = px.bar(df_enr, x="Term", y="Log_10_Pv")
+        st.plotly_chart(fig, theme="streamlit", use_container_width=True)
+    else:
+        st.warning('Not enough Data')
 
 def upload_files():
     uploaded_files = st.file_uploader(
