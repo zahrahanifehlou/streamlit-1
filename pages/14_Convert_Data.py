@@ -1,6 +1,7 @@
 
 import pandas as pd
 import streamlit as st
+import psycopg2
 
 
 st.set_page_config(layout="wide")
@@ -9,6 +10,10 @@ import sys
 sys.path.append('/mnt/shares/L/PROJECTS/JUMP-CRISPR/Code/streamlit-1/lib/')
 from streamlib import conn_meta, sql_df
 
+def init_connection():
+    return psycopg2.connect(**st.secrets["postgres"])
+
+conn_meta = init_connection()
 # conn_meta.close()
 
 def convert_df(df):
