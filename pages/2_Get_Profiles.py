@@ -293,6 +293,7 @@ if len(df_cpds) > 0:
                 df_prof["metabatchid"])
             tab3.write(df_prof_crisper)
             tab4.write(df_prof_crisper.describe().T)
+            st.session_state["df_crisper"] = df_crisperBatchs
 
         # plot------------------------------------------------------------------------------------------------------------------
         list_sources = df_prof.metasource.unique().tolist()
@@ -332,7 +333,7 @@ if len(df_cpds) > 0:
         st.session_state["df_profiles"] = df_prof
         #st.session_state["df_cpds"] = df_cpds
         st.session_state["df_cpds"] = df_cpdGene
-        st.session_state["df_crisper"] = df_crisperBatchs
+        
         # st.session_state["df_efficacy"] = df_efficacy
         # st.session_state["df_crisper"] = df_prof_crisper
 
