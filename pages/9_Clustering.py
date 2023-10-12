@@ -215,3 +215,5 @@ for trace in fig5.data:
         
 st.plotly_chart(fig5, theme="streamlit", use_container_width=True)#
 # st.error('you failed!!!')
+conn.close()
+conn_profileDB.close()

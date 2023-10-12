@@ -1,14 +1,19 @@
 
 import pandas as pd
 import streamlit as st
+import psycopg2
 
 
 st.set_page_config(layout="wide")
 import sys
 
 sys.path.append('/mnt/shares/L/PROJECTS/JUMP-CRISPR/Code/streamlit-1/lib/')
-from streamlib import conn_meta, sql_df
+from streamlib import sql_df
 
+def init_connection():
+    return psycopg2.connect(**st.secrets["postgres"])
+
+conn_meta = init_connection()
 # conn_meta.close()
 
 def convert_df(df):
@@ -62,7 +67,7 @@ for uploaded_file in uploaded_files:
 
 if len(list_df) > 0:
     df = pd.concat(list_df)
-    st.write('Your Data:', df)
+    st.write('Your Data:', st.data_editor(df))
    
 #test
 # test test
@@ -110,3 +115,5 @@ if len(list_df) > 0:
       st.write(df_jump)
       st.download_button(
                 label="Save",data=convert_df(df_jump),file_name=f"{sel_data}.csv",mime='csv')
+      
+conn_meta.close()

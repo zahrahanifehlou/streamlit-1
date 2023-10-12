@@ -5,15 +5,31 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st
 import umap
+import psycopg2
 
 st.set_page_config(layout="wide")
 import sys
 
 sys.path.append('/mnt/shares/L/PROJECTS/JUMP-CRISPR/Code/streamlit-1/lib/')
-from streamlib import (conn_meta, conn_prof, get_cpds, get_list_category,
+from streamlib import (get_cpds, get_list_category,
                        get_stringDB, get_stringDB_enr, int_to_str, sql_df,
                        str_to_float)
 
+conn_meta = psycopg2.connect(
+    host="192.168.2.131",
+    port="5432",
+    user="arno",
+    database="ksi_cpds",
+    password="12345",
+)
+
+conn_prof = psycopg2.connect(
+    host="192.168.2.131",
+    port="5432",
+    user="arno",
+    database="ksilink_cpds",
+    password="12345",
+)
 
 def get_relation(df_genes):
     if not df_genes.empty:
@@ -65,7 +81,7 @@ def get_relation(df_genes):
 ################################### LOAD GENE CSV DATA ##############################################
 for key in st.session_state.keys():
         del st.session_state[key]
-df_genes=get_cpds()
+df_genes=get_cpds(conn_meta)
 unique_gene=df_genes['symbol'].unique()
 gene_col='symbol'
 # st.write("TOTOT: ",len(df_genes['keggid']))
@@ -326,3 +342,5 @@ if not df_inter.empty:
 
     st.pyplot(fig_clusmap)
 
+conn_meta.close()
+conn_prof.close()

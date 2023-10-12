@@ -98,9 +98,6 @@ def upload_files():
     return list_df
 
 
-def init_connection():
-    return psycopg2.connect(**st.secrets["postgres"])
-
 
 # Load or fetch data
 def load_data():
