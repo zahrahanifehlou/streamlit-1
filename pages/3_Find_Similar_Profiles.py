@@ -348,18 +348,37 @@ else:
                     x="umap1",
                     y="umap2",
                     color="color",
+                     color_discrete_sequence=["blue", "red", "green"],
 
                     title=f" {title}  :UMAP ",
                     hover_data=["metabatchid", "metaefficacy",
                                 "metageneid", "metakeggid"]
                 )
-                for trace in figUMAP_knn.data:
-                    if trace.name == 'similar profile':
-                        trace.marker.opacity = 0.9
-                        trace.marker.size = 15
+                if choix_source not in(["Ksilink_625","Ksilink_25","CRISPER"]):
+                    st.plotly_chart(figUMAP_knn, theme="streamlit",
+                                    use_container_width=True)
 
-                st.plotly_chart(figUMAP_knn, theme="streamlit",
-                                use_container_width=True)
+                else:
+                    selected_point_knn = plotly_events(figUMAP_knn,click_event=True)
+                    if selected_point_knn:
+                        batch_knn = df_src_emd.iloc[selected_point_knn[0]['pointIndex']].metabatchid
+                        name_knn =df_src_emd.iloc[selected_point_knn[0]['pointIndex']].metacpdname
+                        sql_point = f"select * from platemap where batchid='{batch_knn}' and source='{choix_source}'"
+                        df_plates= sql_df(sql_point, conn)
+                        plt_len=len(df_plates)
+                        br_cols = st.columns(plt_len)
+                      
+                        
+                        for i in range(len(df_plates)):
+                            plate=df_plates.plate[i]
+                            well=df_plates.well[i]
+                            fpath=f"/mnt/shares/L/PROJECTS/JUMP-CP/Checkout_Results/BirdView/{plate}/{plate}_{well}.jpg"
+                            image = Image.open(fpath)
+                            with br_cols[i]:
+                                st.image(image, caption=f"{name_knn} : {plate} {well}", width =256)
+
+    
+                    
 
                 #
                 st.write("\n")  # ----------plot PROFILE
