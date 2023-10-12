@@ -194,7 +194,7 @@ else:
                 batch_list_cpd), "color"] = "similar compounds"
             df_src_emd.loc[df_src_emd["metacpdname"] ==
                            choix, "color"] = "selected compounds"
-          
+           
             fig = px.scatter(
                 df_src_emd,
                 x="umap1",
@@ -213,9 +213,21 @@ else:
                 selected_points = plotly_events(fig,click_event=True)
                
                 if selected_points:
-                    batch = df_src_emd.iloc[selected_points[0]['pointIndex']].metabatchid
-                    name =df_src_emd.iloc[selected_points[0]['pointIndex']].metacpdname
-                 
+                    x=selected_points[0]['x']
+                    y=selected_points[0]['y']
+                
+                    tmp = df_src_emd.loc[(df_src_emd['umap1']==x) & (df_src_emd['umap2'] == y) ]
+                    batch=tmp.metabatchid.values[0]
+                    name=tmp.metacpdname.values[0]
+                    st.write(name)
+               
+                    # batch = df_src_emd.iloc[selected_points[0]['pointIndex']].metabatchid
+                    # name =df_src_emd.iloc[selected_points[0]['pointIndex']].metacpdname
+                    # st.write(df_src_emd)
+                    # st.write(selected_points)
+                    # st.write(df_src_emd.iloc[selected_points[0]['pointIndex']])
+                    aa=df_src_emd[df_src_emd["metacpdname"]==name]
+                    st.write(aa)
                     sql_point = f"select * from platemap where batchid='{batch}' and source='{choix_source}'"
                     df_plates= sql_df(sql_point, conn)
                   
@@ -228,6 +240,8 @@ else:
                         plate=df_plates.plate[i]
                         well=df_plates.well[i]
                         fpath=f"/mnt/shares/L/PROJECTS/JUMP-CP/Checkout_Results/BirdView/{plate}/{plate}_{well}.jpg"
+                        if choix_source=="CRISPER":
+                            fpath=f"/mnt/shares/L/PROJECTS/JUMP-CRISPR/Checkout_Results/BirdView/{plate}/{plate}_{well}.jpg"
                         image = Image.open(fpath)
                         with br_cols[i]:
                             st.image(image, caption=f"{name} : {plate} {well}", width =256)
@@ -377,6 +391,8 @@ else:
                             plate=df_plates.plate[i]
                             well=df_plates.well[i]
                             fpath=f"/mnt/shares/L/PROJECTS/JUMP-CP/Checkout_Results/BirdView/{plate}/{plate}_{well}.jpg"
+                            if choix_source=="CRISPER":
+                                 fpath=f"/mnt/shares/L/PROJECTS/JUMP-CRISPR/Checkout_Results/BirdView/{plate}/{plate}_{well}.jpg"
                             image = Image.open(fpath)
                             with br_cols[i]:
                                 st.image(image, caption=f"{name_knn} : {plate} {well}", width =256)
