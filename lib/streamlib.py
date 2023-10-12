@@ -1,4 +1,4 @@
-import psycopg2
+
 import pandas as pd
 import json
 import requests
@@ -9,21 +9,7 @@ import umap
 
 
 ################################### CONNECTION DBs ##############################################
-conn_meta = psycopg2.connect(
-    host="192.168.2.131",
-    port="5432",
-    user="arno",
-    database="ksi_cpds",
-    password="12345",
-)
 
-conn_prof = psycopg2.connect(
-    host="192.168.2.131",
-    port="5432",
-    user="arno",
-    database="ksilink_cpds",
-    password="12345",
-)
 
 
 def int_to_str(ints):
@@ -34,7 +20,7 @@ def str_to_float(strs):
     return float(strs)
 
 
-def sql_df(sql_str, conn=conn_meta):
+def sql_df(sql_str, conn):
 
     cur = conn.cursor()
     cur.execute(sql_str)
@@ -166,7 +152,7 @@ def get_list_category(df_all_umap, genecol='target'):
     return list(set(list_category))
 
 
-def get_cpds():
+def get_cpds(conn_meta):
 
     sql_query = """
     SELECT cpd.*, gene.*, keggcpdgene.*, cpdgene.pubchemid
