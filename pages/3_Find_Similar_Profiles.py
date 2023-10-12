@@ -14,7 +14,116 @@ from sklearn.metrics.pairwise import cosine_similarity
 
 sys.path.append('/mnt/shares/L/PROJECTS/JUMP-CRISPR/Code/streamlit-1/lib/')
 
+#####################
+from ipywidgets import HTML, Image, Layout
+from ipywidgets import HBox, VBox
+import plotly.graph_objs as go
+def mask(df, options, le=None, sep="="):
+    if type(options) is list:
+        opts = {}
+        for p, opt in enumerate(options):
+            op = opt.split(sep)
+            if le is None:
+                opts[op[0]] = op[1]
+            else:
+                opts[op[0]] = le[p].strip()
 
+        options = opts
+
+    mas = df.any(axis=1)
+    for k, v in options.items():
+        if k in df.columns:
+            if type(v) is list:
+                if k[0] == "~":
+                    mas &= ~df[k[1:]].isin(v)
+                else:
+                    mas &= df[k].isin(v)
+            elif callable(v):
+                if k[0] == "~":
+                    mas &= ~df[k[1:]].apply(v)
+                else:
+                    mas &= df[k].apply(v)
+            else:
+                if k[0] == "~":
+                    mas &= df[k[1:]] != v
+                else:
+                    mas &= df[k] == v
+        else:
+            print(f"{k} is not found in dataframe")            
+    return mas
+
+
+def showWithPreview(fig, callback_df, project, show_details=True, image_width="512px", image_height="432px", phenolink='localhost', search_drive="O"):
+    details = HTML()
+
+    #f2.on_hover(hover_fn)
+    image_widget = Image(
+        format="jpeg",
+        layout=Layout(height=image_height, width=image_width)
+    )
+    details.value='<div></div>'
+
+    #callback_df=im[["Plate", "Well"]]
+
+
+    f2=go.FigureWidget(fig)
+    f2.layout.hovermode = 'closest'
+
+
+    def hover_fn(trace, points, state):
+        if len(points.point_inds) > 0:
+            details.value = ""
+#            print(trace)
+            ind=points.point_inds[0]
+            #print(ind, f"{chr(ind[0]+ord('A'))}{1+ind[1]:02}", points.point_inds)
+            if not type(ind) is  int:                
+                
+                ind=callback_df.index[callback_df["Well"]==f"{chr(ind[0]+ord('A'))}{1+ind[1]:02}"]
+                
+            
+            le=trace.legendgroup.count(',')+1
+            ff=trace.hovertemplate
+            #if le == 1:
+            #    ff=ff[:ff.find("<extra")]
+            #    le=ff.count("<br>")+1
+            #print(ff, le, trace.legendgroup)
+            filt=ff.split('<br>')[0:le]
+
+            if trace.name.isnumeric():
+                sub=callback_df[["Plate", "Well"]].iloc[ind]
+            else:
+                sub=callback_df.loc[mask(callback_df, filt, trace.legendgroup.split(','))].iloc[ind]
+            
+            plate = sub["Plate"].iloc[0] if type(sub["Plate"]) is pd.core.series.Series else sub["Plate"]               
+            well = sub["Well"].iloc[0] if type(sub["Well"]) is pd.core.series.Series else sub["Well"]
+            
+            url=f'http://{phenolink}:8020/Load?project={project}&plate={plate}&wells={well}&unpack&json&drive={search_drive}'
+            st.write(url)
+            details.value = f'<a href="{url}">{plate} {well}</a>' + "<div>" + pd.DataFrame(sub.T).to_html() + '</div>'
+            if "Drugs" in sub.index:
+                details.value += f'<img src="https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/{sub["Drugs"].split(";")[0]}/PNG" />'
+            if sys.platform.startswith('win'):
+                fpath=f"L:/PROJECTS/{project}/Checkout_Results/BirdView/{plate}/{plate}_{well}.jpg"
+            else:
+                fpath=f"/mnt/shares/L/PROJECTS/{project}/Checkout_Results/BirdView/{plate}/{plate}_{well}.jpg"
+            
+            with open(fpath, 'rb') as dat:
+                image_widget.value=dat.read()
+
+
+    for scatter in f2.data:
+        #scatter.on_hover(hover_fn)
+        scatter.on_click(hover_fn)
+
+
+    if show_details:
+        return VBox([f2,
+                    HBox([image_widget, details])])
+    else:
+        return VBox([f2,
+                    HBox([image_widget])])
+
+#########################################
 def init_connection():
     return psycopg2.connect(**st.secrets["postgres"])
 
@@ -64,6 +173,15 @@ else:
     df_crisper_emd = sql_df(sql_umqpemd_crips, profile_conn)
     sql_umqpemd = f"select * from umapemd where metasource='{choix_source}'"
     df_src_emd = sql_df(sql_umqpemd, profile_conn)
+    
+    #platemap------------------------
+    sql_pltmap=f"select platemap.* from platemap where platemap.source='{choix_source}'"
+    df_platemap = sql_df(sql_pltmap, conn)
+    df_platemap.drop_duplicates(subset=["plate","well","batchid"], inplace=True)
+    umap_plate=df_platemap.set_index("batchid").to_dict()["plate"]
+    umap_well=df_platemap.set_index("batchid").to_dict()["well"]
+    df_src_emd["Plate"]=df_src_emd["metabatchid"].map(umap_plate)
+    df_src_emd["Well"]=df_src_emd["metabatchid"].map(umap_well)
 
     # cpds---------------------------------------------------------------------------------------------------------------------
 
@@ -105,7 +223,8 @@ else:
             df_keep_prof_cpd = df_source[df_source["metabatchid"].isin(
                 df_keep_cpd["metabatchid"].values)]
             df_keep_prof_cpd.reset_index(inplace=True, drop=True)
-
+            
+           
             if len(df_results_cpd) > 0:
                 df_keep_prof_cpd = df_keep_prof_cpd.merge(df_results_cpd.add_prefix(
                     'meta'), left_on='metabatchid', right_on='metabatchid').reset_index(drop=True)
@@ -147,7 +266,7 @@ else:
                 df_keep_cpd = df_keep_cpd.drop(["metabatchid"], axis=1)
                 df_keep_cpd["source"] = choix_source
 
-            fig_cols1 = st.columns(2)
+            fig_cols1 = st.columns(3)
             name = choix_source+choix
             with fig_cols1[0]:
                 st.write(f" {title} :  metadata")
@@ -155,11 +274,15 @@ else:
                 st.download_button(
                     label="Save", data=convert_df(df_keep_cpd), file_name=f"{name}_cos_info.csv", mime='csv',)
             with fig_cols1[1]:  # Profile
-                st.write(f" {title} : Profile")
+                st.write(f"  Profile")
                 st.write(df_keep_prof_cpd.head(10))
                 st.download_button(
                     label="Save Profile", data=convert_df(df_keep_prof_cpd), file_name=f"{name}_cos_prof.csv", mime='csv',)
-
+            with fig_cols1[2]:  # PlateMap
+                st.write(f" PlateMap")
+                st.write(df_platemap)
+            
+         
             st.write("\n")
             fig_cols2 = st.columns(2)
             with fig_cols2[0]:
@@ -185,6 +308,7 @@ else:
                 batch_list_cpd), "color"] = "similar compounds"
             df_src_emd.loc[df_src_emd["metacpdname"] ==
                            choix, "color"] = "selected compounds"
+            st.write(df_src_emd)
             fig = px.scatter(
                 df_src_emd,
                 x="umap1",
@@ -197,6 +321,8 @@ else:
             )
             st.plotly_chart(fig, theme="streamlit",
                             use_container_width=True)
+            showWithPreview(fig,df_src_emd,'JUMP-CP',show_details = False)
+      
 
             st.write("\n")  # ----------plot PROFILE
             tmp = df_keep_prof_cpd.head(15)
@@ -280,6 +406,7 @@ else:
                     st.write(df_keep_prof_cpd_knn.head(10))
                     st.download_button(
                         label="Save Profile", data=convert_df(df_keep_prof_cpd_knn), file_name=f"{name}_knn_prof.csv", mime='csv',)
+                    
 
                 st.write("\n")
                 fig_cols4 = st.columns(2)
