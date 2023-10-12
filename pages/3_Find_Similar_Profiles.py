@@ -205,23 +205,26 @@ else:
                 hover_data=["metabatchid", "metaefficacy",
                             "metageneid", "metakeggid"],
             )
-            # st.plotly_chart(fig, theme="streamlit",
-            #                 use_container_width=True)
-            selected_points = plotly_events(fig,click_event=True)
-            if selected_points:
-                batch = df_src_emd.iloc[selected_points[0]['pointIndex']].metabatchid
-                sql_point = f"select * from platemap where batchid='{batch}' and source='Ksilink_625'"
-                df_plates= sql_df(sql_point, conn)
-                plt_len=len(df_plates)
-                br_cols = st.columns(plt_len)
-                
-                for i in range(len(df_plates)):
-                    plate=df_plates.plate[i]
-                    well=df_plates.well[i]
-                    fpath=f"/mnt/shares/L/PROJECTS/JUMP-CP/Checkout_Results/BirdView/{plate}/{plate}_{well}.jpg"
-                    image = Image.open(fpath)
-                    with br_cols[i]:
-                        st.image(image, caption=f"{plate} {well}", width =256)
+            if choix_source not in(["Ksilink_625","Ksilink_25","CRISPER"]):
+                st.plotly_chart(fig, theme="streamlit",
+                                use_container_width=True)
+            
+            else:
+                selected_points = plotly_events(fig,click_event=True)
+                if selected_points:
+                    batch = df_src_emd.iloc[selected_points[0]['pointIndex']].metabatchid
+                    sql_point = f"select * from platemap where batchid='{batch}' and source='{choix_source}'"
+                    df_plates= sql_df(sql_point, conn)
+                    plt_len=len(df_plates)
+                    br_cols = st.columns(plt_len)
+                    
+                    for i in range(len(df_plates)):
+                        plate=df_plates.plate[i]
+                        well=df_plates.well[i]
+                        fpath=f"/mnt/shares/L/PROJECTS/JUMP-CP/Checkout_Results/BirdView/{plate}/{plate}_{well}.jpg"
+                        image = Image.open(fpath)
+                        with br_cols[i]:
+                            st.image(image, caption=f"{plate} {well}", width =256)
 
                 
     
