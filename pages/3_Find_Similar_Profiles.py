@@ -212,15 +212,18 @@ else:
                 batch = df_src_emd.iloc[selected_points[0]['pointIndex']].metabatchid
                 sql_point = f"select * from platemap where batchid='{batch}' and source='Ksilink_625'"
                 df_plates= sql_df(sql_point, conn)
-                st.write(df_plates)
-                plate=df_plates.plate[0]
-                well=df_plates.well[0]
-                fpath=f"/mnt/shares/L/PROJECTS/JUMP-CP/Checkout_Results/BirdView/{plate}/{plate}_{well}.jpg"
-                st.write(fpath)
+                plt_len=len(df_plates)
+                br_cols = st.columns(plt_len)
                 
-                image = Image.open(fpath)
-                st.image(image, caption="Loaded Image", use_column_width=True)
-            
+                for i in range(len(df_plates)):
+                    plate=df_plates.plate[i]
+                    well=df_plates.well[i]
+                    fpath=f"/mnt/shares/L/PROJECTS/JUMP-CP/Checkout_Results/BirdView/{plate}/{plate}_{well}.jpg"
+                    image = Image.open(fpath)
+                    with br_cols[i]:
+                        st.image(image, caption=f"{plate} {well}", width =256)
+
+                
     
     
            
