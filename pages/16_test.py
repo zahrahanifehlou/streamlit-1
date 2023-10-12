@@ -34,7 +34,7 @@ df=toto()
 # st.write(df)
 fig = px.scatter(df,x="umap1",
                 y="umap2",)
-selected_points = plotly_events(fig,click_event=True)
+selected_points = plotly_events(fig,click_event=True,hover_event=True)
 if selected_points:
     batch = df.iloc[selected_points[0]['pointIndex']].metabatchid
     sql_test = f"select * from platemap where batchid='{batch}' and source='Ksilink_625'"
