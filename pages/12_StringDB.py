@@ -326,3 +326,5 @@ if not df_inter.empty:
 
     st.pyplot(fig_clusmap)
 
+conn_meta.close()
+conn_prof.close()

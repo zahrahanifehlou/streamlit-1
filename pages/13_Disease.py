@@ -157,7 +157,7 @@ if not df_gene_of_int.empty:
 else:
     st.warning("Unknown gene")
 
-
+conn_meta.close()
 # from tdc.multi_pred import GDA
 # data = GDA(name = 'DisGeNET')
 # split = data.get_split()

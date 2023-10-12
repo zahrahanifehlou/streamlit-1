@@ -115,3 +115,5 @@ if len(list_df) > 0:
       st.write(df_jump)
       st.download_button(
                 label="Save",data=convert_df(df_jump),file_name=f"{sel_data}.csv",mime='csv')
+      
+conn_meta.close()

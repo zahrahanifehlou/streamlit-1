@@ -358,6 +358,7 @@ else:
                     )
 
                     st.pyplot(fig_clusmap)
-
+    profile_conn.close()
+    conn.close()
 
 
