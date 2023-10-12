@@ -11,7 +11,7 @@ st.set_page_config(layout="wide")
 import sys
 
 sys.path.append('/mnt/shares/L/PROJECTS/JUMP-CRISPR/Code/streamlit-1/lib/')
-from streamlib import (conn_meta, conn_prof, get_cpds, get_list_category,
+from streamlib import (get_cpds, get_list_category,
                        get_stringDB, get_stringDB_enr, int_to_str, sql_df,
                        str_to_float)
 
