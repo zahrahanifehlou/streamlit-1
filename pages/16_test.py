@@ -115,8 +115,8 @@ st.pyplot(fig8.axes.figure)
 fig9=umap.plot.diagnostic(mapper, diagnostic_type='neighborhood')
 st.pyplot(fig9.axes.figure)
 
-fig10 = umap.plot.connectivity(mapper, edge_bundling='hammer')
-st.pyplot(fig10.axes.figure)
+# fig10 = umap.plot.connectivity(mapper, edge_bundling='hammer')
+# st.pyplot(fig10.axes.figure)
 # X=df_g1.values
 
 # grid_unit_size = .02
