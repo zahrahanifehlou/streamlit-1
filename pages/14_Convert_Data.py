@@ -8,7 +8,7 @@ st.set_page_config(layout="wide")
 import sys
 
 sys.path.append('/mnt/shares/L/PROJECTS/JUMP-CRISPR/Code/streamlit-1/lib/')
-from streamlib import conn_meta, sql_df
+from streamlib import sql_df
 
 def init_connection():
     return psycopg2.connect(**st.secrets["postgres"])
