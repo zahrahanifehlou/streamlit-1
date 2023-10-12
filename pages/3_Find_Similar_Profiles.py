@@ -219,20 +219,12 @@ else:
                     tmp = df_src_emd.loc[(df_src_emd['umap1']==x) & (df_src_emd['umap2'] == y) ]
                     batch=tmp.metabatchid.values[0]
                     name=tmp.metacpdname.values[0]
-                    st.write(name)
-               
-                    # batch = df_src_emd.iloc[selected_points[0]['pointIndex']].metabatchid
-                    # name =df_src_emd.iloc[selected_points[0]['pointIndex']].metacpdname
-                    # st.write(df_src_emd)
-                    # st.write(selected_points)
-                    # st.write(df_src_emd.iloc[selected_points[0]['pointIndex']])
-                    aa=df_src_emd[df_src_emd["metacpdname"]==name]
-                    st.write(aa)
+             
                     sql_point = f"select * from platemap where batchid='{batch}' and source='{choix_source}'"
                     df_plates= sql_df(sql_point, conn)
                   
                     plt_len=len(df_plates)
-                    if plt_len>1:
+                    if plt_len>0:
                         br_cols = st.columns(plt_len)
                     
                     for i in range(len(df_plates)):
@@ -356,6 +348,7 @@ else:
                                     use_container_width=True)
 
                 # -------------------------------------------
+                st.write("\n")
                 df_src_emd["color"] = "others"
                 df_src_emd.loc[df_src_emd["metacpdname"].isin(
                     nearest_neighbor_name), "color"] = "similar compounds"
@@ -379,14 +372,19 @@ else:
                 else:
                     selected_point_knn = plotly_events(figUMAP_knn,click_event=True)
                     if selected_point_knn:
-                        batch_knn = df_src_emd.iloc[selected_point_knn[0]['pointIndex']].metabatchid
-                        name_knn =df_src_emd.iloc[selected_point_knn[0]['pointIndex']].metacpdname
+                        x=selected_point_knn[0]['x']
+                        y=selected_point_knn[0]['y']
+                    
+                        tmp = df_src_emd.loc[(df_src_emd['umap1']==x) & (df_src_emd['umap2'] == y) ]
+                        batch_knn=tmp.metabatchid.values[0]
+                        name_knn=tmp.metacpdname.values[0]
+                    
+                       
                         sql_point = f"select * from platemap where batchid='{batch_knn}' and source='{choix_source}'"
                         df_plates= sql_df(sql_point, conn)
                         plt_len=len(df_plates)
-                        br_cols = st.columns(plt_len)
-                      
-                        
+                        if plt_len>0:
+                            br_cols = st.columns(plt_len)
                         for i in range(len(df_plates)):
                             plate=df_plates.plate[i]
                             well=df_plates.well[i]
