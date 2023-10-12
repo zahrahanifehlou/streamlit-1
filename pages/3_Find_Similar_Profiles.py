@@ -67,8 +67,8 @@ else:
         sql_umqpemd = f"select * from umapemd where metasource='{choix_source}'"
         df_src_emd = sql_df(sql_umqpemd, profile_conn)
         return df_src_emd
-    df_src_emd = get_umap(choix_source="Ksilink_625")
-    df_crisper_emd = get_umap(choix_source="CRISPER")
+    df_src_emd = get_umap(choix_source=choix_source)
+
 
 
     # cpds---------------------------------------------------------------------------------------------------------------------
@@ -211,13 +211,17 @@ else:
             
             else:
                 selected_points = plotly_events(fig,click_event=True)
+               
                 if selected_points:
                     batch = df_src_emd.iloc[selected_points[0]['pointIndex']].metabatchid
                     name =df_src_emd.iloc[selected_points[0]['pointIndex']].metacpdname
+                 
                     sql_point = f"select * from platemap where batchid='{batch}' and source='{choix_source}'"
                     df_plates= sql_df(sql_point, conn)
+                  
                     plt_len=len(df_plates)
-                    br_cols = st.columns(plt_len)
+                    if plt_len>1:
+                        br_cols = st.columns(plt_len)
                     
                     for i in range(len(df_plates)):
                     
