@@ -14,7 +14,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 from streamlit_plotly_events import plotly_events
 from PIL import Image
 sys.path.append('/mnt/shares/L/PROJECTS/JUMP-CRISPR/Code/streamlit-1/lib/')
-
+import os
 
 
 def init_connection():
@@ -234,9 +234,10 @@ else:
                         fpath=f"/mnt/shares/L/PROJECTS/JUMP-CP/Checkout_Results/BirdView/{plate}/{plate}_{well}.jpg"
                         if choix_source=="CRISPER":
                             fpath=f"/mnt/shares/L/PROJECTS/JUMP-CRISPR/Checkout_Results/BirdView/{plate}/{plate}_{well}.jpg"
-                        image = Image.open(fpath)
-                        with br_cols[i]:
-                            st.image(image, caption=f"{name} : {plate} {well}", width =256)
+                        if os.path.isfile(fpath):
+                            image = Image.open(fpath)
+                            with br_cols[i]:
+                                st.image(image, caption=f"{name} : {plate} {well}", width =256)
 
                 
     
