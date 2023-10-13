@@ -184,10 +184,10 @@ st.write(sel_symb)
 sel_card = st.slider('card of neighbours', min_value=2,max_value=30,value=5,step=1)
 neigh = NearestNeighbors(n_neighbors=sel_card,n_jobs=-1)
 neigh.fit(df_all_umap.select_dtypes(include=numerics))
-neib =neigh.kneighbors(df_all_umap[df_all_umap[sel_col]==sel_symb].select_dtypes(include=numerics))[1].tolist()
+neib =neigh.kneighbors(df_all_umap[df_all_umap[sel_col]==sel_symb].select_dtypes(include=numerics))[1]
 df_neib = df_all_umap.iloc[neib[0]]
 
-st.write(df_neib)
+
 #
 df_all_umap['color']='others'
 df_all_umap.loc[df_all_umap[sel_col].isin(df_neib[sel_col].tolist()), "color"] = "similar profile"
@@ -198,7 +198,7 @@ fig5 = px.scatter(
     y="Y_umap",    
     hover_data=sel_col,
     color_discrete_sequence=["green", "red","blue" ],
-    title=f"similar CRISPER profiles to {sel_symb}   ",
+    title=f"similar {sel_source} profiles to {sel_symb}   ",
     color="color",
     opacity=0.8,
     # text=sel_col
@@ -214,6 +214,36 @@ for trace in fig5.data:
     #     trace.marker.line.width = 2
         
 st.plotly_chart(fig5, theme="streamlit", use_container_width=True)#
+
+
+df_all_umap['color']='others'
+# df_all_umap.iloc[neib.flatten()]['color']='chr'
+df_all_umap.loc[df_all_umap[sel_col]==sel_symb, 'color'] = sel_symb
+
+# df_all_umap[df_all_umap["meta_locus"]=='17q25']='chr'
+
+fig6 = px.scatter(
+    df_all_umap,
+    x="X_umap",
+    y="Y_umap",    
+    hover_data=[sel_col,'symbol'],
+    color_discrete_sequence=["green", "red","blue" ],
+    title=f"{sel_source} profiles of {sel_symb}   ",
+    color="color",
+    opacity=0.8,
+    # text=sel_col
+)
+# for trace in fig6.data:
+#     if trace.name=='chr':
+#         # st.write(trace)
+#         trace.marker.opacity=0.9
+#         trace.marker.size=15
+#         # trace.text=sel_col
+#     # else:
+#     #     trace.marker.line.color = 'rgba(0, 0, 0, 1.0)'
+#     #     trace.marker.line.width = 2
+        
+st.plotly_chart(fig6, theme="streamlit", use_container_width=True)#
 # st.error('you failed!!!')
 conn.close()
 conn_profileDB.close()
