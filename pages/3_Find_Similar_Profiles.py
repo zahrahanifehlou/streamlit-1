@@ -392,9 +392,10 @@ else:
                             fpath=f"/mnt/shares/L/PROJECTS/JUMP-CP/Checkout_Results/BirdView/{plate}/{plate}_{well}.jpg"
                             if choix_source=="CRISPER":
                                  fpath=f"/mnt/shares/L/PROJECTS/JUMP-CRISPR/Checkout_Results/BirdView/{plate}/{plate}_{well}.jpg"
-                            image = Image.open(fpath)
-                            with br_cols[i]:
-                                st.image(image, caption=f"{name_knn} : {plate} {well}", width =256)
+                            if os.path.isfile(fpath):
+                                image = Image.open(fpath)
+                                with br_cols[i]:
+                                    st.image(image, caption=f"{name_knn} : {plate} {well}", width =256)
 
     
                     
