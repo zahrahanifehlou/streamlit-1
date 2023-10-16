@@ -292,18 +292,15 @@ else:
                                 == choix][["umap1", "umap2"]]
 
             distances, indices = neigh.kneighbors(points)
-            nearest_neighbor_name = df_src_emd.loc[indices[0,
-                                                           1:], 'metacpdname']
-            nearest_neighbor_name = nearest_neighbor_name.to_list()
-            nearest_neighbor_name.append(choix)
-
-            knn_sim_df = df_src_emd[df_src_emd["metacpdname"].isin(
-                nearest_neighbor_name)]
+            knn_sim_df=pd.concat([df_src_emd[df_src_emd["metacpdname"]==choix],df_src_emd.loc[indices[0,1:]]])
+            knn_sim_df.reset_index(inplace=True, drop=True)
 
             # knn_sim_df.drop(columns=["metasource"],inplace=True)
-            df_keep_prof_cpd_knn = df_source[df_source["metabatchid"].isin(
-                knn_sim_df["metabatchid"].values)]
+            df_keep_prof_cpd_knn =df_source[df_source['metabatchid'].isin(knn_sim_df['metabatchid'].values)]  
+        
             df_keep_prof_cpd_knn.reset_index(inplace=True, drop=True)
+            
+            
 
             df_keep_prof_cpd_knn = df_keep_prof_cpd_knn.merge(knn_sim_df[["metabatchid", "metaefficacy", "metageneid", "metagenesymbol",
                                                               "metasmile", "metakeggid", "metacpdname"]], left_on='metabatchid', right_on='metabatchid').reset_index(drop=True)
@@ -351,8 +348,9 @@ else:
                 # -------------------------------------------
                 st.write("\n")
                 df_src_emd["color"] = "others"
-                df_src_emd.loc[df_src_emd["metacpdname"].isin(
-                    nearest_neighbor_name), "color"] = "similar compounds"
+                df_src_emd.loc[indices[0,1:], "color"] = "similar compounds"
+                # df_src_emd.loc[df_src_emd["metacpdname"].isin(
+                #     nearest_neighbor_name), "color"] = "similar compounds"
                 df_src_emd.loc[df_src_emd["metacpdname"] ==
                                choix, "color"] = "selected compounds"
                 figUMAP_knn = px.scatter(
