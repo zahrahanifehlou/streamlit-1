@@ -67,9 +67,9 @@ def get_relation(df_genes):
         st.write('### Displaying the full network/graph clustered with Leiden approach')
         # col1, col2,col3 = st.columns(3)
 
-        vert_size = st.sidebar.slider('vertex size',min_value=0.2,max_value=20.0,step=0.1,value=1.0)
-        lab_size = st.sidebar.slider('label size',min_value=0.2,max_value=20.0,step=0.1,value=1.0)
-        box_size = st.sidebar.slider('box size',min_value=400,max_value=1600,step=50,value=600)
+        vert_size = st.sidebar.slider('vertex2 size',min_value=0.2,max_value=20.0,step=0.1,value=1.0)
+        lab_size = st.sidebar.slider('label2 size',min_value=0.2,max_value=20.0,step=0.1,value=1.0)
+        box_size = st.sidebar.slider('box2 size',min_value=400,max_value=1600,step=50,value=600)
         ig.config['plotting.backend'] = 'matplotlib'
         subax1=ig.plot(partition,vertex_label=partition.graph.vs['_nx_name'],vertex_label_size=lab_size,vertex_size=vert_size,
                     margin=10, bbox=(0,0,box_size, box_size))
