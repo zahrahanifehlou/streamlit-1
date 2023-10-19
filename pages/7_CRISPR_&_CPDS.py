@@ -25,76 +25,7 @@ profile_conn = psycopg2.connect(
     user="arno",
     database="ksilink_cpds",
     password="12345",)
-main_tab, umap_tab = st.tabs(
-    ["calculation", " UMAP  "])
 
-sal = 'select gene.*,crisperbatchs.batchid from gene  INNER JOIN crisperbatchs ON crisperbatchs.geneid=gene.geneid'
-df_gene = sql_df(sal, conn)
-df_gene.drop_duplicates(subset=["batchid"], inplace=True)
-
-sql_crisper = f"SELECT * FROM aggcombatprofile WHERE metasource='CRISPER'"
-df_crisper = sql_df(sql_crisper, profile_conn)
-
-df_crisper = df_crisper.merge(df_gene.add_prefix(
-    'meta'), left_on='metabatchid', right_on='metabatchid').reset_index(drop=True)
-st.write(df_crisper.metachromosome.value_counts())
-
-df_corrected = []
-cols = [col for col in df_crisper.columns if not col.startswith("meta")]
-meta = [col for col in df_crisper.columns if col.startswith("meta")]
-for chrom in df_crisper.metachromosome.unique():
-    mean_out = df_crisper[df_crisper["metachromosome"]
-                            != chrom][cols].mean()
-    tmp = df_crisper[df_crisper["metachromosome"] == chrom]
-    df_cr_in = tmp[cols]-mean_out
-    df_cr_in[meta] = tmp[meta]
-    df_corrected.append(df_cr_in)
-
-df = pd.concat(df_corrected)
-df.reset_index(inplace=True, drop=True)
-cols = [c for c in df.columns if not c.startswith("meta")]
-meta_cols = [c for c in df.columns if c.startswith("meta")]
-X = df[cols]
-
-# UMAP
-umap_2d = umap.UMAP(n_components=2, n_neighbors=30,
-                    min_dist=0, verbose=True, random_state=42)
-mapper = umap_2d.fit(X)
-projection_2d = umap_2d.fit_transform(X)
-emd_umap = pd.DataFrame()
-emd_umap["umap1"] = projection_2d[:, :1].flatten()
-emd_umap["umap2"] = projection_2d[:, 1:2].flatten()
-emd_umap[meta_cols] = df[meta_cols]
-st.write(emd_umap)
-st.download_button(
-    label="Save", data=convert_df(emd_umap), file_name=f"umap_corr.csv", mime='csv',)
-
-st.write(df)
-st.download_button(
-    label="Save", data=convert_df(df), file_name=f"df_corr.csv", mime='csv',)
-
-
-
-
-color_col = st.radio(
-    "select color",
-    ("metalocus", 'metasymbol', "metachromosome", "metamainlocation"),
-    horizontal=True,
-)
-
-fig = px.scatter(
-    emd_umap,
-    x="umap1",
-    y="umap2",
-    color=color_col,
-    title=f" UMAP ",
-    hover_data=meta_cols,
-)
-
-st.plotly_chart(fig, theme="streamlit",
-                use_container_width=True)
-
-profile_conn.close()
 ####################################
 
 # def int_to_str(ints):
