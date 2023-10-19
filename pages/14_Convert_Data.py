@@ -87,6 +87,7 @@ if len(list_df) > 0:
       sql_genes = f"select * from gene where {sel_match}  in  (" + ",".join(bq) + ")"
       df_genes = sql_df(sql_genes,conn_meta)
       st.write(df_genes)
+      df_pub=df_genes
 
       
       st.download_button(
@@ -97,7 +98,7 @@ if len(list_df) > 0:
       st.write(df_cpds)
       st.download_button(
                 label="Save",data=convert_df(df_cpds),file_name=f"{sel_data}.csv",mime='csv')
-
+      df_pub=df_cpds
 
     
     if sel_data=='cpds in Kegg':
@@ -106,7 +107,7 @@ if len(list_df) > 0:
       st.write(df_kegg)
       st.download_button(
                 label="Save",data=convert_df(df_kegg),file_name=f"{sel_data}.csv",mime='csv')
-      
+      df_pub=df_kegg
     if sel_data=='cpds in Jump':
       sql_jump="select * from cpd"
       df_jump=sql_df(sql_jump,conn_meta)
@@ -115,5 +116,6 @@ if len(list_df) > 0:
       st.write(df_jump)
       st.download_button(
                 label="Save",data=convert_df(df_jump),file_name=f"{sel_data}.csv",mime='csv')
-      
+      df_pub=df_jump
+    st.session_state['Convert']=df_pub
 conn_meta.close()
