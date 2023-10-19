@@ -95,6 +95,14 @@ if on and not df_known_drug.empty:
     def convert_df(df):
     # IMPORTANT: Cache the conversion to prevent computation on every rerun
         return df.to_csv().encode('utf-8')
+    @st.cache_data
+    def get_cpds(list_drug):
+        sql_ksi = f"select * from platemap where platemap.batchid in ({','.join(list_drug)})"
+        df_ksi = sql_df(sql_ksi,conn_meta)
+        
+        
+        return df_ksi
+        
     list_drug = [f"'{t}'" for t in df_known_drug['keggid']]
     # sql_drug="select * from keggcpd where keggid  in (" + ",".join(list_drug) + ")"
     sql_drug = f"SELECT keggcpd.*, keggcpdgene.geneid,gene.geneid, gene.symbol,cpdbatchs.batchid FROM keggcpd\
@@ -113,10 +121,9 @@ if on and not df_known_drug.empty:
 
 
     list_drug_ksi = [f"'{t}'" for t in df_drug['batchid']]
-    sql_ksi = f"select * from platemap where platemap.batchid in ({','.join(list_drug_ksi)})"
-    df_ksi = sql_df(sql_ksi,conn_meta)
+    df_ksi=get_cpds(list_drug_ksi)
     list_source= df_ksi.source.unique()
-    sel_source = st.selectbox('Chose the source',list_source )
+    sel_source = st.selectbox('Chose the source',list_source)
     df_sel = df_ksi[df_ksi['source']==sel_source]
     st.write(f'Data from source: {sel_source}',df_sel)
 

@@ -30,6 +30,14 @@ def toto():
     return df_src_emd
 
 df=toto()
+all_cpds=["Staurosporine","Saccharin","Sorbitol",   "CA-074","BAYK8644",
+    "Lys05","Cucurbitacin","FCCP","Rapamycin","Cladribine","Cytarabine",
+    "Etoposide","Berberine","Fluphenazine","Docetaxel","Oxibendazole",
+    "Ethoxyquin","Rotenone","GSK2879552","BAY K8644","NMDA","Tetrandrine",
+    'Aloxistatin','Dexamethasone','Quinidine','LY2109761','AMG900','NVS-PAK1-1','Mirk-IN-1','Daporinad']
+df_dcps=pd.DataFrame()
+df_dcps['cpds']=all_cpds
+df_dcps.to_csv('/mnt/shares/L/Temp/cpds_tox.csv',index=None)
 cols = [c for c in df.columns if  not c.startswith("meta")]
 meta_cols = [c for c in df.columns if  c.startswith("meta")]
 X = df[cols]
