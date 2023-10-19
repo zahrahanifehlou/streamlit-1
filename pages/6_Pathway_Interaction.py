@@ -19,8 +19,13 @@ from Bio.Graphics.ColorSpiral import ColorSpiral
 from Bio.Graphics.KGML_vis import KGMLCanvas
 from Bio.KEGG.KGML import KGML_parser
 from Bio.KEGG.REST import *
-from streamlib import conn_meta, sql_df
+from streamlib import sql_df
 
+
+def init_connection():
+    return psycopg2.connect(**st.secrets["postgres"])
+
+conn_meta = init_connection()
 
 def convert_hexa(dfa,col):
     cmap = plt.cm.get_cmap('bwr')
@@ -98,13 +103,13 @@ if len(list_df) > 0:
 
             # st.write('df_bb')
             # st.write(df_bb)
-            path_names=df_bb['name_y'].unique().tolist()
+            path_names=df_bb['pathname'].unique().tolist()
             path_name =st.selectbox('Chose Pathway',path_names)
 
-            df_cancer=df_bb[df_bb['name_y']==path_name]
+            df_cancer=df_bb[df_bb['pathname']==path_name]
             df_cancer['sim']=1
-            st.write('path_name')
-            st.write(df_cancer)
+            # st.write(path_name)
+            # st.write(df_cancer)
 
             df_c=convert_hexa(df_cancer,'sim')
 
