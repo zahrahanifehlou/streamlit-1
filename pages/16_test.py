@@ -23,6 +23,7 @@ conn = psycopg2.connect(
     password="12345",
 )
 
+st.title('Experimental: works only on 131')
 
 def toto():
     sql_umqpemd =  f"SELECT * FROM aggcombatprofile where metasource='Ksilink_625'"
@@ -51,9 +52,10 @@ nb_cluster=st.slider('Number of clusters',min_value=2,max_value=30,value=15,step
 from cuml import PCA
 pca_2d = PCA(n_components=2)
 projection_2d = pca_2d.fit_transform(X)
+# st.write(projection_2d[0])
 emd_pca = pd.DataFrame()
-emd_pca["pca1"] = projection_2d[:, :1].flatten()
-emd_pca["pca2"] = projection_2d[:, 1:2].flatten()
+emd_pca["pca1"] = projection_2d[0]
+emd_pca["pca2"] = projection_2d[1]
 kmeans = KMeans(n_clusters=nb_cluster, random_state=0).fit(emd_pca)
 # emd_pca[meta_cols] = df[meta_cols]
 
@@ -74,15 +76,15 @@ st.plotly_chart(fig1, theme="streamlit",
                                 use_container_width=True)
 
 ## UMAP
-import umap
-
-umap_2d = umap.UMAP(n_components=2, n_neighbors=30,
+# import umap
+from cuml import UMAP
+umap_2d = UMAP(n_components=2, n_neighbors=30,
                 min_dist=0, verbose=True, random_state=42)
 mapper=umap_2d.fit(X)
-projection_2d = umap_2d.fit_transform(X)
+projection_2d = mapper.transform(X)
 emd_umap = pd.DataFrame()
-emd_umap["umap1"] = projection_2d[:, :1].flatten()
-emd_umap["umap2"] = projection_2d[:, 1:2].flatten()
+emd_umap["umap1"] = projection_2d[0]
+emd_umap["umap2"] = projection_2d[1]
 # emd_umap[meta_cols] = df[meta_cols]
 emd_umap['Cluster']=kmeans.labels_
 emd_umap['Cluster'] = emd_umap['Cluster'].astype(str)
@@ -99,30 +101,32 @@ fig = px.scatter(
             
 st.plotly_chart(fig, theme="streamlit",
                                 use_container_width=True)
+from cuml.metrics import trustworthiness
+cu_score=trustworthiness(X,projection_2d)
+st.write(" cuml's trustworthiness score : ",cu_score)
 
+# st.write(df)
+# import matplotlib.pyplot as plt
+# import plotly.figure_factory as ff
+# df_g1=emd_pca.groupby("Cluster").mean()
+# df_g2=emd_umap.groupby("Cluster").mean()
+# st.write(df_g1)
+# st.write(df_g2)
+# fig3=ff.create_quiver( df_g1["pca1"],df_g1["pca2"],(df_g2["umap1"]-df_g1["pca1"]),df_g2["umap2"]-df_g1["pca2"],scale=1)
+# st.plotly_chart(fig3)
+# import umap.plot
+# fig6 = umap.plot.diagnostic(mapper, diagnostic_type='pca')
+# # st.write(fig6)
+# st.pyplot(fig6.axes.figure)
 
-st.write(df)
-import matplotlib.pyplot as plt
-import plotly.figure_factory as ff
-df_g1=emd_pca.groupby("Cluster").mean()
-df_g2=emd_umap.groupby("Cluster").mean()
-st.write(df_g1)
-st.write(df_g2)
-fig3=ff.create_quiver( df_g1["pca1"],df_g1["pca2"],(df_g2["umap1"]-df_g1["pca1"]),df_g2["umap2"]-df_g1["pca2"],scale=1)
-st.plotly_chart(fig3)
-import umap.plot
-fig6 = umap.plot.diagnostic(mapper, diagnostic_type='pca')
-# st.write(fig6)
-st.pyplot(fig6.axes.figure)
+# fig7=umap.plot.diagnostic(mapper, diagnostic_type='vq')
+# st.pyplot(fig7.axes.figure)
 
-fig7=umap.plot.diagnostic(mapper, diagnostic_type='vq')
-st.pyplot(fig7.axes.figure)
+# fig8=umap.plot.diagnostic(mapper, diagnostic_type='local_dim')
+# st.pyplot(fig8.axes.figure)
 
-fig8=umap.plot.diagnostic(mapper, diagnostic_type='local_dim')
-st.pyplot(fig8.axes.figure)
-
-fig9=umap.plot.diagnostic(mapper, diagnostic_type='neighborhood')
-st.pyplot(fig9.axes.figure)
+# fig9=umap.plot.diagnostic(mapper, diagnostic_type='neighborhood')
+# st.pyplot(fig9.axes.figure)
 
 # fig10 = umap.plot.connectivity(mapper, edge_bundling='hammer')
 # st.pyplot(fig10.axes.figure)
