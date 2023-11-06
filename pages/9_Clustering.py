@@ -11,7 +11,8 @@ from sklearn.cluster import KMeans
 
 sys.path.append('/mnt/shares/L/PROJECTS/JUMP-CRISPR/Code/streamlit-1/lib/')
 from streamlib import sql_df
-
+def convert_df(df):
+       return df.to_csv(index=False).encode('utf-8')
 st.set_page_config(
 
     layout="wide",
@@ -100,7 +101,8 @@ for col in data.columns:
 # st.write(data.describe())
 data=data.reset_index(drop=True)
 st.write(data.sample(2))
-
+# st.download_button(
+#                 label="Save",data=convert_df(data),file_name=f"{sel_source}.csv",mime='csv')
 list_batch = [f"'{meta_batchid}'" for meta_batchid in data["meta_batchid"]]
 
 # st.write(len(data))
@@ -126,7 +128,8 @@ for col in df_genes.columns:
 df_prof_drug_meta_genes =df_prof_drug_meta.merge(df_genes,left_on='meta_geneid',right_on='meta_geneid').reset_index(drop=True)
 df_prof_drug_meta_genes=df_prof_drug_meta_genes[df_prof_drug_meta_genes['metasource']==sel_source].reset_index(drop=True)
 st.write(df_prof_drug_meta_genes.sample(2))
-
+st.download_button(
+                label="Save",data=convert_df(df_prof_drug_meta_genes),file_name=f"{sel_source}.csv",mime='csv')
 
 model = umap.UMAP(random_state=42, verbose=False).fit(df_prof_drug_meta_genes[num_col])
 emb = model.transform(df_prof_drug_meta_genes[num_col])
