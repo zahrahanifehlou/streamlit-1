@@ -14,7 +14,7 @@ conn = init_connection()
 
 df_results=pd.DataFrame()
 
-st.write("Example: SELECT cpd.pubchemid,  cpd.keggid, cpd.cpdname, cpd.smile from cpd  INNER JOIN keggcpdgene ON keggcpdgene.keggid=cpd.keggid INNER JOIN gene ON gene.geneid=keggcpdgene.geneid")
+st.write("Example:  SELECT cpd.pubchemid, cpd.keggid, cpd.cpdname, gene.* from cpd INNER JOIN keggcpdgene ON keggcpdgene.keggid=cpd.keggid INNER JOIN gene ON gene.geneid=keggcpdgene.geneid")
 sql_line = st.text_area("Enter your search",help="select * from cpd")
 if len(sql_line)>0:
     st.write("your SQL is :",sql_line)
