@@ -6,6 +6,8 @@ from streamlib import sql_df
 import psycopg2
 import pandas as pd
 from sklearn.cluster import KMeans
+from streamlib import convert_df
+
 def init_connection():
     return psycopg2.connect(**st.secrets["postgres"])
 
@@ -23,4 +25,10 @@ if len(sql_line)>0:
 
 if len(df_results)>0:
             st.write(df_results)
+            st.download_button(
+            label="Save results",
+            data=convert_df(df_results),
+            file_name="df_results.csv",
+            mime="csv",
+    )
     
