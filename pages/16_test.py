@@ -47,7 +47,8 @@ nb_cluster=st.slider('Number of clusters',min_value=2,max_value=30,value=15,step
 
 
 ## PCA
-from sklearn.decomposition import PCA
+# from sklearn.decomposition import PCA
+from cuml import PCA
 pca_2d = PCA(n_components=2)
 projection_2d = pca_2d.fit_transform(X)
 emd_pca = pd.DataFrame()
