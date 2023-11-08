@@ -8,7 +8,7 @@ import streamlit as st
 
 sys.path.append('/mnt/shares/L/PROJECTS/JUMP-CRISPR/Code/streamlit-1/lib/')
 from streamlib import sql_df
-from streamlib import sql_df
+
 
 def convert_df(df):
        return df.to_csv(index=False).encode('utf-8')
@@ -23,38 +23,86 @@ st.set_page_config(
     layout="wide",
 )
 st.header("In house Dataset",divider='rainbow')
-cols1= st.columns(2)
-with cols1[0]:
-    to_find = st.text_input("Enter your search (Batchid)",help='FCCP')
-with cols1[1]:
-    project_name = st.text_input("Enter Project name",help='DM1')
-if project_name!="":
-    sql_profile = f"SELECT * from projectsprofile WHERE projectsprofile.project='{project_name}' \
-    AND ( batchid='{to_find}' OR UPPER(projectsprofile.name) LIKE UPPER('{to_find}%'))"
-else:
-    sql_profile = f"SELECT * from projectsprofile WHERE ( batchid='{to_find}'\
-    OR UPPER(projectsprofile.name) LIKE UPPER('{to_find}%'))"
-
-df_pro = sql_df(sql_profile, profile_conn)
-st.write(df_pro.assay.unique())
-st.write("--------------------------------------")
-
-disp = st.sidebar.toggle("Display Data")
-if len(df_pro)>0 and (to_find or project_name):
+# sql_line = st.text_area("Enter your search",help="select * from cpd")
+# if len(sql_line)>0:
+#     st.write("your SQL is :",sql_line)
+#     df_results= sql_df(sql_line, profile_conn)
 
 
-    original_columns = ["project","assay", "name", "batchid","concentration", "tags", "plate", "well"]
-    for g, data in df_pro.groupby('assay'):
-        pivot_df = pd.pivot_table(data, index=original_columns, columns='feature', values='value').reset_index()
-        tab1,tab2=st.tabs([f"Profiles in {g}", f"Summary in {g}"])
-        if disp:
-            tab1.write(pivot_df)
-            st.download_button(
-                label="Save",data=convert_df(pivot_df),file_name=f"{g}.csv",mime='csv',)
-            tab2.write(pivot_df.describe())
+   
+# if len(df_results)>0:
+#             st.write(df_results)
+#             st.download_button(
+#             label="Save results",
+#             data=convert_df(df_results),
+#             file_name="df_results.csv",
+#             mime="csv",
+#     )
+sql_proj='select project from projectsprofile group by project'
+res_proj=sql_df(sql_proj, profile_conn)
+
+project_name = st.selectbox("Select Project name",res_proj,help='DM1')
+sql_profile = f"SELECT assay from projectsprofile WHERE projectsprofile.project='{project_name}' group by assay"
+res_assay=sql_df(sql_profile, profile_conn)
+# list_assay = res_assay.assay.unique()
+sel_proj = st.selectbox("Select Assay name",res_assay)
+
+sql_assay=f"SELECT * from projectsprofile WHERE projectsprofile.assay='{sel_proj}'"
+df_pro=sql_df(sql_assay, profile_conn)
+# st.write(prof_assay)
+
+original_columns = ["project","assay", "name", "batchid","concentration", "tags", "plate", "well"]
+for g, data in df_pro.groupby('assay'):
+    pivot_df = pd.pivot_table(data, index=original_columns, columns='feature', values='value').reset_index()
+    tab1,tab2=st.tabs([f"Profiles in {g}", f"Summary in {g}"])
+    
+    tab1.write(pivot_df)
+    st.download_button(
+        label="Save",data=convert_df(pivot_df),file_name=f"{g}.csv",mime='csv',)
+    tab2.write(pivot_df.describe())
+
+list_cols=pivot_df.columns
+cols = st.columns(3)
+sel_col = cols[0].selectbox('select column:', list_cols)
+sel_sign = cols[1].selectbox('select sign:', ['<','>','=='])
+sel_value = cols[2].slider('Value',0,130,15 )
+# cols1= st.columns(2)
+# with cols1[0]:
+#     to_find = st.text_input("Enter your search (Batchid)",help='FCCP')
+# with cols1[1]:
+
+    
+    
+
+    
+    
+# if project_name!="":
+#     sql_profile = f"SELECT * from projectsprofile WHERE projectsprofile.project='{project_name}' \
+#     AND ( batchid='{to_find}' OR UPPER(projectsprofile.name) LIKE UPPER('{to_find}%'))"
+# else:
+#     sql_profile = f"SELECT * from projectsprofile WHERE ( batchid='{to_find}'\
+#     OR UPPER(projectsprofile.name) LIKE UPPER('{to_find}%'))"
+
+# df_pro = sql_df(sql_profile, profile_conn)
+# st.write(df_pro.assay.unique())
+# st.write("--------------------------------------")
+
+# disp = st.sidebar.toggle("Display Data")
+# if len(df_pro)>0 and (to_find or project_name):
 
 
-profile_conn.close()
+#     original_columns = ["project","assay", "name", "batchid","concentration", "tags", "plate", "well"]
+#     for g, data in df_pro.groupby('assay'):
+#         pivot_df = pd.pivot_table(data, index=original_columns, columns='feature', values='value').reset_index()
+#         tab1,tab2=st.tabs([f"Profiles in {g}", f"Summary in {g}"])
+#         if disp:
+#             tab1.write(pivot_df)
+#             st.download_button(
+#                 label="Save",data=convert_df(pivot_df),file_name=f"{g}.csv",mime='csv',)
+#             tab2.write(pivot_df.describe())
+
+
+# profile_conn.close()
 
 # for g in df_pro_gr.groups.keys:
 
