@@ -7,7 +7,16 @@ import psycopg2
 import streamlit as st
 
 sys.path.append('/mnt/shares/L/PROJECTS/JUMP-CRISPR/Code/streamlit-1/lib/')
-from streamlib import sql_df
+
+@st.cache_resource
+def sql_df(sql_str, _conn):
+    cur = _conn.cursor()
+    cur.execute(sql_str)
+    rows = cur.fetchall()
+    df_d = pd.DataFrame(rows, columns=[desc[0] for desc in cur.description])
+
+    return df_d
+# from streamlib import sql_df
 
 
 def convert_df(df):
@@ -62,10 +71,32 @@ for g, data in df_pro.groupby('assay'):
     tab2.write(pivot_df.describe())
 
 list_cols=pivot_df.columns
+numerics = ["int16", "int32", "int64", "float16", "float32", "float64"]
+cols_alpha = pivot_df.select_dtypes(exclude=numerics).columns
 cols = st.columns(3)
 sel_col = cols[0].selectbox('select column:', list_cols)
-sel_sign = cols[1].selectbox('select sign:', ['<','>','=='])
-sel_value = cols[2].slider('Value',0,130,15 )
+if sel_col in cols_alpha:
+    sel_sign = cols[1].selectbox('select:', '==')
+    str_data=pivot_df[sel_col]
+    # st.write(str_data)
+    sel_value= cols[2].selectbox('select value',str_data)
+    df_sel = pivot_df[pivot_df[sel_col] == sel_value]
+else:
+    sel_sign = cols[1].selectbox('select sign:', ['<','>','=='])
+    val_data_min = pivot_df[sel_col].min()
+    val_data_max =  pivot_df[sel_col].max()
+    val_data_med =  pivot_df[sel_col].median()
+    sel_value = cols[2].slider('Value',val_data_min,val_data_max,val_data_med )
+    if sel_sign == '<':
+        df_sel = pivot_df[pivot_df[sel_col] < sel_value]
+    elif sel_sign == '>':
+        df_sel = pivot_df[pivot_df[sel_col] > sel_value]
+    elif sel_sign == '==':
+        df_sel = pivot_df[pivot_df[sel_col] == sel_value]
+        
+st.write(df_sel)
+st.download_button(
+        label="Save",data=convert_df(df_sel),file_name=f"{sel_col}+{sel_sign}+{sel_value}.csv",mime='csv',)
 # cols1= st.columns(2)
 # with cols1[0]:
 #     to_find = st.text_input("Enter your search (Batchid)",help='FCCP')
