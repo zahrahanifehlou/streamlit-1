@@ -17,7 +17,10 @@ def sql_df(sql_str, _conn):
 
     return df_d
 # from streamlib import sql_df
+def init_connection():
+    return psycopg2.connect(**st.secrets["postgres"])
 
+conn_meta = init_connection()
 
 def convert_df(df):
        return df.to_csv(index=True).encode('utf-8')
@@ -111,8 +114,19 @@ s4 =s3.set_sticky(axis="index")
 st.dataframe(s4)
 # ,column_config={sel_col:st.column_config.BarChartColumn("PlotSel",y_min=val_data_min,y_max=val_data_max),}
 df_state=df_agg.reset_index()
+b_list2 = df_state['batchid'].astype(str).to_list()
+   
+ 
+bq = []
+for bs in b_list2:
+    bq.append("'" + bs.strip().upper() + "'")
 
-st.session_state['history'] = df_state
+  
+sql_genes = f"select * from cpdbatchs where batchid  in  (" + ",".join(bq) + ")"
+df_cpd_infos=sql_df(sql_genes,conn_meta)
+# st.write(df_cpd_infos)
+
+st.session_state['df_cpds'] = df_cpd_infos
 
 st.download_button(
         label="Save",data=convert_df(df_agg),file_name=f"{sel_col}+{sel_sign}+{sel_value}.csv",mime='csv',)
