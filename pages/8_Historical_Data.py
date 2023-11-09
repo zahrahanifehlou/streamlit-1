@@ -103,7 +103,14 @@ if on:
     df_agg=df_sel.drop_duplicates(subset=['batchid','concentration']).reset_index()
 else:
     df_agg=df_sel        
-st.dataframe(df_agg.style.highlight_max(props='color:white;background-color:darkblue',axis=0))
+s2 = df_agg.style.highlight_min(subset=df_agg.select_dtypes(include=numerics).columns,props='color:white;background-color:darkred',axis=0)
+s3 = s2.highlight_max(subset=df_agg.select_dtypes(include=numerics).columns,props='color:white;background-color:darkblue',axis=0)
+st.dataframe(s3)
+# ,column_config={sel_col:st.column_config.BarChartColumn("PlotSel",y_min=val_data_min,y_max=val_data_max),}
+
+
+
+
 st.download_button(
         label="Save",data=convert_df(df_agg),file_name=f"{sel_col}+{sel_sign}+{sel_value}.csv",mime='csv',)
 # cols1= st.columns(2)
