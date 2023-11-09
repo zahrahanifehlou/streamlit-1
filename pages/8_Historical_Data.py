@@ -80,6 +80,7 @@ numerics = ["int16", "int32", "int64", "float16", "float32", "float64"]
 cols_alpha = pivot_df.select_dtypes(exclude=numerics).columns
 cols = st.columns(3)
 sel_col = cols[0].selectbox('select column:', list_cols)
+on = st.sidebar.toggle('Drop Duplicates')
 if sel_col in cols_alpha:
     sel_sign = cols[1].selectbox('select:', '==')
     str_data=pivot_df[sel_col]
@@ -98,10 +99,13 @@ else:
         df_sel = pivot_df[pivot_df[sel_col] > sel_value]
     elif sel_sign == '==':
         df_sel = pivot_df[pivot_df[sel_col] == sel_value]
-        
-st.write(df_sel)
+if on:
+    df_agg=df_sel.drop_duplicates(subset=['batchid','concentration']).reset_index()
+else:
+    df_agg=df_sel        
+st.dataframe(df_agg.style.highlight_max(props='color:white;background-color:darkblue',axis=0))
 st.download_button(
-        label="Save",data=convert_df(df_sel),file_name=f"{sel_col}+{sel_sign}+{sel_value}.csv",mime='csv',)
+        label="Save",data=convert_df(df_agg),file_name=f"{sel_col}+{sel_sign}+{sel_value}.csv",mime='csv',)
 # cols1= st.columns(2)
 # with cols1[0]:
 #     to_find = st.text_input("Enter your search (Batchid)",help='FCCP')
