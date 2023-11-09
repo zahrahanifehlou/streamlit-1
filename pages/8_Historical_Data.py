@@ -83,7 +83,7 @@ sel_col = cols[0].selectbox('select column:', list_cols)
 on = st.sidebar.toggle('Drop Duplicates')
 if sel_col in cols_alpha:
     sel_sign = cols[1].selectbox('select:', '==')
-    str_data=pivot_df[sel_col]
+    str_data=pivot_df[sel_col].unique()
     # st.write(str_data)
     sel_value= cols[2].selectbox('select value',str_data)
     df_sel = pivot_df[pivot_df[sel_col] == sel_value]
@@ -104,7 +104,7 @@ if on:
     df_agg.set_index(['name','concentration','batchid'],inplace=True)   
 else:
     df_agg=df_sel
-     
+# st.write(df_agg)  
 s2 = df_agg.style.highlight_min(subset=df_agg.select_dtypes(include=numerics).columns,props='color:white;background-color:darkred',axis=0)
 s3 = s2.highlight_max(subset=df_agg.select_dtypes(include=numerics).columns,props='color:white;background-color:darkblue',axis=0)
 s4 =s3.set_sticky(axis="index")
