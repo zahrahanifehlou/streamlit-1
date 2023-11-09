@@ -79,7 +79,7 @@ list_cols=pivot_df.columns
 numerics = ["int16", "int32", "int64", "float16", "float32", "float64"]
 cols_alpha = pivot_df.select_dtypes(exclude=numerics).columns
 cols = st.columns(3)
-sel_col = cols[0].selectbox('select column:', list_cols)
+sel_col = cols[0].selectbox('select column:', list_cols,index=2)
 on = st.sidebar.toggle('Drop Duplicates')
 if sel_col in cols_alpha:
     sel_sign = cols[1].selectbox('select:', '==')
