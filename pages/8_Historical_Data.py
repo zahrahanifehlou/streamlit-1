@@ -20,7 +20,7 @@ def sql_df(sql_str, _conn):
 
 
 def convert_df(df):
-       return df.to_csv(index=False).encode('utf-8')
+       return df.to_csv(index=True).encode('utf-8')
 
 
 profile_conn = psycopg2.connect(
@@ -101,7 +101,7 @@ else:
         df_sel = pivot_df[pivot_df[sel_col] == sel_value]
 if on:
     df_agg=df_sel.drop_duplicates(subset=['batchid','concentration']).reset_index()
-    df_agg.set_index(['name','concentration'],inplace=True)   
+    df_agg.set_index(['name','concentration','batchid'],inplace=True)   
 else:
     df_agg=df_sel
      
