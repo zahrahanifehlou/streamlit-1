@@ -110,9 +110,9 @@ s3 = s2.highlight_max(subset=df_agg.select_dtypes(include=numerics).columns,prop
 s4 =s3.set_sticky(axis="index")
 st.dataframe(s4)
 # ,column_config={sel_col:st.column_config.BarChartColumn("PlotSel",y_min=val_data_min,y_max=val_data_max),}
+df_state=df_agg.reset_index()
 
-
-
+st.session_state['history'] = df_state
 
 st.download_button(
         label="Save",data=convert_df(df_agg),file_name=f"{sel_col}+{sel_sign}+{sel_value}.csv",mime='csv',)
