@@ -101,11 +101,14 @@ else:
         df_sel = pivot_df[pivot_df[sel_col] == sel_value]
 if on:
     df_agg=df_sel.drop_duplicates(subset=['batchid','concentration']).reset_index()
+    df_agg.set_index(['name','concentration'],inplace=True)   
 else:
-    df_agg=df_sel        
+    df_agg=df_sel
+     
 s2 = df_agg.style.highlight_min(subset=df_agg.select_dtypes(include=numerics).columns,props='color:white;background-color:darkred',axis=0)
 s3 = s2.highlight_max(subset=df_agg.select_dtypes(include=numerics).columns,props='color:white;background-color:darkblue',axis=0)
-st.dataframe(s3)
+s4 =s3.set_sticky(axis="index")
+st.dataframe(s4)
 # ,column_config={sel_col:st.column_config.BarChartColumn("PlotSel",y_min=val_data_min,y_max=val_data_max),}
 
 
