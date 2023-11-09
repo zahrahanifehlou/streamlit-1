@@ -21,6 +21,8 @@ def sql_df(sql_str, _conn):
 
 def convert_df(df):
        return df.to_csv(index=False).encode('utf-8')
+
+
 profile_conn = psycopg2.connect(
     host="192.168.2.131",
     port="5432",
@@ -47,6 +49,7 @@ st.header("In house Dataset",divider='rainbow')
 #             file_name="df_results.csv",
 #             mime="csv",
 #     )
+
 sql_proj='select project from projectsprofile group by project'
 res_proj=sql_df(sql_proj, profile_conn)
 
@@ -56,20 +59,22 @@ res_assay=sql_df(sql_profile, profile_conn)
 # list_assay = res_assay.assay.unique()
 sel_proj = st.selectbox("Select Assay name",res_assay)
 
-sql_assay=f"SELECT * from projectsprofile WHERE projectsprofile.assay='{sel_proj}'"
-df_pro=sql_df(sql_assay, profile_conn)
-# st.write(prof_assay)
 
-original_columns = ["project","assay", "name", "batchid","concentration", "tags", "plate", "well"]
-for g, data in df_pro.groupby('assay'):
-    pivot_df = pd.pivot_table(data, index=original_columns, columns='feature', values='value').reset_index()
-    tab1,tab2=st.tabs([f"Profiles in {g}", f"Summary in {g}"])
-    
-    tab1.write(pivot_df)
-    st.download_button(
-        label="Save",data=convert_df(pivot_df),file_name=f"{g}.csv",mime='csv',)
-    tab2.write(pivot_df.describe())
+@st.cache_data
+def get_data_once(sel_projet):
+    sql_assay=f"SELECT * from projectsprofile WHERE projectsprofile.assay='{sel_projet}'"
+    df_pro=sql_df(sql_assay, profile_conn)
+    original_columns = ["project","assay", "name", "batchid","concentration", "tags", "plate", "well"]    
+    pivot_df = pd.pivot_table(df_pro, index=original_columns, columns='feature', values='value').reset_index()
+    return pivot_df
 
+
+pivot_df=get_data_once(sel_proj)
+tab1,tab2=st.tabs([f"Profiles in {sel_proj}", f"Summary in {sel_proj}"])
+tab1.write(pivot_df)
+st.download_button(
+    label="Save",data=convert_df(pivot_df),file_name=f"{sel_proj}.csv",mime='csv',)
+tab2.write(pivot_df.describe())
 list_cols=pivot_df.columns
 numerics = ["int16", "int32", "int64", "float16", "float32", "float64"]
 cols_alpha = pivot_df.select_dtypes(exclude=numerics).columns
