@@ -121,11 +121,21 @@ bq = []
 for bs in b_list2:
     bq.append("'" + bs.strip().upper() + "'")
 
-  
+
+# sql_cpd="select cpd.*, cpdbatchs.batchid, keggcpdgene.geneid from cpd \
+#         INNER join cpdbatchs on cpd.pubchemid=cpdbatchs.pubchemid \
+#         INNER join keggcpdgene on cpd.keggid=keggcpdgene.keggid \
+#         "
+
+# st.write(sql_cpd)         
+# df_cpd_meta = sql_df(sql_cpd, conn_meta)
+# df_cpd_meta = df_cpd_meta.loc[:, ~df_cpd_meta.columns.duplicated()]
+# st.write(df_cpd_meta)
+# st.write(df_cpd_infos)
+# df_cpds= df_cpd_meta[df_cpd_meta['batchid'].astype(str).str.contains('|'.join(b_list2))].drop_duplicates(subset='pubchemid').reset_index(drop=True)
+# st.write(df_cpds)
 sql_genes = f"select * from cpdbatchs where batchid  in  (" + ",".join(bq) + ")"
 df_cpd_infos=sql_df(sql_genes,conn_meta)
-# st.write(df_cpd_infos)
-
 st.session_state['df_cpds'] = df_cpd_infos
 
 st.download_button(
