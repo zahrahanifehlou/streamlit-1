@@ -116,8 +116,7 @@ if on and not df_known_drug.empty:
     df_drug=df_drug.drop_duplicates(subset=["keggid", "batchid"]).reset_index(drop=True)
     st.write("Drug Infos",df_drug)
     on_save1 = st.sidebar.toggle('Save Drug Infos')
-    if on_save1:
-        st.download_button(label="Save",data=convert_df(df_drug),file_name="data.csv",mime='csv')
+
 
 
     list_drug_ksi = [f"'{t}'" for t in df_drug['batchid']]
@@ -128,8 +127,8 @@ if on and not df_known_drug.empty:
     st.write(f'Data from source: {sel_source}',df_sel)
 
     on_save = st.sidebar.toggle('Save Data from source')
-    if on_save:
-        st.download_button(label="Save",data=convert_df(df_sel),file_name="data.csv",mime='csv')
+    
+     
 
 
 on_gene = st.sidebar.toggle('Retrieve Genes Info',help='Will retrieve all gene infos')

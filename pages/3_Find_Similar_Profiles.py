@@ -159,13 +159,11 @@ else:
             with fig_cols1[0]:
                 st.write(f" {title} :  metadata")
                 st.write(df_keep_cpd)
-                st.download_button(
-                    label="Save", data=convert_df(df_keep_cpd), file_name=f"{name}_cos_info.csv", mime='csv',)
+            
             with fig_cols1[1]:  # Profile
                 st.write(f"  Profile")
                 st.write(df_keep_prof_cpd.head(10))
-                st.download_button(
-                    label="Save Profile", data=convert_df(df_keep_prof_cpd), file_name=f"{name}_cos_prof.csv", mime='csv',)
+               
         
             
          
@@ -317,13 +315,11 @@ else:
                 with fig_cols3[0]:
                     st.write(f" {title} MetaData NN")
                     st.write(knn_sim_df)
-                    st.download_button(
-                        label="Save", data=convert_df(knn_sim_df), file_name=f"{name}_knn_info.csv", mime='csv',)
+                
                 with fig_cols3[1]:  # Profile
                     st.write(f" {title} Profile NN")
                     st.write(df_keep_prof_cpd_knn.head(10))
-                    st.download_button(
-                        label="Save Profile", data=convert_df(df_keep_prof_cpd_knn), file_name=f"{name}_knn_prof.csv", mime='csv',)
+       
                     
 
                 st.write("\n")

@@ -174,12 +174,7 @@ if len(df_cpds) > 0:
         ]
     )
     tabs[0].write(df_cpds)
-    st.download_button(
-        label="Save compounds",
-        data=convert_df(df_cpds.drop_duplicates(subset=["pubchemid"])),
-        file_name="cpds.csv",
-        mime="csv",
-    )
+  
     with tabs[1]:
         server_name = st.radio(
             "select server",
@@ -278,12 +273,7 @@ if len(df_cpds) > 0:
             ]
         )
         tab1.write(df_prof)
-        st.download_button(
-            label="Save Profile",
-            data=convert_df(df_prof),
-            file_name="df_prof.csv",
-            mime="csv",
-        )
+       
         tab2.write(df_prof.describe().T)
         if str(option) == "gene":
             df_prof_crisper["metatype"] = "CRISPR"

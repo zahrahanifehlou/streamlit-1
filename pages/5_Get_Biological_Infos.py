@@ -43,8 +43,7 @@ def get_infos(dftiti):
         df_enr["Log_10_Pv"] = -np.log10(df_enr["Adjusted P-value"])
         # df_enr.rename(columns={"Term": "Pathways"}, inplace=True)
         st.write(df_enr)
-        st.download_button(
-                            label="Save",data=convert_df(df_enr),file_name=f"enrich.csv",mime='csv',)
+   
 
 
         fig = px.bar(df_enr, x="Term", y="Log_10_Pv")

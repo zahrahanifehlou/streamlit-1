@@ -31,10 +31,5 @@ if len(sql_line)>0:
    
 if len(df_results)>0:
             st.write(df_results)
-            st.download_button(
-            label="Save results",
-            data=convert_df(df_results),
-            file_name="df_results.csv",
-            mime="csv",
-    )
+      
     

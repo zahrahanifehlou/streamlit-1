@@ -75,8 +75,7 @@ def get_data_once(sel_projet):
 pivot_df=get_data_once(sel_proj)
 tab1,tab2=st.tabs([f"Profiles in {sel_proj}", f"Summary in {sel_proj}"])
 tab1.write(pivot_df)
-st.download_button(
-    label="Save",data=convert_df(pivot_df),file_name=f"{sel_proj}.csv",mime='csv',)
+
 tab2.write(pivot_df.describe())
 list_cols=pivot_df.columns
 numerics = ["int16", "int32", "int64", "float16", "float32", "float64"]
@@ -138,8 +137,7 @@ sql_genes = f"select * from cpdbatchs where batchid  in  (" + ",".join(bq) + ")"
 df_cpd_infos=sql_df(sql_genes,conn_meta)
 st.session_state['df_cpds'] = df_cpd_infos
 
-st.download_button(
-        label="Save",data=convert_df(df_agg),file_name=f"{sel_col}+{sel_sign}+{sel_value}.csv",mime='csv',)
+
 # cols1= st.columns(2)
 # with cols1[0]:
 #     to_find = st.text_input("Enter your search (Batchid)",help='FCCP')

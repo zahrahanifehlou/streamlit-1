@@ -128,8 +128,7 @@ for col in df_genes.columns:
 df_prof_drug_meta_genes =df_prof_drug_meta.merge(df_genes,left_on='meta_geneid',right_on='meta_geneid').reset_index(drop=True)
 df_prof_drug_meta_genes=df_prof_drug_meta_genes[df_prof_drug_meta_genes['metasource']==sel_source].reset_index(drop=True)
 st.write(df_prof_drug_meta_genes.sample(2))
-st.download_button(
-                label="Save",data=convert_df(df_prof_drug_meta_genes),file_name=f"{sel_source}.csv",mime='csv')
+
 
 model = umap.UMAP(random_state=42, verbose=False).fit(df_prof_drug_meta_genes[num_col])
 emb = model.transform(df_prof_drug_meta_genes[num_col])
