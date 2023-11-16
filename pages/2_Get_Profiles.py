@@ -329,6 +329,18 @@ if len(df_cpds) > 0:
             )
 
             st.pyplot(fig_clusmap)
+            
+            tmp = tmp
+            tmp["meta_name_source"] = tmp["metacpdname"] + "_" + tmp["metasource"]
+            cpd_names = tmp.meta_name_source.values
+            df_plt = tmp.set_index("meta_name_source")
+            filter_col = [
+                col for col in df_plt.columns if not col.startswith("meta")]
+            df_plt = df_plt[filter_col].T
+            fig_line = px.line(
+                df_plt, x=filter_col, y=cpd_names, width=1400, height=1000, title="Profiles")
+            st.plotly_chart(fig_line, theme="streamlit",
+                            use_container_width=True)
 
         st.session_state["df_profiles"] = df_prof
         #st.session_state["df_cpds"] = df_cpds
