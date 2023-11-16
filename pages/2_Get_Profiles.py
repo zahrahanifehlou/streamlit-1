@@ -337,8 +337,9 @@ if len(df_cpds) > 0:
             filter_col = [
                 col for col in df_plt.columns if not col.startswith("meta")]
             df_plt = df_plt[filter_col].T
+            sty = st.radio('Line Style',['linear','spline'])
             fig_line = px.line(
-                df_plt, x=filter_col, y=cpd_names, width=1400, height=1000, title="Profiles")
+                df_plt, x=filter_col, y=cpd_names, width=1400, height=1000,line_shape=sty, title="Profiles")
             st.plotly_chart(fig_line, theme="streamlit",
                             use_container_width=True)
 
