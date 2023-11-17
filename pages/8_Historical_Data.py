@@ -69,7 +69,7 @@ def get_data_once(sel_projet):
     df_pro=sql_df(sql_assay, profile_conn)
     original_columns = ["project","assay", "name", "batchid", "concentration", "tags", "plate", "well","cellline"]
   
-    pivot_df = pd.pivot_table(df_pro, index=original_columns, columns='feature', values='value').reset_index()
+    pivot_df = pd.pivot_table(df_pro, index=original_columns, columns='feature', values='value', dropna=False).reset_index()
     return pivot_df
 
 
