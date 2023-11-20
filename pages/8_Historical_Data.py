@@ -67,8 +67,9 @@ sel_proj = st.selectbox("Select Assay name",res_assay)
 def get_data_once(sel_projet):
     sql_assay=f"SELECT * from projectsprofile WHERE projectsprofile.assay='{sel_projet}'"
     df_pro=sql_df(sql_assay, profile_conn)
-    original_columns = ["project","assay", "name", "batchid","concentration", "tags", "plate", "well"]    
-    pivot_df = pd.pivot_table(df_pro, index=original_columns, columns='feature', values='value').reset_index()
+    original_columns = [ "name", "batchid", "tags", "plate", "well","project","assay","concentration"]  
+ 
+    pivot_df = df_pro.pivot( index=original_columns, columns='feature', values='value').reset_index()
     return pivot_df
 
 
