@@ -78,6 +78,13 @@ tab1,tab2=st.tabs([f"Profiles in {sel_proj}", f"Summary in {sel_proj}"])
 tab1.write(pivot_df)
 
 tab2.write(pivot_df.describe())
+df2=pivot_df.convert_dtypes()
+df3=df2['EC_50 Nuclei_Tot'].apply(lambda x:"{:.2e}".format(float(x)))
+df4=pd.to_numeric(df3)
+# df5 = df4.applymap('{:.2f}'.format)
+# st.write(df4.apply(lambda x:"{:.2e}".format(float(x))))
+# pd.set_option('display.float_format', '{:.2g}'.format)
+st.dataframe(df4)
 list_cols=pivot_df.columns
 numerics = ["int16", "int32", "int64", "float16", "float32", "float64"]
 cols_alpha = pivot_df.select_dtypes(exclude=numerics).columns

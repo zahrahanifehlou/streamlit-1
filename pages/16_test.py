@@ -30,6 +30,11 @@ def toto():
     df_src_emd = sql_df(sql_umqpemd, profile_conn)
     return df_src_emd
 
+
+# df_dcp= pd.read_csv('/mnt/shares/L/Temp/Test/test.csv')
+# numerics = ["int16", "int32", "int64", "float16", "float32", "float64"]
+# cols_num = df_dcp.select_dtypes(include=numerics).columns
+# st.dataframe(df_dcp[cols_num].style.format('{:.4g}'))
 df=toto()
 all_cpds=["Staurosporine","Saccharin","Sorbitol",   "CA-074","BAYK8644",
     "Lys05","Cucurbitacin","FCCP","Rapamycin","Cladribine","Cytarabine",
