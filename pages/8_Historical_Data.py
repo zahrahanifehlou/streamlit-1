@@ -75,19 +75,30 @@ def get_data_once(sel_projet):
 
 pivot_df=get_data_once(sel_proj)
 tab1,tab2=st.tabs([f"Profiles in {sel_proj}", f"Summary in {sel_proj}"])
-tab1.write(pivot_df)
+pivot_df=pivot_df.apply(pd.to_numeric, errors='ignore')
+list_cols=pivot_df.columns
+numerics = ["int16", "int32", "int64", "float16", "float32", "float64"]
+cols_alpha = pivot_df.select_dtypes(exclude=numerics).columns
+cols_num = pivot_df.select_dtypes(include=numerics).columns
 
+for col in cols_num:
+    pivot_df[col] = pivot_df[col].apply(lambda x: "{:.2e}".format(x))
+# df_temp = pivot_df[cols_alpha]
+# df_temp_num = pivot_df[cols_num].format('{:.4g}')
+# pivot_df=pd.concat([df_temp,df_temp_num])
+tab1.dataframe(pivot_df)
+# st.dataframe(df_dcp[cols_num].style.format('{:.4g}'))
 tab2.write(pivot_df.describe())
-df2=pivot_df.convert_dtypes()
+
 # df3=df2['EC_50 Nuclei_Tot'].apply(lambda x:"{:.2e}".format(float(x)))
 # df4=pd.to_numeric(df3)
 # # df5 = df4.applymap('{:.2f}'.format)
 # # st.write(df4.apply(lambda x:"{:.2e}".format(float(x))))
 # # pd.set_option('display.float_format', '{:.2g}'.format)
 # st.dataframe(df4)
-list_cols=pivot_df.columns
-numerics = ["int16", "int32", "int64", "float16", "float32", "float64"]
-cols_alpha = pivot_df.select_dtypes(exclude=numerics).columns
+for col in cols_num:
+    pivot_df[col] = pivot_df[col].astype(float)
+
 cols = st.columns(3)
 sel_col = cols[0].selectbox('select column:', list_cols,index=2)
 on = st.sidebar.toggle('Drop Duplicates')
@@ -102,7 +113,8 @@ else:
     val_data_min = pivot_df[sel_col].min()
     val_data_max =  pivot_df[sel_col].max()
     val_data_med =  pivot_df[sel_col].median()
-    sel_value = cols[2].slider('Value',val_data_min,val_data_max,val_data_med )
+    val_step=(val_data_max-val_data_min)/10
+    sel_value = cols[2].slider('Value',val_data_min,val_data_max,val_data_med,step=val_step,format="%7.2e" )
     if sel_sign == '<':
         df_sel = pivot_df[pivot_df[sel_col] < sel_value]
     elif sel_sign == '>':

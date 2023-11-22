@@ -31,10 +31,21 @@ def toto():
     return df_src_emd
 
 
-# df_dcp= pd.read_csv('/mnt/shares/L/Temp/Test/test.csv')
+df_dcp= pd.read_csv('/mnt/shares/L/Temp/Test/test.csv')
 # numerics = ["int16", "int32", "int64", "float16", "float32", "float64"]
 # cols_num = df_dcp.select_dtypes(include=numerics).columns
 # st.dataframe(df_dcp[cols_num].style.format('{:.4g}'))
+# st.write(df_dcp.dtypes)
+st.dataframe(df_dcp,column_config={"EC_50_Nuclei_Tot":st.column_config.NumberColumn("EC_50_Nuclei_Tot", format="%7.2g",)})
+numerics = ["int16", "int32", "int64", "float16", "float32", "float64"]
+cols_num = df_dcp.select_dtypes(include=numerics).columns
+for col in cols_num:
+    df_dcp[col] = df_dcp[col].apply(lambda x: "{:.2e}".format(x))
+
+
+
+st.dataframe(df_dcp)
+
 df=toto()
 all_cpds=["Staurosporine","Saccharin","Sorbitol",   "CA-074","BAYK8644",
     "Lys05","Cucurbitacin","FCCP","Rapamycin","Cladribine","Cytarabine",
