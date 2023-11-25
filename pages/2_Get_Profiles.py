@@ -13,7 +13,7 @@ from streamlib import sql_df,  get_sql_jump, convert_df, get_col_colors
 def init_connection():
     return psycopg2.connect(**st.secrets["postgres"])
 
-conn = init_connection()
+conn = "postgres://arno:123456@192.168.2.131:5432/ksi_cpds"
 conn_profileDB = psycopg2.connect(
     host="192.168.2.131",
     port="5432",

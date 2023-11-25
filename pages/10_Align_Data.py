@@ -40,7 +40,7 @@ list_sources = [
 ]
 def init_connection():
     return psycopg2.connect(**st.secrets["postgres"])
-conn = init_connection()
+conn = "postgres://arno:123456@192.168.2.131:5432/ksi_cpds"
 
 #  where batchid like 'BR%'
 # choix_source = st.selectbox("Select the Source", list_sources)

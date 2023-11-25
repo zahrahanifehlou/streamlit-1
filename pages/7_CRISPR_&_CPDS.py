@@ -18,7 +18,7 @@ def init_connection():
     return psycopg2.connect(**st.secrets["postgres"])
 
 
-conn = init_connection()
+conn = "postgres://arno:123456@192.168.2.131:5432/ksi_cpds"
 profile_conn = psycopg2.connect(
     host="192.168.2.131",
     port="5432",

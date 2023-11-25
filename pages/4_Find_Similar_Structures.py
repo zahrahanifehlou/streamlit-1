@@ -235,7 +235,7 @@ if len(df_cpds) > 0:
         plot_smile(mol_list, df_str)
 
     with mainTabs[1]:
-        conn = init_connection()
+        conn = "postgres://arno:123456@192.168.2.131:5432/ksi_cpds"
         sql_cpd = f"select cpd.pubchemid, cpd.cpdname, cpd.smile from cpd  "
         jump_df = sql_df(sql_cpd, conn)
         conn.close()

@@ -25,7 +25,7 @@ from streamlib import sql_df
 def init_connection():
     return psycopg2.connect(**st.secrets["postgres"])
 
-conn_meta = init_connection()
+conn_meta = "postgres://arno:123456@192.168.2.131:5432/ksi_cpds"
 
 def convert_hexa(dfa,col):
     cmap = plt.cm.get_cmap('bwr')
