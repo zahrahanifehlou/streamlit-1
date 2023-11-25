@@ -9,7 +9,7 @@ import polars as pl
 
 sys.path.append('/mnt/shares/L/PROJECTS/JUMP-CRISPR/Code/streamlit-1/lib/')
 
-# @st.cache_resource
+@st.cache_resource
 def sql_df(sql_str, _conn):
     # cur = _conn.cursor()
     # cur.execute(sql_str)
@@ -59,7 +59,7 @@ sql_proj='select project from projectsprofile group by project'
 res_proj=sql_df(sql_proj, profile_conn)
 
 
-st.write(res_proj)
+# st.write(res_proj)
 project_name = st.selectbox("Select Project name",res_proj,help='DM1')
 sql_profile = f"SELECT assay from projectsprofile WHERE projectsprofile.project='{project_name}' group by assay"
 res_assay=sql_df(sql_profile, profile_conn)
