@@ -6,6 +6,7 @@ import streamlib as st
 from sklearn.metrics.pairwise import cosine_similarity
 import plotly.express as px
 import umap
+import polars as pl
 
 
 ################################### CONNECTION DBs ##############################################
@@ -22,12 +23,15 @@ def str_to_float(strs):
 
 def sql_df(sql_str, conn):
 
-    cur = conn.cursor()
-    cur.execute(sql_str)
-    rows = cur.fetchall()
-    df_d = pd.DataFrame(rows, columns=[desc[0] for desc in cur.description])
+    # cur = conn.cursor()
+    # cur.execute(sql_str)
+    # rows = cur.fetchall()
+    # df_d = pd.DataFrame(rows, columns=[desc[0] for desc in cur.description])
+    df_d =pl.read_database_uri(query=sql_str, uri=conn)
+   
+    return df_d.to_pandas()
 
-    return df_d
+    # return df_d
 
 ################################### STRINGDB PPI ##############################################
 

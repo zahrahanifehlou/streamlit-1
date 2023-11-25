@@ -5,34 +5,36 @@ import sys
 import pandas as pd
 import psycopg2
 import streamlit as st
+import polars as pl
 
 sys.path.append('/mnt/shares/L/PROJECTS/JUMP-CRISPR/Code/streamlit-1/lib/')
 
-@st.cache_resource
+# @st.cache_resource
 def sql_df(sql_str, _conn):
-    cur = _conn.cursor()
-    cur.execute(sql_str)
-    rows = cur.fetchall()
-    df_d = pd.DataFrame(rows, columns=[desc[0] for desc in cur.description])
-
-    return df_d
+    # cur = _conn.cursor()
+    # cur.execute(sql_str)
+    # rows = cur.fetchall()
+    # df_d = pd.DataFrame(rows, columns=[desc[0] for desc in cur.description])
+    df_d =pl.read_database_uri(query=sql_str, uri=_conn)
+    # df_e=pd.DataFrame(df_d)
+    return df_d.to_pandas()
 # from streamlib import sql_df
 def init_connection():
     return psycopg2.connect(**st.secrets["postgres"])
 
-conn_meta = init_connection()
-
+# conn_meta = init_connection()
+conn_meta = "postgres://arno:123456@192.168.2.131:5432/ksi_cpds"
 def convert_df(df):
        return df.to_csv(index=True).encode('utf-8')
 
-
-profile_conn = psycopg2.connect(
-    host="192.168.2.131",
-    port="5432",
-    user="arno",
-    database="ksilink_cpds",
-    password="12345",
-)
+profile_conn = "postgres://arno:12345@192.168.2.131:5432/ksilink_cpds"
+# profile_conn = psycopg2.connect(
+#     host="192.168.2.131",
+#     port="5432",
+#     user="arno",
+#     database="ksilink_cpds",
+#     password="12345",
+# )
 st.set_page_config(
     layout="wide",
 )
@@ -56,6 +58,8 @@ st.header("In house Dataset",divider='rainbow')
 sql_proj='select project from projectsprofile group by project'
 res_proj=sql_df(sql_proj, profile_conn)
 
+
+st.write(res_proj)
 project_name = st.selectbox("Select Project name",res_proj,help='DM1')
 sql_profile = f"SELECT assay from projectsprofile WHERE projectsprofile.project='{project_name}' group by assay"
 res_assay=sql_df(sql_profile, profile_conn)
@@ -130,6 +134,7 @@ else:
 s2 = df_agg.style.highlight_min(subset=df_agg.select_dtypes(include=numerics).columns,props='color:white;background-color:darkred',axis=0)
 s3 = s2.highlight_max(subset=df_agg.select_dtypes(include=numerics).columns,props='color:white;background-color:darkblue',axis=0)
 s4 =s3.set_sticky(axis="index")
+# pd.set_option("styler.render.max_elements", 3000000)
 st.dataframe(s4)
 # ,column_config={sel_col:st.column_config.BarChartColumn("PlotSel",y_min=val_data_min,y_max=val_data_max),}
 df_state=df_agg.reset_index()
