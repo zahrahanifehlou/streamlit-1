@@ -324,14 +324,14 @@ if len(df_cpds) > 0:
             st.dataframe(df_plt)
             filter_col = [
                 col for col in df_plt.columns if not col.startswith("meta")]
-            df_plt = df_plt[filter_col].T
+            df_plt2 = df_plt[filter_col].T
             sty = st.radio('Line Style',['linear','spline'])
             fig_line = px.line(
-                df_plt, x=filter_col, y=cpd_names, width=1400, height=1000,line_shape=sty, title="Profiles")
+                df_plt2, x=filter_col, y=cpd_names, width=1400, height=1000,line_shape=sty, title="Profiles")
             st.plotly_chart(fig_line, theme="streamlit",
                             use_container_width=True)
 
-        st.session_state["df_profiles"] = df_prof
+        st.session_state["df_profiles"] = tmp
         #st.session_state["df_cpds"] = df_cpds
         st.session_state["df_cpds"] = df_cpdGene
         
