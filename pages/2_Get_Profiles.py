@@ -14,13 +14,7 @@ def init_connection():
     return psycopg2.connect(**st.secrets["postgres"])
 
 conn = "postgres://arno:123456@192.168.2.131:5432/ksi_cpds"
-conn_profileDB = psycopg2.connect(
-    host="192.168.2.131",
-    port="5432",
-    user="arno",
-    database="ksilink_cpds",
-    password="12345",
-)
+conn_profileDB = "postgres://arno:12345@192.168.2.131:5432/ksilink_cpds"
 
 table_mapping = {
     "KEGG": {
@@ -344,5 +338,5 @@ if len(df_cpds) > 0:
     else:
         st.warning(" No Luck!! ")
 
-    conn_profileDB.close()
-    conn.close()
+    # conn_profileDB.close()
+    # conn.close()

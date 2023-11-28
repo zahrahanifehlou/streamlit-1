@@ -105,15 +105,10 @@ def load_data():
         df_tmap = st.session_state["df_tmap"]
     else:
         sql = "SELECT * FROM tmap"
-        conn_profileDB = psycopg2.connect(
-            host="192.168.2.131",
-            port="5432",
-            user="arno",
-            database="ksilink_cpds",
-            password="12345",
-        )
+     
+        conn_profileDB = "postgres://arno:12345@192.168.2.131:5432/ksilink_cpds"
         df_tmap = sql_df(sql, conn_profileDB).reset_index(drop=True)
-        conn_profileDB.close()
+        # conn_profileDB.close()
        # st.session_state["df_tmap"] = df_tmap
     return df_tmap
 
@@ -238,7 +233,7 @@ if len(df_cpds) > 0:
         conn = "postgres://arno:123456@192.168.2.131:5432/ksi_cpds"
         sql_cpd = f"select cpd.pubchemid, cpd.cpdname, cpd.smile from cpd  "
         jump_df = sql_df(sql_cpd, conn)
-        conn.close()
+        # conn.close()
         jump_df = jump_df[jump_df["smile"].notna()]
         mol_list_jump = []
         find_list = []
@@ -310,83 +305,4 @@ if len(df_cpds) > 0:
 
             except:
                 print("cant find this pubchemid", pubchemid)
-        # st.write(df_sim_result)
-        # for index, row in df_sim_result.iterrows():
-        #     pubchemid = row['pubchemid']
-        #     print(f"pubchemid: {pubchemid}")
-
-        #     for column, value in row.items():
-        #         if column != 'pubchemid' and value > 0.1:
-        #             print(f"Column '{column}' has a value greater than 0.5: {value}")
-
-    # with mainTabs[0]:
-    #     df_str=df_cpds.copy()
-    #     df_tmap["selected compounds"]="others"
-    #     df_tmap.loc[df_tmap['pubchemid'].isin(df_str.pubchemid), 'selected compounds'] = "selected compounds"
-    #     st.write("TMAP plt of selected compounds")
-    #     fig = px.scatter(df_tmap, x="x", y="y", hover_data=['pubchemid', 'name','genetarget', 'efficacy', 'disname', 'keggid'],color_discrete_sequence=["blue", "red" ],color="selected compounds",width=800,height=1000 )
-    #     st.plotly_chart(fig, theme="streamlit", use_container_width=True)
-    #     st.write("\n")
-
-    #     # plot similarity-----------------------------------------------------------------------------------
-    #     st.write("DATA frame",df_str)
-
-    #     df_c = get_struc(mol_list)
-    #     name_list = [f"`{t}`" for t in df_str["pubchemid"]]
-    #     df_c = df_c.rename(index=dict(enumerate(name_list, 0)), columns=dict(enumerate(name_list, 0)))
-    #     fig = px.imshow(df_c, color_continuous_scale='RdBu_r')
-    #     st.plotly_chart(fig)
-
-    #     # plot smile-----------------------------------------------------------------------------------
-    #     ik = 0
-    #     cpt = 0
-    #     cols = st.columns(5)
-    #     for mol in mol_list:
-    #         if cpt == 5:
-    #             cpt = 0
-    #         try:
-    #             cols[cpt].image(Draw.MolToImage(mol), df_str["pubchemid"][ik])
-    #             ik = ik + 1
-    #             cpt = cpt + 1
-    #         except:
-    #             st.write("")
-
-    # with mainTabs[1]:
-    #     conn = init_connection()
-    #     sql_cpd = f"select cpd.pubchemid, cpd.name, cpd.smile from cpd  "
-    #     jump_df=sql_df(sql_cpd,conn)
-    #     conn.close()
-    #     jump_df=jump_df[jump_df["smile"].notna()]
-    #     mol_list_jump=[]
-    #     find_list=[]
-    #     bits=1024
-    #     for smiles in jump_df['smile']:
-    #         find=1
-    #         try:
-    #             mol= Chem.MolFromSmiles(smiles)
-    #             morgan=AllChem.GetMorganFingerprintAsBitVect(mol, useChirality=True, radius=3, nBits=bits)
-    #             mol_list_jump.append(morgan)
-    #             # mol= mol=Chem.MolFromSmiles(smiles)
-    #             # fp=Chem.RDKFingerprint(mol)
-    #             # mol_list_jump.append(fp)
-    #         except:
-    #             find=0
-
-    #         find_list.append(find)
-
-    #     jump_df["find"]=find_list
-    #     jump_df=jump_df[jump_df["find"]!=0]
-
-    #     search_tbl=pd.DataFrame()
-    #     df_sim_result=pd.DataFrame()
-    #     df_sim_result["pubchemid"]=jump_df.pubchemid
-
-    #     for pubchemid  in list_pubchem:
-    #         try:
-    #             mol=Chem.MolFromSmiles(pcp.Compound.from_cid(pubchemid).canonical_smiles)
-    #             fp=AllChem.GetMorganFingerprintAsBitVect(mol, useChirality=True, radius=3, nBits=bits)
-    #             similarities = DataStructs.BulkTanimotoSimilarity(fp, mol_list_jump)
-    #             df_sim_result[pubchemid]=similarities
-    #         except:
-    #             print("cant find this pubchemid", pubchemid)
-    #     st.write(df_sim_result)
+       

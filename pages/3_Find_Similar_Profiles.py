@@ -22,13 +22,7 @@ def init_connection():
 
 
 conn = "postgres://arno:123456@192.168.2.131:5432/ksi_cpds"
-profile_conn = psycopg2.connect(
-    host="192.168.2.131",
-    port="5432",
-    user="arno",
-    database="ksilink_cpds",
-    password="12345",
-)
+profile_conn = "postgres://arno:12345@192.168.2.131:5432/ksilink_cpds"
 
 
 # -------------------------------------------------------------------------------------------------
@@ -428,7 +422,5 @@ else:
                     )
 
                     st.pyplot(fig_clusmap)
-    profile_conn.close()
-    conn.close()
 
 

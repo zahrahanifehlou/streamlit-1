@@ -118,4 +118,4 @@ if len(list_df) > 0:
                 label="Save",data=convert_df(df_jump),file_name=f"{sel_data}.csv",mime='csv')
       df_pub=df_jump
     st.session_state['Convert']=df_pub
-conn_meta.close()
+# conn_meta.close()

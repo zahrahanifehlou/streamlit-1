@@ -15,7 +15,10 @@ st.image("Postgresql.png")
 st.write("# Welcome to Ksilink Databases")
 st.write('Can be access locally on : http://192.168.2.131:8501; http://192.168.2.130:8501')
 # st.sidebar.success("Select a demo above.")
- 
+ #- [CRISPR & CPDS](http://192.168.2.131:8501/CRISPR_&_CPDS) compute the similarities between crispr and cpds.
+#  - [Pathway Interaction](http://192.168.2.131:8501/Pathway_Interaction) display the involved genes in a specific pathway    
+#      - [Clustering](http://192.168.2.131:8501/Clustering) Clustering Jump Profiles with known targets
+#     - [Alignement](http://192.168.2.131:8501/Align_Data) Tentative of data alignement between sources (In progress)
 st.markdown(
     """
     The goal of this software is to be able to interrogate Jump and historical Dataset.
@@ -29,12 +32,8 @@ st.markdown(
     - [Get Profiles](http://192.168.2.131:8501/Get_Profiles) connect to DB and Get Profiles
     - [Find Profiles](http://192.168.2.131:8501/Find_Similar_Profiles) find profiles close to the ones selected in connect DB from a selected source
     - [Find structures](http://192.168.2.131:8501/Find_Similar_Structures) find the structures and names of the closest profiles
-    - [Get Bio Infos](http://192.168.2.131:8501/Get_Biological_Infos) compute the overrepresentation in pathways and connect to >50 Libraries
-    - [Pathway Interaction](http://192.168.2.131:8501/Pathway_Interaction) display the involved genes in a specific pathway
-    - [CRISPR & CPDS](http://192.168.2.131:8501/CRISPR_&_CPDS) compute the similarities between crispr and cpds.
+    - [Get Bio Infos](http://192.168.2.131:8501/Get_Biological_Infos) compute the overrepresentation in pathways and connect to >50 Libraries    
     - [Historical Data](http://192.168.2.131:8501/Historical_Data) Retrieve Ksilink Data
-    - [Clustering](http://192.168.2.131:8501/Clustering) Clustering Jump Profiles with known targets
-    - [Alignement](http://192.168.2.131:8501/Align_Data) Tentative of data alignement between sources (In progress)
     - [Protein-Protein Interactions](http://192.168.2.131:8501/StringDB) Found Protein-Protein Interactions and profile vizualisation
     - [Disease](http://192.168.2.131:8501/Disease) Retrieve Drugs/Genes disease specifics
     - [Convert Data](http://192.168.2.131:8501/Convert_Data) Retrieve Identifiers from different databases (pubchem,Kegg)

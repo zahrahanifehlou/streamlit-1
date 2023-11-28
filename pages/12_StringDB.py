@@ -15,21 +15,10 @@ from streamlib import (get_cpds, get_list_category,
                        get_stringDB, get_stringDB_enr, int_to_str, sql_df,
                        str_to_float)
 
-conn_meta = psycopg2.connect(
-    host="192.168.2.131",
-    port="5432",
-    user="arno",
-    database="ksi_cpds",
-    password="12345",
-)
 
-conn_prof = psycopg2.connect(
-    host="192.168.2.131",
-    port="5432",
-    user="arno",
-    database="ksilink_cpds",
-    password="12345",
-)
+
+conn_meta = "postgres://arno:123456@192.168.2.131:5432/ksi_cpds"
+conn_prof = "postgres://arno:12345@192.168.2.131:5432/ksilink_cpds"
 
 def get_relation(df_genes):
     if not df_genes.empty:
@@ -342,5 +331,3 @@ if not df_inter.empty:
 
     st.pyplot(fig_clusmap)
 
-conn_meta.close()
-conn_prof.close()

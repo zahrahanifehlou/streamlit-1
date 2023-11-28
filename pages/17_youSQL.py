@@ -1,18 +1,13 @@
 import streamlit as st
-from streamlit_plotly_events import plotly_events
-import numpy as np
-import plotly.express as px
 from streamlib import sql_df
-import psycopg2
+
 import pandas as pd
-from sklearn.cluster import KMeans
-from streamlib import convert_df
+
 st.set_page_config(
     layout="wide",
 )
 
-def init_connection():
-    return psycopg2.connect(**st.secrets["postgres"])
+
 conn = "postgres://arno:123456@192.168.2.131:5432/ksi_cpds"
 df_results=pd.DataFrame()
 

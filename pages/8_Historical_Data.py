@@ -117,7 +117,7 @@ else:
     val_data_min = pivot_df[sel_col].min()
     val_data_max =  pivot_df[sel_col].max()
     val_data_med =  pivot_df[sel_col].median()
-    val_step=(val_data_max-val_data_min)/10
+    val_step=(val_data_max-val_data_min)/50
     sel_value = cols[2].slider('Value',val_data_min,val_data_max,val_data_med,step=val_step,format="%7.2e" )
     if sel_sign == '<':
         df_sel = pivot_df[pivot_df[sel_col] < sel_value]
@@ -135,32 +135,30 @@ s2 = df_agg.style.highlight_min(subset=df_agg.select_dtypes(include=numerics).co
 s3 = s2.highlight_max(subset=df_agg.select_dtypes(include=numerics).columns,props='color:white;background-color:darkblue',axis=0)
 s4 =s3.set_sticky(axis="index")
 # pd.set_option("styler.render.max_elements", 3000000)
-st.dataframe(s4)
+tab3,tab4=st.tabs([f"Results in {sel_proj}", f"Results Summary in {sel_proj}"])
+tab3.dataframe(s4)
+df_res=s4.data
+tab4.dataframe(df_res.describe())
 # ,column_config={sel_col:st.column_config.BarChartColumn("PlotSel",y_min=val_data_min,y_max=val_data_max),}
-df_state=df_agg.reset_index()
-b_list2 = df_state['batchid'].astype(str).to_list()
-   
- 
-bq = []
-for bs in b_list2:
-    bq.append("'" + bs.strip().upper() + "'")
+
+on_export = st.sidebar.toggle('export data as df_cpds')
+if on_export:
+    df_state=df_agg.reset_index()
+    b_list2 = df_state['batchid'].astype(str).to_list()
+    
+    
+    bq = []
+    for bs in b_list2:
+        bq.append("'" + bs.strip().upper() + "'")
 
 
-# sql_cpd="select cpd.*, cpdbatchs.batchid, keggcpdgene.geneid from cpd \
-#         INNER join cpdbatchs on cpd.pubchemid=cpdbatchs.pubchemid \
-#         INNER join keggcpdgene on cpd.keggid=keggcpdgene.keggid \
-#         "
-
-# st.write(sql_cpd)         
-# df_cpd_meta = sql_df(sql_cpd, conn_meta)
-# df_cpd_meta = df_cpd_meta.loc[:, ~df_cpd_meta.columns.duplicated()]
-# st.write(df_cpd_meta)
-# st.write(df_cpd_infos)
-# df_cpds= df_cpd_meta[df_cpd_meta['batchid'].astype(str).str.contains('|'.join(b_list2))].drop_duplicates(subset='pubchemid').reset_index(drop=True)
-# st.write(df_cpds)
-sql_genes = f"select * from cpdbatchs where batchid  in  (" + ",".join(bq) + ")"
-df_cpd_infos=sql_df(sql_genes,conn_meta)
-st.session_state['df_cpds'] = df_cpd_infos
+    sql_cpd="select cpd.*, cpdbatchs.batchid, keggcpdgene.geneid, gene.* from cpd \
+            INNER join cpdbatchs on cpd.pubchemid=cpdbatchs.pubchemid \
+            INNER join keggcpdgene on cpd.keggid=keggcpdgene.keggid \
+            INNER join gene on gene.geneid=keggcpdgene.geneid"
+    df_cpd_infos=sql_df(sql_cpd,conn_meta)
+    df_cpds= df_cpd_infos[df_cpd_infos['batchid'].astype(str).str.contains('|'.join(b_list2))].drop_duplicates(subset='pubchemid').reset_index(drop=True)
+    st.session_state['df_cpds'] = df_cpds.drop_duplicates(subset='keggid').reset_index(drop=True)
 
 
 # cols1= st.columns(2)

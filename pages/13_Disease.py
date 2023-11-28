@@ -9,13 +9,9 @@ from Bio.KEGG.REST import *
 sys.path.append('/mnt/shares/L/PROJECTS/JUMP-CRISPR/Code/streamlit-1/lib/')
 from streamlib import sql_df
 import urllib
-conn_meta = psycopg2.connect(
-    host="192.168.2.131",
-    port="5432",
-    user="arno",
-    database="ksi_cpds",
-    password="12345",
-)
+
+conn_meta = "postgres://arno:12345@192.168.2.131:5432/ksi_cpds"
+
 # A bit of helper code to shorten long text
 def head(text):
     """ Print the first lines lines of the passed text.
@@ -121,9 +117,9 @@ if on and not df_known_drug.empty:
 
     list_drug_ksi = [f"'{t}'" for t in df_drug['batchid']]
     df_ksi=get_cpds(list_drug_ksi)
-    list_source= df_ksi.source.unique()
+    list_source= df_ksi.assay.unique()
     sel_source = st.selectbox('Chose the source',list_source)
-    df_sel = df_ksi[df_ksi['source']==sel_source]
+    df_sel = df_ksi[df_ksi['assay']==sel_source]
     st.write(f'Data from source: {sel_source}',df_sel)
 
     on_save = st.sidebar.toggle('Save Data from source')
@@ -163,7 +159,7 @@ if not df_gene_of_int.empty:
 else:
     st.warning("Unknown gene")
 
-conn_meta.close()
+
 # from tdc.multi_pred import GDA
 # data = GDA(name = 'DisGeNET')
 # split = data.get_split()
