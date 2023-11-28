@@ -150,7 +150,7 @@ tab3.dataframe(s4)
 df_res=s4.data
 tab4.dataframe(df_res.describe())
 # ,column_config={sel_col:st.column_config.BarChartColumn("PlotSel",y_min=val_data_min,y_max=val_data_max),}
-df_res2=df_res.reset_index(drop=True)
+df_res2=df_res.reset_index()
 components.html(get_pyg_html(df_res2), width=1300, height=1000, scrolling=True)
 on_export = st.sidebar.toggle('export data as df_cpds')
 if on_export:
