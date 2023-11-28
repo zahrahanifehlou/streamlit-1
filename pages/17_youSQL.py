@@ -27,4 +27,3 @@ if len(sql_line)>0:
 if len(df_results)>0:
             st.write(df_results)
       
-    

@@ -314,10 +314,14 @@ if len(df_cpds) > 0:
 
             st.pyplot(fig_clusmap)
             
-            tmp = tmp
+            # tmp = tmp
             tmp["meta_name_source"] = tmp["metacpdname"] + "_" + tmp["metasource"]
             cpd_names = tmp.meta_name_source.values
-            df_plt = tmp.set_index("meta_name_source")
+            df_plt=tmp.drop_duplicates(subset='meta_name_source')
+            df_plt = df_plt.set_index("meta_name_source")
+            
+            df_plt = df_plt.drop('name',axis=1)
+            st.dataframe(df_plt)
             filter_col = [
                 col for col in df_plt.columns if not col.startswith("meta")]
             df_plt = df_plt[filter_col].T
