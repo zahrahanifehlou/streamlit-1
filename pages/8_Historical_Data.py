@@ -6,8 +6,18 @@ import pandas as pd
 import psycopg2
 import streamlit as st
 import polars as pl
+import streamlit.components.v1 as components
+from pygwalker.api.streamlit import init_streamlit_comm, get_streamlit_html
 
 sys.path.append('/mnt/shares/L/PROJECTS/JUMP-CRISPR/Code/streamlit-1/lib/')
+init_streamlit_comm()
+
+# @st.cache_resource
+def get_pyg_html(df: pd.DataFrame) -> str:
+    # When you need to publish your application, you need set `debug=False`,prevent other users to write your config file.
+    # If you want to use feature of saving chart config, set `debug=True`
+    html = get_streamlit_html(df, spec="./gw0.json", use_kernel_calc=True, debug=False)
+    return html
 
 @st.cache_resource
 def sql_df(sql_str, _conn):
@@ -35,9 +45,9 @@ profile_conn = "postgres://arno:12345@192.168.2.131:5432/ksilink_cpds"
 #     database="ksilink_cpds",
 #     password="12345",
 # )
-st.set_page_config(
-    layout="wide",
-)
+# st.set_page_config(
+#     layout="wide",
+# )
 st.header("In house Dataset",divider='rainbow')
 # sql_line = st.text_area("Enter your search",help="select * from cpd")
 # if len(sql_line)>0:
@@ -141,6 +151,7 @@ df_res=s4.data
 tab4.dataframe(df_res.describe())
 # ,column_config={sel_col:st.column_config.BarChartColumn("PlotSel",y_min=val_data_min,y_max=val_data_max),}
 
+components.html(get_pyg_html(pivot_df), width=1300, height=1000, scrolling=True)
 on_export = st.sidebar.toggle('export data as df_cpds')
 if on_export:
     df_state=df_agg.reset_index()
@@ -160,6 +171,7 @@ if on_export:
     df_cpds= df_cpd_infos[df_cpd_infos['batchid'].astype(str).str.contains('|'.join(b_list2))].drop_duplicates(subset='pubchemid').reset_index(drop=True)
     st.session_state['df_cpds'] = df_cpds.drop_duplicates(subset='keggid').reset_index(drop=True)
 
+    # st.link_button("Go to Biological Informations","http://192.168.2.131:8502/Get_Biological_Infos")
 
 # cols1= st.columns(2)
 # with cols1[0]:
