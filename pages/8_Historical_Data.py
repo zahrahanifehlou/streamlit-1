@@ -9,14 +9,17 @@ import polars as pl
 import streamlit.components.v1 as components
 from pygwalker.api.streamlit import init_streamlit_comm, get_streamlit_html
 
+st.set_page_config(
+    layout="wide",
+)
 sys.path.append('/mnt/shares/L/PROJECTS/JUMP-CRISPR/Code/streamlit-1/lib/')
 init_streamlit_comm()
 
-# @st.cache_resource
+@st.cache_resource
 def get_pyg_html(df: pd.DataFrame) -> str:
     # When you need to publish your application, you need set `debug=False`,prevent other users to write your config file.
     # If you want to use feature of saving chart config, set `debug=True`
-    html = get_streamlit_html(df, spec="./gw0.json", use_kernel_calc=True, debug=False)
+    html = get_streamlit_html(df, use_kernel_calc=True, debug=False)
     return html
 
 @st.cache_resource
@@ -45,9 +48,7 @@ profile_conn = "postgres://arno:12345@192.168.2.131:5432/ksilink_cpds"
 #     database="ksilink_cpds",
 #     password="12345",
 # )
-# st.set_page_config(
-#     layout="wide",
-# )
+
 st.header("In house Dataset",divider='rainbow')
 # sql_line = st.text_area("Enter your search",help="select * from cpd")
 # if len(sql_line)>0:
@@ -88,88 +89,90 @@ def get_data_once(sel_projet):
 
 
 pivot_df=get_data_once(sel_proj)
-tab1,tab2=st.tabs([f"Profiles in {sel_proj}", f"Summary in {sel_proj}"])
 pivot_df=pivot_df.apply(pd.to_numeric, errors='ignore')
-list_cols=pivot_df.columns
-numerics = ["int16", "int32", "int64", "float16", "float32", "float64"]
-cols_alpha = pivot_df.select_dtypes(exclude=numerics).columns
-cols_num = pivot_df.select_dtypes(include=numerics).columns
+# df=pivot_df.sample(100)
+# tab1,tab2=st.tabs([f"Profiles in {sel_proj}", f"Summary in {sel_proj}"])
+# 
+# list_cols=pivot_df.columns
+# numerics = ["int16", "int32", "int64", "float16", "float32", "float64"]
+# cols_alpha = pivot_df.select_dtypes(exclude=numerics).columns
+# cols_num = pivot_df.select_dtypes(include=numerics).columns
 
-for col in cols_num:
-    pivot_df[col] = pivot_df[col].apply(lambda x: "{:.2e}".format(x))
-# df_temp = pivot_df[cols_alpha]
-# df_temp_num = pivot_df[cols_num].format('{:.4g}')
-# pivot_df=pd.concat([df_temp,df_temp_num])
-tab1.dataframe(pivot_df)
-# st.dataframe(df_dcp[cols_num].style.format('{:.4g}'))
-tab2.write(pivot_df.describe())
+# for col in cols_num:
+#     pivot_df[col] = pivot_df[col].apply(lambda x: "{:.2e}".format(x))
+# # df_temp = pivot_df[cols_alpha]
+# # df_temp_num = pivot_df[cols_num].format('{:.4g}')
+# # pivot_df=pd.concat([df_temp,df_temp_num])
+# tab1.dataframe(pivot_df)
+# # st.dataframe(df_dcp[cols_num].style.format('{:.4g}'))
+# tab2.write(pivot_df.describe())
 
-# df3=df2['EC_50 Nuclei_Tot'].apply(lambda x:"{:.2e}".format(float(x)))
-# df4=pd.to_numeric(df3)
-# # df5 = df4.applymap('{:.2f}'.format)
-# # st.write(df4.apply(lambda x:"{:.2e}".format(float(x))))
-# # pd.set_option('display.float_format', '{:.2g}'.format)
-# st.dataframe(df4)
-for col in cols_num:
-    pivot_df[col] = pivot_df[col].astype(float)
+# # df3=df2['EC_50 Nuclei_Tot'].apply(lambda x:"{:.2e}".format(float(x)))
+# # df4=pd.to_numeric(df3)
+# # # df5 = df4.applymap('{:.2f}'.format)
+# # # st.write(df4.apply(lambda x:"{:.2e}".format(float(x))))
+# # # pd.set_option('display.float_format', '{:.2g}'.format)
+# # st.dataframe(df4)
+# for col in cols_num:
+#     pivot_df[col] = pivot_df[col].astype(float)
 
-cols = st.columns(3)
-sel_col = cols[0].selectbox('select column:', list_cols,index=2)
-on = st.sidebar.toggle('Drop Duplicates')
-if sel_col in cols_alpha:
-    sel_sign = cols[1].selectbox('select:', '==')
-    str_data=pivot_df[sel_col].unique()
-    # st.write(str_data)
-    sel_value= cols[2].selectbox('select value',str_data)
-    df_sel = pivot_df[pivot_df[sel_col] == sel_value]
-else:
-    sel_sign = cols[1].selectbox('select sign:', ['<','>','=='])
-    val_data_min = pivot_df[sel_col].min()
-    val_data_max =  pivot_df[sel_col].max()
-    val_data_med =  pivot_df[sel_col].median()
-    val_step=(val_data_max-val_data_min)/50
-    sel_value = cols[2].slider('Value',val_data_min,val_data_max,val_data_med,step=val_step,format="%7.2e" )
-    if sel_sign == '<':
-        df_sel = pivot_df[pivot_df[sel_col] < sel_value]
-    elif sel_sign == '>':
-        df_sel = pivot_df[pivot_df[sel_col] > sel_value]
-    elif sel_sign == '==':
-        df_sel = pivot_df[pivot_df[sel_col] == sel_value]
-if on:
-    df_agg=df_sel.drop_duplicates(subset=['batchid','concentration']).reset_index()
-    df_agg.set_index(['name','concentration','batchid'],inplace=True)   
-else:
-    df_agg=df_sel
-# st.write(df_agg)  
-s2 = df_agg.style.highlight_min(subset=df_agg.select_dtypes(include=numerics).columns,props='color:white;background-color:darkred',axis=0)
-s3 = s2.highlight_max(subset=df_agg.select_dtypes(include=numerics).columns,props='color:white;background-color:darkblue',axis=0)
-s4 =s3.set_sticky(axis="index")
-# pd.set_option("styler.render.max_elements", 3000000)
-tab3,tab4=st.tabs([f"Results in {sel_proj}", f"Results Summary in {sel_proj}"])
-tab3.dataframe(s4)
-df_res=s4.data
-tab4.dataframe(df_res.describe())
-# ,column_config={sel_col:st.column_config.BarChartColumn("PlotSel",y_min=val_data_min,y_max=val_data_max),}
-df_res2=df_res.reset_index()
-components.html(get_pyg_html(df_res2), width=1300, height=1000, scrolling=True)
-on_export = st.sidebar.toggle('export data as df_cpds')
-if on_export:
-    df_state=df_agg.reset_index()
-    b_list2 = df_state['batchid'].astype(str).to_list()
+# cols = st.columns(3)
+# sel_col = cols[0].selectbox('select column:', list_cols,index=2)
+# on = st.sidebar.toggle('Drop Duplicates')
+# if sel_col in cols_alpha:
+#     sel_sign = cols[1].selectbox('select:', '==')
+#     str_data=pivot_df[sel_col].unique()
+#     # st.write(str_data)
+#     sel_value= cols[2].selectbox('select value',str_data)
+#     df_sel = pivot_df[pivot_df[sel_col] == sel_value]
+# else:
+#     sel_sign = cols[1].selectbox('select sign:', ['<','>','=='])
+#     val_data_min = pivot_df[sel_col].min()
+#     val_data_max =  pivot_df[sel_col].max()
+#     val_data_med =  pivot_df[sel_col].median()
+#     val_step=(val_data_max-val_data_min)/50
+#     sel_value = cols[2].slider('Value',val_data_min,val_data_max,val_data_med,step=val_step,format="%7.2e" )
+#     if sel_sign == '<':
+#         df_sel = pivot_df[pivot_df[sel_col] < sel_value]
+#     elif sel_sign == '>':
+#         df_sel = pivot_df[pivot_df[sel_col] > sel_value]
+#     elif sel_sign == '==':
+#         df_sel = pivot_df[pivot_df[sel_col] == sel_value]
+# if on:
+#     df_agg=df_sel.drop_duplicates(subset=['batchid','concentration']).reset_index()
+#     df_agg.set_index(['name','concentration','batchid'],inplace=True)   
+# else:
+#     df_agg=df_sel
+# # st.write(df_agg)  
+# s2 = df_agg.style.highlight_min(subset=df_agg.select_dtypes(include=numerics).columns,props='color:white;background-color:darkred',axis=0)
+# s3 = s2.highlight_max(subset=df_agg.select_dtypes(include=numerics).columns,props='color:white;background-color:darkblue',axis=0)
+# s4 =s3.set_sticky(axis="index")
+# # pd.set_option("styler.render.max_elements", 3000000)
+# tab3,tab4=st.tabs([f"Results in {sel_proj}", f"Results Summary in {sel_proj}"])
+# tab3.dataframe(s4)
+# df_res=s4.data
+# tab4.dataframe(df_res.describe())
+# # ,column_config={sel_col:st.column_config.BarChartColumn("PlotSel",y_min=val_data_min,y_max=val_data_max),}
+# df_res2=df_res.reset_index()
+components.html(get_pyg_html(pivot_df), height=1000, scrolling=True)
+# on_export = st.sidebar.toggle('export data as df_cpds')
+# if on_export:
+#     df_state=df_agg.reset_index()
+#     b_list2 = df_state['batchid'].astype(str).to_list()
     
     
-    bq = []
-    for bs in b_list2:
-        bq.append("'" + bs.strip().upper() + "'")
+#     bq = []
+#     for bs in b_list2:
+#         bq.append("'" + bs.strip().upper() + "'")
 
 
-    sql_cpd="select cpd.*, cpdbatchs.batchid, keggcpdgene.geneid, gene.* from cpd \
-            INNER join cpdbatchs on cpd.pubchemid=cpdbatchs.pubchemid \
-            INNER join keggcpdgene on cpd.keggid=keggcpdgene.keggid \
-            INNER join gene on gene.geneid=keggcpdgene.geneid"
-    df_cpd_infos=sql_df(sql_cpd,conn_meta)
-    df_cpds= df_cpd_infos[df_cpd_infos['batchid'].astype(str).str.contains('|'.join(b_list2))].drop_duplicates(subset='pubchemid').reset_index(drop=True)
-    st.session_state['df_cpds'] = df_cpds.drop_duplicates(subset='keggid').reset_index(drop=True)
+#     sql_cpd="select cpd.*, cpdbatchs.batchid, keggcpdgene.geneid, gene.* from cpd \
+#             INNER join cpdbatchs on cpd.pubchemid=cpdbatchs.pubchemid \
+#             INNER join keggcpdgene on cpd.keggid=keggcpdgene.keggid \
+#             INNER join gene on gene.geneid=keggcpdgene.geneid"
+#     df_cpd_infos=sql_df(sql_cpd,conn_meta)
+#     df_cpds= df_cpd_infos[df_cpd_infos['batchid'].astype(str).str.contains('|'.join(b_list2))].drop_duplicates(subset='pubchemid').reset_index(drop=True)
+#     st.session_state['df_cpds'] = df_cpds.drop_duplicates(subset='keggid').reset_index(drop=True)
 
     # st.link_button("Go to Biological Informations","http://192.168.2.131:8502/Get_Biological_Infos")
 
