@@ -53,26 +53,28 @@ def get_stringDB(df_all_umap, thresh=0.7, genecol='target'):
     }
 
     request_url = "/".join([string_api_url, output_format, method])
-
+    st.write(request_url)
     results = requests.post(request_url, data=params)
-
+    
     list_id0 = []
     list_id1 = []
     list_inter = []
     list_edges = []
     for line in results.text.strip().split("\n"):
         l = line.strip().split("\t")
-        p1, p2 = l[2], l[3]
+       
+        if len(l)>4:
+            p1, p2 = l[2], l[3]
 
-        # filter the interaction according to experimental score
-        experimental_score = float(l[10])
-        if experimental_score >= thresh:
-            # print
-            # print("\t".join([p1, p2, "experimentally confirmed (prob. %.3f)" % experimental_score]))
-            list_id0.append(p1)
-            list_id1.append(p2)
-            list_edges.append((p1, p2))
-            list_inter.append(experimental_score)
+            # filter the interaction according to experimental score
+            experimental_score = float(l[10])
+            if experimental_score >= thresh:
+                # print
+                # print("\t".join([p1, p2, "experimentally confirmed (prob. %.3f)" % experimental_score]))
+                list_id0.append(p1)
+                list_id1.append(p2)
+                list_edges.append((p1, p2))
+                list_inter.append(experimental_score)
     return list(set(list_edges))
 
 ################################### STRING DB ENRICHMENT ##############################################

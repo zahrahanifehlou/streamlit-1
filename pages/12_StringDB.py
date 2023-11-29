@@ -6,19 +6,59 @@ import plotly.express as px
 import streamlit as st
 import umap
 import psycopg2
-
+import requests
 st.set_page_config(layout="wide")
 import sys
 
 sys.path.append('/mnt/shares/L/PROJECTS/JUMP-CRISPR/Code/streamlit-1/lib/')
 from streamlib import (get_cpds, get_list_category,
-                       get_stringDB, get_stringDB_enr, int_to_str, sql_df,
+                       get_stringDB_enr, int_to_str, sql_df,
                        str_to_float)
 
 
 
 conn_meta = "postgres://arno:123456@192.168.2.131:5432/ksi_cpds"
 conn_prof = "postgres://arno:12345@192.168.2.131:5432/ksilink_cpds"
+def get_stringDB(df_all_umap, thresh=0.7, genecol='target'):
+
+    string_api_url = "https://version-11-5.string-db.org/api"
+    output_format = "tsv-no-header"
+    method = "network"
+
+    params = {
+        "identifiers": "\r".join(df_all_umap[genecol].to_list()),
+        # "identifiers" : "\r".join(["p53", "BRCA1", "cdk2", "Q99835"]), # your protein list
+        "species": 9606,  # species NCBI identifier
+        "limit": 1,  # only one (best) identifier per input protein
+        "echo_query": 1,  # see your input identifiers in the output
+        "caller_identity": "www.awesome_app.org"  # your app name
+
+    }
+
+    request_url = "/".join([string_api_url, output_format, method])
+    # st.write(request_url)
+    results = requests.post(request_url, data=params)
+    
+    list_id0 = []
+    list_id1 = []
+    list_inter = []
+    list_edges = []
+    for line in results.text.strip().split("\n"):
+        l = line.strip().split("\t")
+        # st.write(l)
+        if len(l)>4:
+            p1, p2 = l[2], l[3]
+
+            # filter the interaction according to experimental score
+            experimental_score = float(l[10])
+            if experimental_score >= thresh:
+                # print
+                # print("\t".join([p1, p2, "experimentally confirmed (prob. %.3f)" % experimental_score]))
+                list_id0.append(p1)
+                list_id1.append(p2)
+                list_edges.append((p1, p2))
+                list_inter.append(experimental_score)
+    return list(set(list_edges))
 
 def get_relation(df_genes):
     if not df_genes.empty:
@@ -80,7 +120,7 @@ if on:
     uploaded_file = st.file_uploader("Choose csv file with a list of gene symbols  otherwise the reference 300  GeneMOA will be loaded", accept_multiple_files=False)
     if uploaded_file:
         df_genes = pd.read_csv(uploaded_file)
-        st.write('Loaded csv file:', df_genes.head())
+        st.write('Loaded csv file:', df_genes)
         gene_col = st.text_input('Write the column name with gene symbols',value='symbol')
         if gene_col:
             df_genes.dropna(subset=gene_col,inplace=True)
@@ -286,8 +326,15 @@ if not df_inter.empty:
     st.write('To increase or decrease number of clusters please change cluster threshold above')
     import umap
     numerics = ["float16", "float32", "float64"]
-    umap_sql="select * from umapemd where metasource='CRISPER'"
+    # sql_dot="select * from umapemd"
+    # df_temp=sql_df(sql_dot,conn_prof)
+    # st.write(df_temp)
+    if choice=='Cpds':
+        umap_sql=f"select * from umapemd where metasource='{choix_source}'"
+    else:
+        map_sql="select * from umapemd where metasource='CRISPER'"
     df_umap=sql_df(umap_sql,conn_prof)
+    # df_umap.to_csv('testwholegenes.csv')
     # st.write(df_umap_cluster)
     # exit(0)
 
@@ -300,7 +347,7 @@ if not df_inter.empty:
     df_umap["target"]= df_umap["target"].apply(lambda x:x if x in df_umap_cluster['symbol'].to_list() else '')
     # df_umap["target"] = df_umap[df_umap['metagenesymbol'].isin(df_umap_cluster['symbol'])]
     df_umap['size']=5
-    df_umap["size"]= df_umap["metagenesymbol"].apply(lambda x:1 if x not in df_umap_cluster['symbol'].to_list() else 5)
+    df_umap["size"]= df_umap["metagenesymbol"].apply(lambda x:0.5if x not in df_umap_cluster['symbol'].to_list() else 5)
     # df_umap["size"]= df_umap["metagenesymbol"].apply(lambda x:x if x in df_umap_cluster['symbol'].to_list() else 1)
     df_umap["cluster"] = df_umap['metagenesymbol'].map(dict1)
     # df_umap["cluster"] = df_umap["cluster"].apply(lambda x:x if x in df_umap_cluster['cluster'].to_list() else 'others')
@@ -308,11 +355,11 @@ if not df_inter.empty:
     df_umap['cluster']=df_umap['cluster'].fillna('others')
     if choice=='Cpds':
         df_umap["keggid"] = df_umap_cluster['keggid']
-        fig1 = px.scatter(df_umap, x="X", y="Y",color='cluster',text='target',size='size',width=800,height=800,hover_data=['target','keggid'])
+        fig1 = px.scatter(df_umap, x="umap1", y="umap2",color='cluster',text='target',size='size',width=800,height=800,hover_data=['target','keggid'])
     else:
         fig1 = px.scatter(df_umap, x="umap1", y="umap2",color='cluster',text='target',size='size',width=800,height=800,hover_data=['target'])
     st.plotly_chart(fig1, theme="streamlit", use_container_width=True)
-    st.write(df_umap)
+    # st.write(df_umap)
 
     ################################### SIMILARITY ##############################################
     st.write("## Similarity")
