@@ -19,7 +19,7 @@ init_streamlit_comm()
 def get_pyg_html(df: pd.DataFrame) -> str:
     # When you need to publish your application, you need set `debug=False`,prevent other users to write your config file.
     # If you want to use feature of saving chart config, set `debug=True`
-    html = get_streamlit_html(df,spec="./chart_meta_0.json", use_kernel_calc=True, debug=False)
+    html = get_streamlit_html(df,spec="./chart_meta_0.json", themeKey='vega',use_kernel_calc=True, debug=False)
     return html
 
 @st.cache_resource
