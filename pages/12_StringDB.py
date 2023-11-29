@@ -286,21 +286,33 @@ if not df_inter.empty:
     st.write('To increase or decrease number of clusters please change cluster threshold above')
     import umap
     numerics = ["float16", "float32", "float64"]
-    emb = umap.UMAP(random_state=42, verbose=False).fit_transform(df_umap_cluster.select_dtypes(include=numerics))
-    df_umap = pd.DataFrame()
-    df_umap["X"] = emb[:, 0]
-    df_umap["Y"] = emb[:, 1]
-    df_umap["target"] = df_umap_cluster['symbol']
+    umap_sql="select * from umapemd where metasource='CRISPER'"
+    df_umap=sql_df(umap_sql,conn_prof)
+    # st.write(df_umap_cluster)
+    # exit(0)
+
+    # emb = umap.UMAP(random_state=42, verbose=False).fit_transform(df_umap_cluster.select_dtypes(include=numerics))
+    # df_umap = pd.DataFrame()
+    # df_umap["X"] = emb[:, 0]
+    # df_umap["Y"] = emb[:, 1]
+    dict1 = df_umap_cluster.set_index('symbol').to_dict()['cluster']
+    df_umap["target"] = df_umap['metagenesymbol']
+    df_umap["target"]= df_umap["target"].apply(lambda x:x if x in df_umap_cluster['symbol'].to_list() else '')
+    # df_umap["target"] = df_umap[df_umap['metagenesymbol'].isin(df_umap_cluster['symbol'])]
     df_umap['size']=5
-    df_umap["cluster"] = df_umap_cluster['cluster']
+    df_umap["size"]= df_umap["metagenesymbol"].apply(lambda x:1 if x not in df_umap_cluster['symbol'].to_list() else 5)
+    # df_umap["size"]= df_umap["metagenesymbol"].apply(lambda x:x if x in df_umap_cluster['symbol'].to_list() else 1)
+    df_umap["cluster"] = df_umap['metagenesymbol'].map(dict1)
+    # df_umap["cluster"] = df_umap["cluster"].apply(lambda x:x if x in df_umap_cluster['cluster'].to_list() else 'others')
     df_umap['cluster'] = df_umap['cluster'].replace(list_enr)
+    df_umap['cluster']=df_umap['cluster'].fillna('others')
     if choice=='Cpds':
         df_umap["keggid"] = df_umap_cluster['keggid']
         fig1 = px.scatter(df_umap, x="X", y="Y",color='cluster',text='target',size='size',width=800,height=800,hover_data=['target','keggid'])
     else:
-        fig1 = px.scatter(df_umap, x="X", y="Y",color='cluster',text='target',size='size',width=800,height=800,hover_data=['target'])
+        fig1 = px.scatter(df_umap, x="umap1", y="umap2",color='cluster',text='target',size='size',width=800,height=800,hover_data=['target'])
     st.plotly_chart(fig1, theme="streamlit", use_container_width=True)
-
+    st.write(df_umap)
 
     ################################### SIMILARITY ##############################################
     st.write("## Similarity")
