@@ -263,6 +263,7 @@ if not df_inter.empty:
     import leidenalg as la
     G = ig.Graph.from_networkx(H)
     partition = la.find_partition(G, la.ModularityVertexPartition,n_iterations=-1)
+   
     subg = partition.subgraphs()
     list_gene=[]
     list_clust=[]
@@ -271,6 +272,7 @@ if not df_inter.empty:
     st.write(f'Total Number of clusters: {len(subg)}')
     for g in subg:
         cluster=cluster+1
+        # st.write(g)
         # print(g.vs['_nx_name'])
         # if len(g.vs['_nx_name'])>thres_db:
         for name in g.vs['_nx_name']:
