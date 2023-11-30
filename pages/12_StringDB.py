@@ -56,9 +56,10 @@ def get_stringDB(df_all_umap, thresh=0.7, genecol='target'):
                 # print("\t".join([p1, p2, "experimentally confirmed (prob. %.3f)" % experimental_score]))
                 list_id0.append(p1)
                 list_id1.append(p2)
-                list_edges.append((p1, p2))
-                list_inter.append(experimental_score)
-    return list(set(list_edges))
+                if (p1,p2) not in list_edges:
+                    list_edges.append((p1, p2))
+                    list_inter.append(experimental_score)
+    return list_edges,list_inter
 
 def get_relation(df_genes):
     if not df_genes.empty:
@@ -252,8 +253,8 @@ st.write("## Loading StringDB PPI")
 # col_a,col_b=st.columns(2)
 thres = st.sidebar.slider("Interaction Thresholds", 0.0, 1.0,0.4,0.02)
 if not df_inter.empty:
-    list_edges=get_stringDB(df_inter,thres,'symbol')
-    st.write(f'retrieved : {len(list_edges)} Interaction with {thres} threshold')
+    list_edges,list_inters=get_stringDB(df_inter,thres,'symbol')
+    st.write(f'retrieved : {len(list_edges)} Interaction with {len(list_inters)} threshold')
 
     st.write('## Computing Network')
 
@@ -262,7 +263,7 @@ if not df_inter.empty:
     import igraph as ig
     import leidenalg as la
     G = ig.Graph.from_networkx(H)
-    partition = la.find_partition(G, la.ModularityVertexPartition,n_iterations=-1)
+    partition = la.find_partition(G, la.ModularityVertexPartition,n_iterations=-1,weights=list_inters)
    
     subg = partition.subgraphs()
     list_gene=[]
