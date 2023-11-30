@@ -1,5 +1,7 @@
-
-
+import matplotlib.pyplot as plt
+import networkx as nx
+import igraph as ig
+import leidenalg as la
 import numpy as np
 import pandas as pd
 import plotly.express as px
@@ -215,34 +217,16 @@ if choice=='Cpds':
 ################################### LOAD CRISPR ##############################################
 if choice=='CRISPR':
     st.write("## Loading Crispr")
-    b_list2 = unique_gene
+
     bq = []
-    for bs in b_list2:
+    for bs in unique_gene:
         bq.append("'" + bs + "'")
-
-    sql_genes = "select synonyms,geneid,chromosome,locus,mainlocation,symbol from gene where symbol  in (" + ",".join(bq) + ")"
-    df_genes = sql_df(sql_genes, conn_meta)
-    df_genes['chromosome']=df_genes['chromosome'].apply(int_to_str)
-    st.write("GeneInfos", df_genes.sample(5))
-
-    b_list2 = df_genes["geneid"].to_list()
-    bq = []
-    for bs in b_list2:
-        bq.append("'" + bs + "'")
-
-    sql_crispr = "select * from crisperbatchs where geneid  in (" + ",".join(bq) + ")"
-    df_crispr = sql_df(sql_crispr, conn_meta)
-
-    b_list2 = df_crispr["batchid"].to_list()
-    bq = []
-    for bs in b_list2:
-        bq.append("'" + bs + "'")
-
-    sql_crispr_prof = "select * from aggcombatprofile where metabatchid  in (" + ",".join(bq) + ")"
-    df_crispr_prof = sql_df(sql_crispr_prof, conn_prof)
-    df_crispr_merge = df_crispr_prof.merge(df_crispr, left_on="metabatchid", right_on="batchid").reset_index(drop=True)
-
-    df_inter=df_crispr_merge.merge(df_genes, left_on="geneid", right_on="geneid").reset_index(drop=True)
+    sql_genes = "select gene.*,crisperbatchs.batchid from gene  INNER JOIN crisperbatchs ON  crisperbatchs.geneid=gene.geneid where symbol  in (" + ",".join(bq) + ")  "
+    df_inter = sql_df(sql_genes, conn_meta)
+    df_inter.drop_duplicates(inplace=True)
+    df_inter['chromosome']=df_inter['chromosome'].apply(int_to_str)
+    st.write("GeneInfos", df_inter.sample(5))
+    df_inter.reset_index(drop=True,inplace=True)
     if disp:
         st.write('Crispr with profiles',df_inter)
 
@@ -254,16 +238,10 @@ thres = st.sidebar.slider("Interaction Thresholds", 0.0, 1.0,0.4,0.02)
 if not df_inter.empty:
     list_edges=get_stringDB(df_inter,thres,'symbol')
     st.write(f'retrieved : {len(list_edges)} Interaction with {thres} threshold')
-
     st.write('## Computing Network')
-
-    import networkx as nx
-    H = nx.Graph(list_edges)
-    import igraph as ig
-    import leidenalg as la
+    H = nx.Graph(list_edges)  
     G = ig.Graph.from_networkx(H)
     partition = la.find_partition(G, la.ModularityVertexPartition,n_iterations=-1)
-   
     subg = partition.subgraphs()
     list_gene=[]
     list_clust=[]
@@ -308,15 +286,14 @@ if not df_inter.empty:
             
         else:
              list_enr.update({grpName:'Null'})
-    ################################### ENRICHMENT ##############################################
-    
+
 
     st.write(f'{categ} Enrichment',df_go_ento)
     df_go_ento['log_p_val']=-np.log10(df_go_ento['p_val'].apply(str_to_float))
     fig_bar=px.bar(df_go_ento,x='Description',y='log_p_val')
     st.plotly_chart(fig_bar)
 
-    import matplotlib.pyplot as plt
+    
 
     # subax1 = plt.subplot(121)
     st.write('### Displaying the full network/graph clustered with Leiden approach')
@@ -336,7 +313,7 @@ if not df_inter.empty:
 
     st.write(f'## Computing UMAP with the main {nbr_of_cluster} clusters and {len(df_umap_cluster["symbol"].unique())} genes')
     st.write('To increase or decrease number of clusters please change cluster threshold above')
-    import umap
+    
     numerics = ["float16", "float32", "float64"]
     # sql_dot="select * from umapemd"
     # df_temp=sql_df(sql_dot,conn_prof)
@@ -378,7 +355,7 @@ if not df_inter.empty:
     else:
         fig1 = px.scatter(df_umap, x="umap1", y="umap2",color='cluster',text='target',size='size',width=800,height=800,hover_data=['target'])
     st.plotly_chart(fig1, theme="streamlit", use_container_width=True)
-    # st.write(df_umap)
+    st.write(df_umap)
 
     ################################### SIMILARITY ##############################################
     st.write("## Similarity")
@@ -408,4 +385,3 @@ if not df_inter.empty:
             )
 
     st.pyplot(fig_clusmap)
-
