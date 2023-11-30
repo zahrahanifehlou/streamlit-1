@@ -105,37 +105,48 @@ def get_relation(df_genes):
         # nx.draw(GG, with_labels=True,node_size=10,font_size=4)
         st.pyplot(subax1.figure,use_container_width=False)
 
-
+@st.cache_data
+def get_sample(df):
+    st.write('onky 300 genes will be taken')
+    df_genes=df_gene.sample(300)
+    return df_genes
+    
 
 ################################### LOAD GENE CSV DATA ##############################################
 for key in st.session_state.keys():
         del st.session_state[key]
-df_genes=get_cpds(conn_meta)
-unique_gene=df_genes['symbol'].unique()
-gene_col='symbol'
+# df_genes=get_cpds(conn_meta)
+# unique_gene=df_genes['symbol'].unique()
+# gene_col='symbol'
 # st.write("TOTOT: ",len(df_genes['keggid']))
 on = st.sidebar.toggle('Activate Data Upload')
 if on:
 
     uploaded_file = st.file_uploader("Choose csv file with a list of gene symbols  otherwise the reference 300  GeneMOA will be loaded", accept_multiple_files=False)
     if uploaded_file:
-        df_genes = pd.read_csv(uploaded_file)
-        st.write('Loaded csv file:', df_genes)
+        df_gene = pd.read_csv(uploaded_file)
+        # st.write('Loaded csv file:', df_gene)
         gene_col = st.text_input('Write the column name with gene symbols',value='symbol')
         if gene_col:
-            df_genes.dropna(subset=gene_col,inplace=True)
-            unique_gene=df_genes[gene_col].unique()
+            df_gene.dropna(subset=gene_col,inplace=True)
+            unique_gene=df_gene[gene_col].unique()
             st.write(f'you entered : {len(unique_gene)} genes')
-            get_relation(df_genes)
+            if len(unique_gene)>300:
+                df_genes = get_sample(df_gene)
+                unique_gene=df_genes[gene_col].unique()
+            # get_relation(df_genes)
         # st.write(df_genes)
-    else:
-        df_genes = pd.read_csv('Supp Data 3 - 300-Gene MoA sgRNA Library.csv')
-        st.write('Loaded csv file:', df_genes.head())
-        gene_col = st.text_input('Write the column name with gene symbols',value='symbol')
-    if gene_col:
-        unique_gene=df_genes[gene_col].unique()
+else:
+    df_genes = pd.read_csv('Supp Data 3 - 300-Gene MoA sgRNA Library.csv')
+    st.write('Loaded csv file:', df_genes.head())
+    
+    gene_col = st.text_input('Write the column name with gene symbols',value='symbol')
+    unique_gene=df_genes[gene_col].unique()
+    st.write(f'### You entered : {len(unique_gene)} genes' )
+    
+       
         
-st.write(f'### You entered : {len(unique_gene)} genes' )
+unique_gene=df_genes[gene_col].unique()
 disp= st.sidebar.toggle('Display Data')
 if disp:
     st.write(df_genes)
@@ -251,13 +262,13 @@ if not df_inter.empty:
     import igraph as ig
     import leidenalg as la
     G = ig.Graph.from_networkx(H)
-    partition = la.find_partition(G, la.ModularityVertexPartition)
+    partition = la.find_partition(G, la.ModularityVertexPartition,n_iterations=-1)
     subg = partition.subgraphs()
     list_gene=[]
     list_clust=[]
     cluster=96
     # thres_db = col_b.slider("cluster Thresholds", 2, 100,9,1)
-    st.write(f'Total Number of clusters before Threshold: {len(subg)}')
+    st.write(f'Total Number of clusters: {len(subg)}')
     for g in subg:
         cluster=cluster+1
         # print(g.vs['_nx_name'])
@@ -283,8 +294,7 @@ if not df_inter.empty:
     categ = st.selectbox("Select Category", list_cat)
     df_go_ento = get_stringDB_enr(df_umap_cluster,'symbol',categ)
     # df_umap_cluster['chromosome']=df_umap_cluster['chromosome'].apply(int_to_str)
-    if disp:
-        st.write(df_umap_cluster)
+
     list_enr={}
     for grpName, rows in df_clust.groupby('cluster'):
         df_temp = get_stringDB_enr(rows['symbol'].unique(),cat=categ)
@@ -322,7 +332,7 @@ if not df_inter.empty:
 
     #comment for nothing
 
-    st.write(f'## Computing UMAP with the main {nbr_of_cluster} clusters')
+    st.write(f'## Computing UMAP with the main {nbr_of_cluster} clusters and {len(df_umap_cluster["symbol"].unique())} genes')
     st.write('To increase or decrease number of clusters please change cluster threshold above')
     import umap
     numerics = ["float16", "float32", "float64"]
@@ -332,30 +342,37 @@ if not df_inter.empty:
     if choice=='Cpds':
         umap_sql=f"select * from umapemd where metasource='{choix_source}'"
     else:
-        map_sql="select * from umapemd where metasource='CRISPER'"
+        umap_sql="select * from umapemd where metasource='CRISPER'"
     df_umap=sql_df(umap_sql,conn_prof)
-    # df_umap.to_csv('testwholegenes.csv')
-    # st.write(df_umap_cluster)
-    # exit(0)
 
-    # emb = umap.UMAP(random_state=42, verbose=False).fit_transform(df_umap_cluster.select_dtypes(include=numerics))
-    # df_umap = pd.DataFrame()
-    # df_umap["X"] = emb[:, 0]
-    # df_umap["Y"] = emb[:, 1]
-    dict1 = df_umap_cluster.set_index('symbol').to_dict()['cluster']
-    df_umap["target"] = df_umap['metagenesymbol']
-    df_umap["target"]= df_umap["target"].apply(lambda x:x if x in df_umap_cluster['symbol'].to_list() else '')
-    # df_umap["target"] = df_umap[df_umap['metagenesymbol'].isin(df_umap_cluster['symbol'])]
-    df_umap['size']=5
-    df_umap["size"]= df_umap["metagenesymbol"].apply(lambda x:0.5if x not in df_umap_cluster['symbol'].to_list() else 5)
-    # df_umap["size"]= df_umap["metagenesymbol"].apply(lambda x:x if x in df_umap_cluster['symbol'].to_list() else 1)
-    df_umap["cluster"] = df_umap['metagenesymbol'].map(dict1)
-    # df_umap["cluster"] = df_umap["cluster"].apply(lambda x:x if x in df_umap_cluster['cluster'].to_list() else 'others')
+    if choice=='Cpds':
+        df_umap=df_umap.dropna(subset='metakeggid',axis=0)
+        df_umap=df_umap.set_index('metakeggid')
+        df_umap_cluster = df_umap_cluster.set_index('keggid')
+        df_umap['cluster']=df_umap_cluster['cluster']
+        df_umap["target"] = df_umap_cluster['symbol']
+        df_umap["target"] = df_umap['target'].fillna('')
+        df_umap_cluster=df_umap_cluster.reset_index()
+        df_umap=df_umap.reset_index()
+        df_umap['size']=5
+        df_umap["size"]= df_umap["metakeggid"].apply(lambda x:0.5 if x not in df_umap_cluster['keggid'].to_list() else 5)
+        # dict1 = df_umap_cluster.set_index('keggid').to_dict()['cluster']
+        # df_umap["cluster"] = df_umap['metakeggid'].map(dict1)
+    else:
+        dict1 = df_umap_cluster.set_index('symbol').to_dict()['cluster']
+        df_umap["cluster"] = df_umap['metagenesymbol'].map(dict1)
+        df_umap['size']=5
+        df_umap["size"]= df_umap["metagenesymbol"].apply(lambda x:0.5 if x not in df_umap_cluster['symbol'].to_list() else 5)
+        df_umap["target"] = df_umap['metagenesymbol']
+        df_umap["target"]= df_umap["target"].apply(lambda x:x if x in df_umap_cluster['symbol'].to_list() else '')
+        
+
     df_umap['cluster'] = df_umap['cluster'].replace(list_enr)
     df_umap['cluster']=df_umap['cluster'].fillna('others')
     if choice=='Cpds':
-        df_umap["keggid"] = df_umap_cluster['keggid']
-        fig1 = px.scatter(df_umap, x="umap1", y="umap2",color='cluster',text='target',size='size',width=800,height=800,hover_data=['target','keggid'])
+        # df_umap["keggid"] = df_umap_cluster['keggid']
+        
+        fig1 = px.scatter(df_umap, x="umap1", y="umap2",color='cluster',text='target',size='size',width=800,height=800,hover_data=['target','metakeggid'])
     else:
         fig1 = px.scatter(df_umap, x="umap1", y="umap2",color='cluster',text='target',size='size',width=800,height=800,hover_data=['target'])
     st.plotly_chart(fig1, theme="streamlit", use_container_width=True)
