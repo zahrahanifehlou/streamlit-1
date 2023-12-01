@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+import seaborn as sns
 import networkx as nx
 import igraph as ig
 import leidenalg as la
@@ -352,14 +353,7 @@ if not df_inter.empty:
 
     df_umap['cluster'] = df_umap['cluster'].replace(list_enr)
     df_umap['cluster']=df_umap['cluster'].fillna('others')
-    if choice=='Cpds':
-        # df_umap["keggid"] = df_umap_cluster['keggid']
-        
-        fig1 = px.scatter(df_umap, x="umap1", y="umap2",color='cluster',text='target',size='size',width=800,height=800,hover_data=['target','metakeggid'])
-    else:
-        fig1 = px.scatter(df_umap, x="umap1", y="umap2",color='cluster',text='target',size='size',width=800,height=800,hover_data=['target'])
-    st.plotly_chart(fig1, theme="streamlit", use_container_width=True)
-    st.write(df_umap)
+   
     ################################### SIMILARITY ##############################################
     st.write("## Cosine Similarity")
     
@@ -367,18 +361,7 @@ if not df_inter.empty:
     cluster=cluster[~cluster['cluster'].isin(['others','Null'])]
     cluster.reset_index(inplace=True, drop=True)
     cluster['cluster']=cluster['cluster'].str.split(' ').str[0]
-    col_dict= {'Plasma': 'blue',
-                'Phosphorylation': 'red',
-                'Cellular': 'white',
-                'Steroid': 'black',
-                'Cytokinesis': 'purple',
-                'Pattern': 'pink',
-                'Mitotic': 'cyan',
-                'Chromatin': 'gray',
-                'Fibroblast': 'olive',
-                'Negative': 'brown',
-                'Regulation': 'green',
-                'Sphingolipid': 'orange'}
+    col_dict=dict(zip(list(cluster.cluster.unique()), [tuple(int(c*255) for c in cs) for cs in sns.color_palette("husl", len(cluster.cluster.unique()))]))
     cluster['color'] = cluster['cluster'] .map(col_dict)
     cluster['color']=cluster['color'].fillna("yellow")
     gene_color=cluster.set_index('metagenesymbol').to_dict()['color']
@@ -474,7 +457,7 @@ if not df_inter.empty:
         mode="markers+text",
         showlegend=False,
         hoverinfo="none",
-        marker=dict( color=colors,size=50, line=dict(color="black", width=1)),
+        marker=dict( color=['rgb({}, {}, {})'.format(r, g, b) for r, g, b in colors],size=50, line=dict(color="black", width=1)),
     )
     # layout
 
@@ -503,6 +486,16 @@ if not df_inter.empty:
     fig = go.Figure(data=[edge_trace, node_trace, structer_trace], layout=layout)
 
     st.plotly_chart(fig)
+    
+    if choice=='Cpds':
+            # df_umap["keggid"] = df_umap_cluster['keggid']
+        
+        fig1 = px.scatter(df_umap, x="umap1", y="umap2",color='cluster',text='target',size='size',width=800,height=800,hover_data=['target','metakeggid'])
+    else:
+        fig1 = px.scatter(df_umap, x="umap1", y="umap2",color='cluster',text='target',size='size',width=800,height=800,hover_data=['target'])
+    st.plotly_chart(fig1, theme="streamlit", use_container_width=True)
+    st.write(df_umap)
+    
 
     ################################### SIMILARITY ##############################################
     st.write("## Similarity")
