@@ -11,7 +11,8 @@ import psycopg2
 import requests
 st.set_page_config(layout="wide")
 import sys
-
+import chart_studio.plotly as py
+import plotly.graph_objs as go
 sys.path.append('/mnt/shares/L/PROJECTS/JUMP-CRISPR/Code/streamlit-1/lib/')
 from streamlib import (get_cpds, get_list_category,
                        get_stringDB_enr, int_to_str, sql_df,
@@ -359,6 +360,149 @@ if not df_inter.empty:
         fig1 = px.scatter(df_umap, x="umap1", y="umap2",color='cluster',text='target',size='size',width=800,height=800,hover_data=['target'])
     st.plotly_chart(fig1, theme="streamlit", use_container_width=True)
     st.write(df_umap)
+    ################################### SIMILARITY ##############################################
+    st.write("## Cosine Similarity")
+    
+    cluster=df_umap
+    cluster=cluster[~cluster['cluster'].isin(['others','Null'])]
+    cluster.reset_index(inplace=True, drop=True)
+    cluster['cluster']=cluster['cluster'].str.split(' ').str[0]
+    col_dict= {'Plasma': 'blue',
+                'Phosphorylation': 'red',
+                'Cellular': 'white',
+                'Steroid': 'black',
+                'Cytokinesis': 'purple',
+                'Pattern': 'pink',
+                'Mitotic': 'cyan',
+                'Chromatin': 'gray',
+                'Fibroblast': 'olive',
+                'Negative': 'brown',
+                'Regulation': 'green',
+                'Sphingolipid': 'orange'}
+    cluster['color'] = cluster['cluster'] .map(col_dict)
+    cluster['color']=cluster['color'].fillna("yellow")
+    gene_color=cluster.set_index('metagenesymbol').to_dict()['color']
+    sql_sim = "select * from crisprcos"
+    df_sim = sql_df(sql_sim, conn_prof)
+   
+    df_sim.drop_duplicates(inplace=True)
+    df_sim.rename(columns={"symbol1":"Gene_1", "symbol2":"Gene_2" ,"sim":"Cosine_similarity"},inplace=True)
+    df_sim=df_sim[df_sim['Gene_1'].isin(cluster.metagenesymbol)]
+    df_sim=df_sim[df_sim['Gene_2'].isin(cluster.metagenesymbol)]
+    df_sim=df_sim[df_sim['Cosine_similarity']>0.70]
+    df_sim.reset_index(inplace=True, drop=True)
+    final_df = (
+        df_sim.merge(
+            cluster, left_on="Gene_1", right_on="metagenesymbol", how="inner"
+        )
+
+        .merge(cluster, left_on="Gene_2", right_on="metagenesymbol", how="inner")
+    .drop(columns=["metagenesymbol_y", "metagenesymbol_x"])
+        .rename(columns={"gene_group_name": "Gene_2_gene_group_name"})
+    )
+
+    interactions=final_df[["Gene_1","Gene_2","Cosine_similarity"]]
+
+    G=nx.Graph(name='Protein Interaction Graph')
+    interactions = np.array(interactions)
+
+    for i in range(len(interactions)):
+        interaction = interactions[i]
+        a = interaction[0] # protein a node
+        b = interaction[1] # protein b node
+        w = float(interaction[2]) # score as weighted edge where high scores = low weight
+        G.add_weighted_edges_from([(a,b,w)]) # add weighted edge to graph
+        
+    pos = nx.spring_layout(G)
+
+    # edges trace
+    edge_x = []
+    edge_y = []
+    xtext = []
+    ytext = []
+    str_sim=[]
+
+    for edge in G.edges():
+        x0, y0 = pos[edge[0]]
+        x1, y1 = pos[edge[1]]
+        edge_x.append(x0)
+        edge_x.append(x1)
+        edge_x.append(None)
+        edge_y.append(y0)
+        edge_y.append(y1)
+        edge_y.append(None)
+        tmp = final_df[
+            (final_df["Gene_1"] == edge[0]) & (final_df["Gene_2"] == edge[1])
+        ]
+        if len(tmp) > 0:
+        
+            sim2 = tmp.Cosine_similarity.values[0]
+            sim2=float("{:.2f}".format(sim2))
+            xtext.append((x0 + x1) / 2)
+            ytext.append((y0 + y1) / 2)
+            str_sim.append(sim2)
+    
+
+    edge_trace = go.Scatter(
+        x=edge_x,
+        y=edge_y,
+        line=dict(color="black", width=2),
+        hoverinfo="none",
+        showlegend=False,
+        mode="lines",
+    )
+
+    # nodes trace
+    node_x = []
+    node_y = []
+    text = []
+    colors = []
+    for node in G.nodes():
+        x, y = pos[node]
+        node_x.append(x)
+        node_y.append(y)
+
+        text.append(node)
+        colors.append(gene_color[node])
+
+
+    node_trace = go.Scatter(
+        x=node_x,
+        y=node_y,
+        text=text,
+    
+        mode="markers+text",
+        showlegend=False,
+        hoverinfo="none",
+        marker=dict( color=colors,size=50, line=dict(color="black", width=1)),
+    )
+    # layout
+
+    # figure
+    structer_trace = go.Scatter(
+        x=xtext,
+        y=ytext,
+        mode="text",
+        hoverinfo="none",
+        text=str_sim,
+
+        textposition="top right",
+        textfont=dict(color="blue", size=10),
+    )
+    layout = dict(
+        autosize=True,
+        template="plotly_white",
+        width=1200,
+        height=800,
+        hovermode="closest",
+    
+        xaxis=dict(linecolor="white", showgrid=False, showticklabels=False, mirror=True),
+        yaxis=dict(linecolor="black", showgrid=False, showticklabels=False, mirror=True),
+    )
+
+    fig = go.Figure(data=[edge_trace, node_trace, structer_trace], layout=layout)
+
+    st.plotly_chart(fig)
 
     ################################### SIMILARITY ##############################################
     st.write("## Similarity")
