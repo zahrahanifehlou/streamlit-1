@@ -369,8 +369,8 @@ else:
                         name_knn=tmp.metacpdname.values[0]
                     
                        
-                        sql_point = f"select * from platemap where batchid='{batch_knn}' and project='{choix_source}'"
-                        df_plates= sql_df(sql_point, conn)
+                        sql_point = f"select * from platemap where batchid='{batch_knn}' and assay='{choix_source}'"
+                        df_plates= sql_df(sql_point, conn)                        
                         plt_len=len(df_plates)
                         if plt_len>0:
                             br_cols = st.columns(plt_len)
