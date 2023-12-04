@@ -2,124 +2,123 @@ import streamlit as st
 from streamlit_plotly_events import plotly_events
 import numpy as np
 import plotly.express as px
-from streamlib import sql_df
-import psycopg2
+from streamlib import sql_df,find_sim_cpds
 import pandas as pd
 from sklearn.cluster import KMeans
-profile_conn = psycopg2.connect(
-    host="192.168.2.131",
-    port="5432",
-    user="arno",
-    database="ksilink_cpds",
-    password="12345",
-)
+from sklearn.metrics.pairwise import cosine_similarity
 
 
-conn = psycopg2.connect(
-    host="192.168.2.131",
-    port="5432",
-    user="arno",
-    database="ksi_cpds",
-    password="12345",
-)
+conn_meta = "postgres://arno:123456@192.168.2.131:5432/ksi_cpds"
+conn_prof = "postgres://arno:12345@192.168.2.131:5432/ksilink_cpds"
 
 st.title('Experimental: works only on 131')
 
-def toto():
-    sql_umqpemd =  f"SELECT * FROM aggcombatprofile where metasource='Ksilink_625'"
-    df_src_emd = sql_df(sql_umqpemd, profile_conn)
-    return df_src_emd
+sql_umqpemd =  f"SELECT * FROM aggcombatprofile where metasource='CRISPER'"
+df_src_emd = sql_df(sql_umqpemd, conn_prof)
+
+sim_crispr = find_sim_cpds(df_src_emd, df_sel)
+df_hist_cpd = pd.DataFrame(
+    {"sim": sim_crispr.flatten().tolist(
+    ), "metabatchid": df_src_emd["metabatchid"]}
+)
 
 
-df_dcp= pd.read_csv('/mnt/shares/L/Temp/Test/test.csv')
+df_rna=pd.read_csv('/mnt/shares/L/PROJECTS/')
+# def toto():
+#     sql_umqpemd =  f"SELECT * FROM aggcombatprofile where metasource='CRISPER'"
+#     df_src_emd = sql_df(sql_umqpemd, conn_prof)
+#     return df_src_emd
+
+
+# df_dcp= pd.read_csv('/mnt/shares/L/Temp/Test/test.csv')
+# # numerics = ["int16", "int32", "int64", "float16", "float32", "float64"]
+# # cols_num = df_dcp.select_dtypes(include=numerics).columns
+# # st.dataframe(df_dcp[cols_num].style.format('{:.4g}'))
+# # st.write(df_dcp.dtypes)
+# st.dataframe(df_dcp,column_config={"EC_50_Nuclei_Tot":st.column_config.NumberColumn("EC_50_Nuclei_Tot", format="%7.2g",)})
 # numerics = ["int16", "int32", "int64", "float16", "float32", "float64"]
 # cols_num = df_dcp.select_dtypes(include=numerics).columns
-# st.dataframe(df_dcp[cols_num].style.format('{:.4g}'))
-# st.write(df_dcp.dtypes)
-st.dataframe(df_dcp,column_config={"EC_50_Nuclei_Tot":st.column_config.NumberColumn("EC_50_Nuclei_Tot", format="%7.2g",)})
-numerics = ["int16", "int32", "int64", "float16", "float32", "float64"]
-cols_num = df_dcp.select_dtypes(include=numerics).columns
-for col in cols_num:
-    df_dcp[col] = df_dcp[col].apply(lambda x: "{:.2e}".format(x))
+# for col in cols_num:
+#     df_dcp[col] = df_dcp[col].apply(lambda x: "{:.2e}".format(x))
 
 
 
-st.dataframe(df_dcp)
+# st.dataframe(df_dcp)
 
-df=toto()
-all_cpds=["Staurosporine","Saccharin","Sorbitol",   "CA-074","BAYK8644",
-    "Lys05","Cucurbitacin","FCCP","Rapamycin","Cladribine","Cytarabine",
-    "Etoposide","Berberine","Fluphenazine","Docetaxel","Oxibendazole",
-    "Ethoxyquin","Rotenone","GSK2879552","BAY K8644","NMDA","Tetrandrine",
-    'Aloxistatin','Dexamethasone','Quinidine','LY2109761','AMG900','NVS-PAK1-1','Mirk-IN-1','Daporinad']
-df_dcps=pd.DataFrame()
-df_dcps['cpds']=all_cpds
-df_dcps.to_csv('/mnt/shares/L/Temp/cpds_tox.csv',index=None)
-cols = [c for c in df.columns if  not c.startswith("meta")]
-meta_cols = [c for c in df.columns if  c.startswith("meta")]
-X = df[cols]
-# KNN
-nb_cluster=st.slider('Number of clusters',min_value=2,max_value=30,value=15,step=1)
-#kmeans = KMeans(n_clusters=nb_cluster, random_state=0).fit(X)
+# df=toto()
+# all_cpds=["Staurosporine","Saccharin","Sorbitol",   "CA-074","BAYK8644",
+#     "Lys05","Cucurbitacin","FCCP","Rapamycin","Cladribine","Cytarabine",
+#     "Etoposide","Berberine","Fluphenazine","Docetaxel","Oxibendazole",
+#     "Ethoxyquin","Rotenone","GSK2879552","BAY K8644","NMDA","Tetrandrine",
+#     'Aloxistatin','Dexamethasone','Quinidine','LY2109761','AMG900','NVS-PAK1-1','Mirk-IN-1','Daporinad']
+# df_dcps=pd.DataFrame()
+# df_dcps['cpds']=all_cpds
+# df_dcps.to_csv('/mnt/shares/L/Temp/cpds_tox.csv',index=None)
+# cols = [c for c in df.columns if  not c.startswith("meta")]
+# meta_cols = [c for c in df.columns if  c.startswith("meta")]
+# X = df[cols]
+# # KNN
+# nb_cluster=st.slider('Number of clusters',min_value=2,max_value=30,value=15,step=1)
+# #kmeans = KMeans(n_clusters=nb_cluster, random_state=0).fit(X)
 
 
-## PCA
-# from sklearn.decomposition import PCA
-from cuml import PCA
-pca_2d = PCA(n_components=2)
-projection_2d = pca_2d.fit_transform(X)
-# st.write(projection_2d[0])
-emd_pca = pd.DataFrame()
-emd_pca["pca1"] = projection_2d[0]
-emd_pca["pca2"] = projection_2d[1]
-kmeans = KMeans(n_clusters=nb_cluster, random_state=0).fit(emd_pca)
-# emd_pca[meta_cols] = df[meta_cols]
+# ## PCA
+# # from sklearn.decomposition import PCA
+# from cuml import PCA
+# pca_2d = PCA(n_components=2)
+# projection_2d = pca_2d.fit_transform(X)
+# # st.write(projection_2d[0])
+# emd_pca = pd.DataFrame()
+# emd_pca["pca1"] = projection_2d[0]
+# emd_pca["pca2"] = projection_2d[1]
+# kmeans = KMeans(n_clusters=nb_cluster, random_state=0).fit(emd_pca)
+# # emd_pca[meta_cols] = df[meta_cols]
 
-emd_pca['Cluster']=kmeans.labels_
-emd_pca['Cluster'] = emd_pca['Cluster'].astype(str)
-fig1 = px.scatter(
-                emd_pca,
-                x="pca1",
-                y="pca2",
-                color="Cluster",
+# emd_pca['Cluster']=kmeans.labels_
+# emd_pca['Cluster'] = emd_pca['Cluster'].astype(str)
+# fig1 = px.scatter(
+#                 emd_pca,
+#                 x="pca1",
+#                 y="pca2",
+#                 color="Cluster",
             
                
-                title=f" PCA ",
-                # hover_data=["metabatchid"],
-            )
+#                 title=f" PCA ",
+#                 # hover_data=["metabatchid"],
+#             )
             
-st.plotly_chart(fig1, theme="streamlit",
-                                use_container_width=True)
+# st.plotly_chart(fig1, theme="streamlit",
+#                                 use_container_width=True)
 
-## UMAP
-# import umap
-from cuml import UMAP
-umap_2d = UMAP(n_components=2, n_neighbors=30,
-                min_dist=0, verbose=True, random_state=42)
-mapper=umap_2d.fit(X)
-projection_2d = mapper.transform(X)
-emd_umap = pd.DataFrame()
-emd_umap["umap1"] = projection_2d[0]
-emd_umap["umap2"] = projection_2d[1]
-# emd_umap[meta_cols] = df[meta_cols]
-emd_umap['Cluster']=kmeans.labels_
-emd_umap['Cluster'] = emd_umap['Cluster'].astype(str)
-fig = px.scatter(
-                emd_umap,
-                x="umap1",
-                y="umap2",
-                color="Cluster",
+# ## UMAP
+# # import umap
+# from cuml import UMAP
+# umap_2d = UMAP(n_components=2, n_neighbors=30,
+#                 min_dist=0, verbose=True, random_state=42)
+# mapper=umap_2d.fit(X)
+# projection_2d = mapper.transform(X)
+# emd_umap = pd.DataFrame()
+# emd_umap["umap1"] = projection_2d[0]
+# emd_umap["umap2"] = projection_2d[1]
+# # emd_umap[meta_cols] = df[meta_cols]
+# emd_umap['Cluster']=kmeans.labels_
+# emd_umap['Cluster'] = emd_umap['Cluster'].astype(str)
+# fig = px.scatter(
+#                 emd_umap,
+#                 x="umap1",
+#                 y="umap2",
+#                 color="Cluster",
               
                 
-                title=f" UMAP ",
-                # hover_data=["metabatchid"],
-            )
+#                 title=f" UMAP ",
+#                 # hover_data=["metabatchid"],
+#             )
             
-st.plotly_chart(fig, theme="streamlit",
-                                use_container_width=True)
-from cuml.metrics import trustworthiness
-cu_score=trustworthiness(X,projection_2d)
-st.write(" cuml's trustworthiness score : ",cu_score)
+# st.plotly_chart(fig, theme="streamlit",
+#                                 use_container_width=True)
+# from cuml.metrics import trustworthiness
+# cu_score=trustworthiness(X,projection_2d)
+# st.write(" cuml's trustworthiness score : ",cu_score)
 
 # st.write(df)
 # import matplotlib.pyplot as plt
