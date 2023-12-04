@@ -15,7 +15,9 @@ st.title('Experimental: works only on 131')
 sql_rep='select symbol1 from crisprcos'
 df_rep= sql_df(sql_rep,conn_prof)
 df_rep = df_rep.drop_duplicates().reset_index(drop=True)
-df_rep= df_rep.append({'symbol1':'DMSO'},ignore_index=True)
+
+df_rep=pd.read_csv('Supp Data 3 - 300-Gene MoA sgRNA Library.csv',usecols=['symbol'])
+df_rep= df_rep.append({'symbol':'DMSO'},ignore_index=True)
 # st.write(df_rep)
 # bq = []
 # for bs in df_rep['symbol1']:
@@ -32,7 +34,7 @@ df_hist_cpd = pd.DataFrame(
     ), "metabatchid": df_src_emd["metabatchid"]}
 )
 df_hist_cpd['metabatchid']=df_hist_cpd['metabatchid'].str.split('_').str[0]
-# df_hist_cpd=df_hist_cpd[df_hist_cpd['metabatchid'].isin(df_rep['symbol1'])]
+df_hist_cpd=df_hist_cpd[df_hist_cpd['metabatchid'].isin(df_rep['symbol'])]
 
 df_rna=pd.read_csv('Recursion_U2OS_expression_data.csv')
 dict_rna = df_rna.set_index('gene').to_dict()['zfpkm']
