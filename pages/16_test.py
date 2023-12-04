@@ -12,18 +12,36 @@ conn_meta = "postgres://arno:123456@192.168.2.131:5432/ksi_cpds"
 conn_prof = "postgres://arno:12345@192.168.2.131:5432/ksilink_cpds"
 
 st.title('Experimental: works only on 131')
-
-sql_umqpemd =  f"SELECT * FROM aggcombatprofile where metasource='CRISPER'"
+sql_rep='select symbol1 from crisprcos'
+df_rep= sql_df(sql_rep,conn_prof)
+df_rep = df_rep.drop_duplicates().reset_index(drop=True)
+st.write(df_rep)
+bq = []
+for bs in df_rep['symbol1']:
+    bq.append("'" + bs + "'")
+    
+sql_umqpemd =  f"SELECT * FROM aggcombatprofile where metasource='CRISPER' and metabatchid  in (" + ",".join(bq) + ") "
 df_src_emd = sql_df(sql_umqpemd, conn_prof)
-
+df_sel = df_src_emd[df_src_emd["metabatchid"]=='DMSO']
 sim_crispr = find_sim_cpds(df_src_emd, df_sel)
 df_hist_cpd = pd.DataFrame(
     {"sim": sim_crispr.flatten().tolist(
     ), "metabatchid": df_src_emd["metabatchid"]}
 )
+df_hist_cpd['metabatchid']=df_hist_cpd['metabatchid'].str.split('_').str[0]
+
+df_rna=pd.read_csv('Recursion_U2OS_expression_data.csv')
+dict_rna = df_rna.set_index('gene').to_dict()['zfpkm']
+
+df_hist_cpd['zfpkm']=df_hist_cpd['metabatchid'].map(dict_rna)
+df_hist_cpd.dropna(subset='zfpkm', inplace=True)
+df_hist_cpd=df_hist_cpd[df_hist_cpd['zfpkm']>-30]
+df_hist_cpd=df_hist_cpd[df_hist_cpd['zfpkm']<-3]
+st.write(df_hist_cpd)
+fig = px.scatter(df_hist_cpd,x='sim',y='zfpkm',hover_data=['metabatchid'])
+st.plotly_chart(fig)
 
 
-df_rna=pd.read_csv('/mnt/shares/L/PROJECTS/')
 # def toto():
 #     sql_umqpemd =  f"SELECT * FROM aggcombatprofile where metasource='CRISPER'"
 #     df_src_emd = sql_df(sql_umqpemd, conn_prof)
