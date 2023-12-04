@@ -113,7 +113,7 @@ def get_relation(df_genes):
 @st.cache_data
 def get_sample(df):
     st.write('onky 300 genes will be taken')
-    df_genes=df_gene.sample(300)
+    df_genes=df_genes.sample(300)
     return df_genes
     
 
