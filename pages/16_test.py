@@ -60,8 +60,10 @@ df_rna2=df_rna2[df_rna2['TPM']>3]
 df_rna2['log10TPM']=np.log10(df_rna2['TPM'])
 fig2= px.scatter(df_rna2,x='log10TPM',y='zfpkm',hover_data=['symbol'],trendline='ols', trendline_color_override = 'red')
 st.plotly_chart(fig2)
-
-
+model = px.get_trendline_results(fig2)
+alpha = model.iloc[0]["px_fit_results"].params[0]
+beta = model.iloc[0]["px_fit_results"].params[1]
+st.write(f'alpha={alpha}, beta={beta}')
 # def toto():
 #     sql_umqpemd =  f"SELECT * FROM aggcombatprofile where metasource='CRISPER'"
 #     df_src_emd = sql_df(sql_umqpemd, conn_prof)
