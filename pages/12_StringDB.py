@@ -385,6 +385,18 @@ if not df_inter.empty:
     )
 
     interactions=final_df[["Gene_1","Gene_2","Cosine_similarity"]]
+    inter =  np.array(final_df[['Gene_1','Gene_2']])
+    tup_inter=list(map(tuple,inter))
+    # st.write(inter)
+    list_sim=final_df['Cosine_similarity'].to_list()
+    # G2 = nx.Graph()
+    G2 = nx.Graph(tup_inter)  
+    IG = ig.Graph.from_networkx(G2)
+    partition2 = la.find_partition(IG, la.ModularityVertexPartition,n_iterations=-1,weights=list_sim)
+    subax2=ig.plot(partition2,vertex_label=partition2.graph.vs['_nx_name'],vertex_label_size=lab_size,vertex_size=vert_size,
+                margin=10, bbox=(0,0,box_size, box_size))
+    # nx.draw(GG, with_labels=True,node_size=10,font_size=4)
+    st.pyplot(subax2.figure,use_container_width=False)
 
     G=nx.Graph(name='Protein Interaction Graph')
     interactions = np.array(interactions)
