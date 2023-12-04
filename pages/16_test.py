@@ -15,13 +15,16 @@ st.title('Experimental: works only on 131')
 sql_rep='select symbol1 from crisprcos'
 df_rep= sql_df(sql_rep,conn_prof)
 df_rep = df_rep.drop_duplicates().reset_index(drop=True)
-st.write(df_rep)
-bq = []
-for bs in df_rep['symbol1']:
-    bq.append("'" + bs + "'")
+df_rep= df_rep.append({'symbol1':'DMSO'},ignore_index=True)
+# st.write(df_rep)
+# bq = []
+# for bs in df_rep['symbol1']:
+#     bq.append("'" + bs.upper() + "'")
     
-sql_umqpemd =  f"SELECT * FROM aggcombatprofile where metasource='CRISPER' and metabatchid  in (" + ",".join(bq) + ") "
+# sql_umqpemd =  f"SELECT * FROM aggcombatprofile where metasource='CRISPER' and metabatchid  in (" + ",".join(bq) + ") "
+sql_umqpemd =  f"SELECT * FROM aggcombatprofile where metasource='CRISPER'"
 df_src_emd = sql_df(sql_umqpemd, conn_prof)
+# st.write(df_src_emd)
 df_sel = df_src_emd[df_src_emd["metabatchid"]=='DMSO']
 sim_crispr = find_sim_cpds(df_src_emd, df_sel)
 df_hist_cpd = pd.DataFrame(
@@ -29,6 +32,7 @@ df_hist_cpd = pd.DataFrame(
     ), "metabatchid": df_src_emd["metabatchid"]}
 )
 df_hist_cpd['metabatchid']=df_hist_cpd['metabatchid'].str.split('_').str[0]
+# df_hist_cpd=df_hist_cpd[df_hist_cpd['metabatchid'].isin(df_rep['symbol1'])]
 
 df_rna=pd.read_csv('Recursion_U2OS_expression_data.csv')
 dict_rna = df_rna.set_index('gene').to_dict()['zfpkm']
@@ -36,9 +40,15 @@ dict_rna = df_rna.set_index('gene').to_dict()['zfpkm']
 df_hist_cpd['zfpkm']=df_hist_cpd['metabatchid'].map(dict_rna)
 df_hist_cpd.dropna(subset='zfpkm', inplace=True)
 df_hist_cpd=df_hist_cpd[df_hist_cpd['zfpkm']>-30]
-df_hist_cpd=df_hist_cpd[df_hist_cpd['zfpkm']<-3]
-st.write(df_hist_cpd)
-fig = px.scatter(df_hist_cpd,x='sim',y='zfpkm',hover_data=['metabatchid'])
+
+df_hist_cpd['expressed']='No'
+df_hist_cpd.loc[df_hist_cpd['zfpkm'] > -3, 'expressed'] = 'Yes'
+
+
+#
+# df_hist_cpd=df_hist_cpd[df_hist_cpd['zfpkm']<-3]
+# st.write(df_hist_cpd)
+fig = px.scatter(df_hist_cpd,x='sim',y='zfpkm',hover_data=['metabatchid'],color='expressed')
 st.plotly_chart(fig)
 
 
