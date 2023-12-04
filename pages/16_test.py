@@ -51,6 +51,16 @@ df_hist_cpd.loc[df_hist_cpd['zfpkm'] > -3, 'expressed'] = 'Yes'
 fig = px.scatter(df_hist_cpd,x='sim',y='zfpkm',hover_data=['metabatchid'],color='expressed')
 st.plotly_chart(fig)
 
+df_rna2=pd.read_csv('src13_u2os.csv')
+df_rna2['zfpkm']=df_rna2['symbol'].map(dict_rna)
+
+df_rna2 = df_rna2.dropna(axis=1)
+df_rna2=df_rna2[df_rna2['zfpkm']>-30]
+df_rna2=df_rna2[df_rna2['TPM']>3]
+df_rna2['log10TPM']=np.log10(df_rna2['TPM'])
+fig2= px.scatter(df_rna2,x='log10TPM',y='zfpkm',hover_data=['symbol'],trendline='ols', trendline_color_override = 'red')
+st.plotly_chart(fig2)
+
 
 # def toto():
 #     sql_umqpemd =  f"SELECT * FROM aggcombatprofile where metasource='CRISPER'"
