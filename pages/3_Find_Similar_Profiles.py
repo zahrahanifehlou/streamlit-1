@@ -213,6 +213,7 @@ else:
                 x="umap1",
                 y="umap2",
                 color="color",
+                opacity=0.3,
                 color_discrete_sequence=["blue", "red", "green"],
                 title=f"{rad} {title}:UMAP ",
                 hover_data=["metabatchid", "metaefficacy",
@@ -369,6 +370,7 @@ else:
                     x="umap1",
                     y="umap2",
                     color="color",
+                    opacity=0.3,
                      color_discrete_sequence=["blue", "red", "green"],
 
                     title=f" {title}  :UMAP ",
