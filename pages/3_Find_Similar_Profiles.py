@@ -69,7 +69,8 @@ else:
 
     cosine_sim_tab, knn_sim_tab = st.tabs(
         ["Similar CPDs with cosine", "Similar CPDs with KNN in UMAP  "])
-    with cosine_sim_tab:  # Similar CPDs with cosine
+    with cosine_sim_tab:  
+        rad = st.radio('Pos or Neg',['Correl', 'AntiCorrel'])# Similar CPDs with cosine
         thr_cols = st.columns(2)
         with thr_cols[0]:
             thres_cpd = st.slider("Threshold cpd", -1.0, 1.0, 0.85)
@@ -81,12 +82,23 @@ else:
             {"sim": sim_cpds.flatten().tolist(
             ), "metabatchid": df_source["metabatchid"]}
         )
-        df_keep_cpd = (
-            df_hist_cpd[df_hist_cpd["sim"] > thres_cpd]
-            .sort_values(by="sim", ascending=False)
-            .head(thresq_cpd)
-            .reset_index(drop=True)
-        )        
+        if rad=='Correl':
+            df_keep_cpd = (
+                df_hist_cpd[df_hist_cpd["sim"] > thres_cpd]
+                .sort_values(by="sim", ascending=False)
+                .head(thresq_cpd)
+                .reset_index(drop=True)
+            )
+        else:
+            df_keep_cpd = (
+                df_hist_cpd[df_hist_cpd["sim"] <= thres_cpd]
+                .sort_values(by="sim", ascending=False)
+                .head(thresq_cpd)
+                .reset_index(drop=True)
+            )
+        
+        st.write("hist_cpd",df_keep_cpd)
+                    
         batch_list_cpd = df_keep_cpd["metabatchid"].tolist()
         b_list_cpd = [
             f"'{b}'" for b in batch_list_cpd if "jcp2022_800" not in b]
