@@ -107,46 +107,37 @@ else:
         
         if len(b_list_cpd) > 0:
             if choix_source != "CRISPER":
-                sql_cpds = f"select cpd.pubchemid,cpd.keggid, cpd.cpdname, gene.symbol, cpd.smile,cpdgene.geneid,cpdbatchs.batchid,keggcpd.efficacy from cpd \
-                inner join cpdbatchs on cpd.pubchemid=cpdbatchs.pubchemid \
-                left join cpdgene on cpdbatchs.pubchemid=cpdgene.pubchemid \
-                left join gene on gene.geneid=cpdgene.geneid \
-                left join keggcpd on cpd.keggid=keggcpd.keggid \
-                where cpdbatchs.batchid in ({','.join(b_list_cpd)}) group by cpd.pubchemid,cpd.keggid, cpd.cpdname, gene.symbol,cpd.smile,cpdgene.geneid,cpdbatchs.batchid,keggcpd.efficacy"
+                sql_cpds = f"SELECT cpd.pubchemid, cpd.keggid, cpd.cpdname, gene.symbol, cpd.smile, cpdgene.geneid, cpdbatchs.batchid, keggcpd.efficacy FROM cpd \
+                            INNER JOIN cpdbatchs ON cpd.pubchemid=cpdbatchs.pubchemid \
+                            LEFT JOIN cpdgene ON cpdbatchs.pubchemid=cpdgene.pubchemid \
+                            LEFT JOIN gene ON gene.geneid=cpdgene.geneid \
+                            LEFT JOIN keggcpd ON cpd.keggid=keggcpd.keggid \
+                            WHERE cpdbatchs.batchid IN ({','.join(b_list_cpd)}) GROUP BY cpd.pubchemid, cpd.keggid, cpd.cpdname, gene.symbol, cpd.smile, cpdgene.geneid, cpdbatchs.batchid, keggcpd.efficacy"
                 df_results_cpd = sql_df(sql_cpds, conn)
+                
                 if len(df_results_cpd) > 0:
                     df_results_cpd.drop_duplicates(subset=["pubchemid"], inplace=True)
-                    df_keep_prof_cpd = df_source[df_source["metabatchid"].isin(
-                        df_keep_cpd["metabatchid"].values)]
-                    df_keep_prof_cpd.reset_index(inplace=True, drop=True)
-                    df_keep_prof_cpd = df_keep_prof_cpd.merge(df_results_cpd.add_prefix(
-                        'meta'), left_on='metabatchid', right_on='metabatchid').reset_index(drop=True)
-                    df_keep_prof_cpd.loc[df_keep_prof_cpd.metacpdname ==
-                                        "No result", 'metacpdname'] = None
-                    df_keep_prof_cpd['metacpdname'] = df_keep_prof_cpd['metacpdname'].str[:30]
-                    df_keep_prof_cpd['metacpdname'] = df_keep_prof_cpd['metacpdname'].fillna(
-                        df_keep_prof_cpd['metabatchid'])
+                    df_keep_prof_cpd = df_source[df_source["metabatchid"].isin(df_keep_cpd["metabatchid"].values)].reset_index(drop=True)
+                    df_keep_prof_cpd = df_keep_prof_cpd.merge(df_results_cpd.add_prefix('meta'), left_on='metabatchid', right_on='metabatchid').reset_index(drop=True)
+                    df_keep_prof_cpd.loc[df_keep_prof_cpd.metacpdname == "No result", 'metacpdname'] = None
+                    df_keep_prof_cpd['metacpdname'] = df_keep_prof_cpd['metacpdname'].str[:30].fillna(df_keep_prof_cpd['metabatchid'])
+
             if choix_source == "CRISPER":
-                sql_crisper2 = f"SELECT gene.symbol, gene.geneid,crisperbatchs.batchid  FROM crisperbatchs  inner join gene \
-                on gene.geneid=crisperbatchs.geneid  where crisperbatchs.batchid in ({','.join(b_list_cpd)})  group by gene.symbol, gene.geneid,crisperbatchs.batchid "
-                df_results_cpd = sql_df(
-                    sql_crisper2, conn).drop_duplicates(subset=["batchid"])
+                sql_crisper2 = f"SELECT gene.symbol, gene.geneid, crisperbatchs.batchid FROM crisperbatchs INNER JOIN gene \
+                                ON gene.geneid=crisperbatchs.geneid WHERE crisperbatchs.batchid IN ({','.join(b_list_cpd)}) GROUP BY gene.symbol, gene.geneid, crisperbatchs.batchid"
+                df_results_cpd = sql_df(sql_crisper2, conn).drop_duplicates(subset=["batchid"])
+                
                 if len(df_results_cpd) > 0:
                     df_results_cpd.drop_duplicates(subset=["geneid"], inplace=True)
-                    df_keep_prof_cpd = df_prof_crisper[df_prof_crisper["metabatchid"].isin(
-                        df_keep_cpd["metabatchid"].values)]
-                    df_keep_prof_cpd.reset_index(inplace=True, drop=True)
-            
-                    meta_cols = [
-                        col for col in df_keep_prof_cpd.columns if col.startswith("meta")]
+                    df_keep_prof_cpd = df_prof_crisper[df_prof_crisper["metabatchid"].isin(df_keep_cpd["metabatchid"].values)].reset_index(drop=True)
+                    meta_cols = [col for col in df_keep_prof_cpd.columns if col.startswith("meta")]
                     df_keep_cpd[meta_cols] = df_keep_prof_cpd[meta_cols]
                     df_keep_cpd["metacpdname"] = df_keep_cpd["metabatchid"]
-                    
                     df_keep_cpd["efficacy"] = None
-                    df_keep_prof_cpd['metacpdname']=df_keep_prof_cpd['metabatchid']
-                    df_keep_prof_cpd = df_keep_prof_cpd.merge(df_results_cpd.add_prefix(
-                        'meta'), left_on='metabatchid', right_on='metabatchid').reset_index(drop=True)
-                    
+                    df_keep_prof_cpd['metacpdname'] = df_keep_prof_cpd['metabatchid']
+                    df_keep_prof_cpd = df_keep_prof_cpd.merge(df_results_cpd.add_prefix('meta'), left_on='metabatchid', right_on='metabatchid').reset_index(drop=True)
+
+                                
 
                 st.session_state["df_sim_crisper"] = df_keep_cpd
                
