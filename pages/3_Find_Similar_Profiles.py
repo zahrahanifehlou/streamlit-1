@@ -92,7 +92,7 @@ else:
         else:
             df_keep_cpd = (
                 df_hist_cpd[df_hist_cpd["sim"] <= thres_cpd]
-                .sort_values(by="sim", ascending=False)
+                .sort_values(by="sim", ascending=True)
                 .head(thresq_cpd)
                 .reset_index(drop=True)
             )
@@ -213,7 +213,7 @@ else:
                 x="umap1",
                 y="umap2",
                 color="color",
-                opacity=0.3,
+                opacity=0.5,
                 color_discrete_sequence=["blue", "red", "green"],
                 title=f"{rad} {title}:UMAP ",
                 hover_data=["metabatchid", "metaefficacy",
@@ -370,7 +370,7 @@ else:
                     x="umap1",
                     y="umap2",
                     color="color",
-                    opacity=0.3,
+                    opacity=0.5,
                      color_discrete_sequence=["blue", "red", "green"],
 
                     title=f" {title}  :UMAP ",
