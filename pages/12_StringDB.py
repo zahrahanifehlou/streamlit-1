@@ -536,8 +536,3 @@ if not df_inter.empty:
     #             # ax=ax1
     #         )
 
-<<<<<<< HEAD
-    st.pyplot(fig_clusmap)
-=======
-    # st.pyplot(fig_clusmap)
->>>>>>> refs/remotes/origin/main
