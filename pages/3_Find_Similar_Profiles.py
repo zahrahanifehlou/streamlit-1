@@ -92,52 +92,56 @@ else:
             f"'{b}'" for b in batch_list_cpd if "jcp2022_800" not in b]
         df_results_cpd = pd.DataFrame()
         df_keep_prof_cpd = pd.DataFrame()
-        if len(b_list_cpd) > 0:
-            sql_cpds = f"select cpd.pubchemid,cpd.keggid, cpd.cpdname, gene.symbol, cpd.smile,cpdgene.geneid,cpdbatchs.batchid,keggcpd.efficacy from cpd \
-            inner join cpdbatchs on cpd.pubchemid=cpdbatchs.pubchemid \
-            left join cpdgene on cpdbatchs.pubchemid=cpdgene.pubchemid \
-            left join gene on gene.geneid=cpdgene.geneid \
-            left join keggcpd on cpd.keggid=keggcpd.keggid \
-            where cpdbatchs.batchid in ({','.join(b_list_cpd)}) group by cpd.pubchemid,cpd.keggid, cpd.cpdname, gene.symbol,cpd.smile,cpdgene.geneid,cpdbatchs.batchid,keggcpd.efficacy"
-            df_results_cpd = sql_df(sql_cpds, conn)
-            df_results_cpd.drop_duplicates(subset=["pubchemid"], inplace=True)
-            df_keep_prof_cpd = df_source[df_source["metabatchid"].isin(
-                df_keep_cpd["metabatchid"].values)]
-            df_keep_prof_cpd.reset_index(inplace=True, drop=True)
-            
-           
-            if len(df_results_cpd) > 0:
-                df_keep_prof_cpd = df_keep_prof_cpd.merge(df_results_cpd.add_prefix(
-                    'meta'), left_on='metabatchid', right_on='metabatchid').reset_index(drop=True)
-                df_keep_prof_cpd.loc[df_keep_prof_cpd.metacpdname ==
-                                     "No result", 'metacpdname'] = None
-                df_keep_prof_cpd['metacpdname'] = df_keep_prof_cpd['metacpdname'].str[:30]
-                df_keep_prof_cpd['metacpdname'] = df_keep_prof_cpd['metacpdname'].fillna(
-                    df_keep_prof_cpd['metabatchid'])
-
-        fig_clusmap_cpd = px.histogram(df_hist_cpd, x="sim")
-        fig_clusmap_cpd.add_vline(x=thres_cpd)
-
-        st.plotly_chart(fig_clusmap_cpd, theme="streamlit",
-                        use_container_width=True)
-        st.session_state["df_sim_cpd"] = df_results_cpd
-        if choix_source == "CRISPER":
-            sql_crisper2 = f"SELECT gene.symbol, gene.geneid,crisperbatchs.batchid  FROM crisperbatchs  inner join gene \
-            on gene.geneid=crisperbatchs.geneid  where crisperbatchs.batchid in ({','.join(b_list_cpd)})  group by gene.symbol, gene.geneid,crisperbatchs.batchid "
-            df_keep_cpd = sql_df(
-                sql_crisper2, conn).drop_duplicates(subset=["batchid"])
         
-            df_prof_crisper = df_prof_crisper.merge(df_keep_cpd.add_prefix(
-                'meta'), left_on='metabatchid', right_on='metabatchid').reset_index(drop=True)
-      
-            meta_cols = [
-                col for col in df_keep_prof_cpd.columns if col.startswith("meta")]
-            df_keep_cpd[meta_cols] = df_keep_prof_cpd[meta_cols]
-    
-            df_keep_cpd["metacpdname"] = df_keep_cpd["batchid"]
-            df_keep_prof_cpd["metacpdname"] = df_keep_prof_cpd["metabatchid"]
-            df_keep_cpd["efficacy"] = None
-            st.session_state["df_sim_crisper"] = df_keep_cpd
+        if len(b_list_cpd) > 0:
+            if choix_source != "CRISPER":
+                sql_cpds = f"select cpd.pubchemid,cpd.keggid, cpd.cpdname, gene.symbol, cpd.smile,cpdgene.geneid,cpdbatchs.batchid,keggcpd.efficacy from cpd \
+                inner join cpdbatchs on cpd.pubchemid=cpdbatchs.pubchemid \
+                left join cpdgene on cpdbatchs.pubchemid=cpdgene.pubchemid \
+                left join gene on gene.geneid=cpdgene.geneid \
+                left join keggcpd on cpd.keggid=keggcpd.keggid \
+                where cpdbatchs.batchid in ({','.join(b_list_cpd)}) group by cpd.pubchemid,cpd.keggid, cpd.cpdname, gene.symbol,cpd.smile,cpdgene.geneid,cpdbatchs.batchid,keggcpd.efficacy"
+                df_results_cpd = sql_df(sql_cpds, conn)
+                df_results_cpd.drop_duplicates(subset=["pubchemid"], inplace=True)
+                df_keep_prof_cpd = df_source[df_source["metabatchid"].isin(
+                    df_keep_cpd["metabatchid"].values)]
+                df_keep_prof_cpd.reset_index(inplace=True, drop=True)
+                
+            
+                if len(df_results_cpd) > 0:
+                    df_keep_prof_cpd = df_keep_prof_cpd.merge(df_results_cpd.add_prefix(
+                        'meta'), left_on='metabatchid', right_on='metabatchid').reset_index(drop=True)
+                    df_keep_prof_cpd.loc[df_keep_prof_cpd.metacpdname ==
+                                        "No result", 'metacpdname'] = None
+                    df_keep_prof_cpd['metacpdname'] = df_keep_prof_cpd['metacpdname'].str[:30]
+                    df_keep_prof_cpd['metacpdname'] = df_keep_prof_cpd['metacpdname'].fillna(
+                        df_keep_prof_cpd['metabatchid'])
+
+            fig_clusmap_cpd = px.histogram(df_hist_cpd, x="sim")
+            fig_clusmap_cpd.add_vline(x=thres_cpd)
+
+            st.plotly_chart(fig_clusmap_cpd, theme="streamlit",
+                            use_container_width=True)
+            st.session_state["df_sim_cpd"] = df_results_cpd
+        
+            if choix_source == "CRISPER":
+                sql_crisper2 = f"SELECT gene.symbol, gene.geneid,crisperbatchs.batchid  FROM crisperbatchs  inner join gene \
+                on gene.geneid=crisperbatchs.geneid  where crisperbatchs.batchid in ({','.join(b_list_cpd)})  group by gene.symbol, gene.geneid,crisperbatchs.batchid "
+                df_keep_cpd = sql_df(
+                    sql_crisper2, conn).drop_duplicates(subset=["batchid"])
+            
+                df_keep_prof_cpd = df_prof_crisper.merge(df_keep_cpd.add_prefix(
+                    'meta'), left_on='metabatchid', right_on='metabatchid').reset_index(drop=True)
+        
+                meta_cols = [
+                    col for col in df_keep_prof_cpd.columns if col.startswith("meta")]
+                df_keep_cpd[meta_cols] = df_keep_prof_cpd[meta_cols]
+        
+                df_keep_cpd["metacpdname"] = df_keep_cpd["batchid"]
+                df_keep_prof_cpd['metacpdname']=df_keep_prof_cpd['metabatchid']
+               
+                df_keep_cpd["efficacy"] = None
+                st.session_state["df_sim_crisper"] = df_keep_cpd
 
         if len(df_keep_cpd) > 0:
             st.write("\n")

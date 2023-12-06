@@ -1,5 +1,6 @@
 
-
+import matplotlib.pyplot as plt
+import seaborn as sns
 import sys
 import warnings
 import numpy as np
@@ -128,8 +129,8 @@ if str(option) == "gene" and len(df_res) > 0:
                             df_prof["metabatchid"])
     
 
-        
-# get cpd gene/target info-------------------------------------------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------------------------------------   
+# get cpd gene/target info-
 
 if len(df_cpds) > 0:
     list_pubchemid = [f"'{t}'" for t in df_cpds["pubchemid"]]
@@ -287,13 +288,14 @@ tab1, tab2, tab3, tab4 = st.tabs(
 if  len(df_prof_crisper)>0:
     tab3.write(df_prof_crisper)
     tab4.write(df_prof_crisper.describe().T)
-    st.session_state["df_crisper"] = df_crisperBatchs
-    
+
     
 if  len(df_prof)>0:
     tab1.write(df_prof)
     tab2.write(df_prof.describe().T)
     
+    #--------------------------------------------------------------
+    #plot profile
     list_sources = df_prof.metasource.unique().tolist()
     options = st.text_area("Enter sources")
     var_t = options.split("\n")
@@ -303,13 +305,10 @@ if  len(df_prof)>0:
         tmp = df_prof.copy()
     else:
         tmp = df_prof.loc[df_prof["metasource"].isin(var_t)]
-
+    st.session_state["df_profiles"] = tmp
+    
     if len(tmp) > 1:
-        import matplotlib.pyplot as plt
-        import seaborn as sns
-
         plt_src, col_colors = get_col_colors(tmp)
-
         fig_clusmap, ax1 = plt.subplots()
         fig_clusmap = sns.clustermap(
             plt_src,
@@ -328,31 +327,9 @@ if  len(df_prof)>0:
 
         st.pyplot(fig_clusmap)
         
-        # tmp = tmp
-        tmp["meta_name_source"] = tmp["metacpdname"] + "_" + tmp["metasource"]
-        cpd_names = tmp.meta_name_source.values
-        df_plt=tmp.drop_duplicates(subset='meta_name_source')
-        df_plt = df_plt.set_index("meta_name_source")
-        
-        df_plt = df_plt.drop('name',axis=1)
-        st.dataframe(df_plt)
-        filter_col = [
-            col for col in df_plt.columns if not col.startswith("meta")]
-        df_plt2 = df_plt[filter_col].T
-        sty = st.radio('Line Style',['linear','spline'])
-        fig_line = px.line(
-            df_plt2, x=filter_col, y=cpd_names, width=1400, height=1000,line_shape=sty, title="Profiles")
-        st.plotly_chart(fig_line, theme="streamlit",
-                        use_container_width=True)
+       
 
-    st.session_state["df_profiles"] = tmp
-    #st.session_state["df_cpds"] = df_cpds
+    
+   
     
 
-    # st.session_state["df_efficacy"] = df_efficacy
-    # st.session_state["df_crisper"] = df_prof_crisper
-
-
-
-# conn_profileDB.close()
-# conn.close()
