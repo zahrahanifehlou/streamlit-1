@@ -86,8 +86,7 @@ else:
             .sort_values(by="sim", ascending=False)
             .head(thresq_cpd)
             .reset_index(drop=True)
-        )
-
+        )        
         batch_list_cpd = df_keep_cpd["metabatchid"].tolist()
         b_list_cpd = [
             f"'{b}'" for b in batch_list_cpd if "jcp2022_800" not in b]
@@ -212,7 +211,7 @@ else:
                     batch=tmp.metabatchid.values[0]
                     name=tmp.metacpdname.values[0]
              
-                    sql_point = f"select * from platemap where batchid='{batch}' and source='{choix_source}'"
+                    sql_point = f"select * from platemap where batchid='{batch}' and assay='{choix_source}'"
                     df_plates= sql_df(sql_point, conn)
                   
                     plt_len=len(df_plates)

@@ -113,7 +113,7 @@ def get_relation(df_genes):
 @st.cache_data
 def get_sample(df):
     st.write('onky 300 genes will be taken')
-    df_genes=df_gene.sample(300)
+    df_genes=df_genes.sample(300)
     return df_genes
     
 
@@ -129,15 +129,15 @@ if on:
 
     uploaded_file = st.file_uploader("Choose csv file with a list of gene symbols  otherwise the reference 300  GeneMOA will be loaded", accept_multiple_files=False)
     if uploaded_file:
-        df_gene = pd.read_csv(uploaded_file)
+        df_genes = pd.read_csv(uploaded_file)
         # st.write('Loaded csv file:', df_gene)
         gene_col = st.text_input('Write the column name with gene symbols',value='symbol')
         if gene_col:
-            df_gene.dropna(subset=gene_col,inplace=True)
-            unique_gene=df_gene[gene_col].unique()
+            df_genes.dropna(subset=gene_col,inplace=True)
+            unique_gene=df_genes[gene_col].unique()
             st.write(f'you entered : {len(unique_gene)} genes')
             if len(unique_gene)>300:
-                df_genes = get_sample(df_gene)
+                df_genes = get_sample(df_genes)
                 unique_gene=df_genes[gene_col].unique()
             # get_relation(df_genes)
         # st.write(df_genes)
@@ -510,30 +510,34 @@ if not df_inter.empty:
     
 
     ################################### SIMILARITY ##############################################
-    st.write("## Similarity")
-    import seaborn as sns
-    df_umap_cluster.set_index('symbol',inplace=True)
-    lut = dict(zip(set(df_umap_cluster['cluster'].values), sns.hls_palette(len(set(df_umap_cluster['cluster'])), l=0.5, s=0.8)))
-    row_colors = pd.DataFrame(df_umap_cluster['cluster'].values)[0].map(lut)
+    # st.write("## Similarity")
+    # import seaborn as sns
+    # df_umap_cluster.set_index('symbol',inplace=True)
+    # lut = dict(zip(set(df_umap_cluster['cluster'].values), sns.hls_palette(len(set(df_umap_cluster['cluster'])), l=0.5, s=0.8)))
+    # row_colors = pd.DataFrame(df_umap_cluster['cluster'].values)[0].map(lut)
 
-    sns.set(font_scale=0.6)
+    # sns.set(font_scale=0.6)
 
-    figsize = [20, 20]
-    fig_clusmap, ax1 = plt.subplots()
-    fig_clusmap = sns.clustermap(
-                df_umap_cluster.select_dtypes(include=numerics),
-                # metric="cosine",
-                figsize=figsize,
-                row_colors=row_colors.values,
-            method="ward",
-                xticklabels=False,
-                yticklabels=True,
-                col_cluster=False,
-                cmap="vlag",
-                center=0,
-                vmin=-5,
-                vmax=5,
-                # ax=ax1
-            )
+    # figsize = [20, 20]
+    # fig_clusmap, ax1 = plt.subplots()
+    # fig_clusmap = sns.clustermap(
+    #             df_umap_cluster.select_dtypes(include=numerics),
+    #             # metric="cosine",
+    #             figsize=figsize,
+    #             row_colors=row_colors.values,
+    #         method="ward",
+    #             xticklabels=False,
+    #             yticklabels=True,
+    #             col_cluster=False,
+    #             cmap="vlag",
+    #             center=0,
+    #             vmin=-5,
+    #             vmax=5,
+    #             # ax=ax1
+    #         )
 
+<<<<<<< HEAD
     st.pyplot(fig_clusmap)
+=======
+    # st.pyplot(fig_clusmap)
+>>>>>>> refs/remotes/origin/main
