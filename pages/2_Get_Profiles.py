@@ -99,8 +99,38 @@ if len(df_res) > 0:
         if db_name == "KEGG":
             # sql_query = get_sql_kegg(table_name=table_name, col_name=col_name)
             df_cpds = df_cpds.dropna(subset=["keggid"]).reset_index(drop=True)
-            
+
+
+# get genes are in crispr but not in cpd
+df_prof_crisper =  pd.DataFrame()
+df_prof = pd.DataFrame()
+if str(option) == "gene" and len(df_res) > 0:
+        geneid_lis = [f"'{geneid}'" for geneid in df_res["geneid"]]
+        
+        sql_crisper = f"SELECT gene.symbol, gene.geneid,crisperbatchs.batchid  FROM crisperbatchs  inner join gene \
+            on gene.geneid=crisperbatchs.geneid  WHERE crisperbatchs.geneid IN ({','.join(geneid_lis)})  group by gene.symbol, gene.geneid,crisperbatchs.batchid "
+        df_crisperBatchs = sql_df(
+            sql_crisper, conn).drop_duplicates(subset=["batchid"])
+        batch_list = [f"'{batchid}'" for batchid in df_crisperBatchs["batchid"]]
+        if len(batch_list) > 0:
+            sql_crisper_profile = (
+                f"SELECT * FROM aggcombatprofile WHERE metabatchid IN ({','.join(batch_list)})"
+            )
+
+            df_prof_crisper = sql_df(sql_crisper_profile, conn_profileDB)
+            df_prof_crisper = df_prof_crisper.merge(df_crisperBatchs.add_prefix(
+                'meta'), left_on='metabatchid', right_on='metabatchid').reset_index(drop=True)
+            df_prof_crisper["metatype"] = "CRISPR"
+            df_prof_crisper["metaefficacy"] = "Unknown"
+            df_prof_crisper["metacpdname"]=df_prof_crisper["metabatchid"]
+            df_prof = pd.concat([df_prof, df_prof_crisper])
+            df_prof["metacpdname"] = df_prof["metacpdname"].fillna(
+                        df_prof["metabatchid"])
+    
+
+        
 # get cpd gene/target info-------------------------------------------------------------------------------------------------------------------
+
 if len(df_cpds) > 0:
     list_pubchemid = [f"'{t}'" for t in df_cpds["pubchemid"]]
     list_batchid = [f"'{batch}'" for batch in df_cpds["batchid"]]
@@ -209,33 +239,16 @@ if len(df_cpds) > 0:
                 )
             fig.update_traces(textposition='inside', textinfo='percent+label')
             st.plotly_chart(fig, theme="streamlit", use_container_width=True)  
-    
+    st.session_state["df_cpds"] = df_cpdGene
   
 
     # get profile------------------------------------------------------------------------------------------------------------------
     st.write(f"Profiles in JUMP CP DATA SET")
-    # get crisper profiles when search gene
-    df_prof_crisper = None
-    if str(option) == "gene" and len(df_res) > 0:
-        geneid_lis = [f"'{geneid}'" for geneid in df_res["geneid"]]
-     
-        sql_crisper = f"SELECT gene.symbol, gene.geneid,crisperbatchs.batchid  FROM crisperbatchs  inner join gene \
-            on gene.geneid=crisperbatchs.geneid  WHERE crisperbatchs.geneid IN ({','.join(geneid_lis)})  group by gene.symbol, gene.geneid,crisperbatchs.batchid "
-        df_crisperBatchs = sql_df(
-            sql_crisper, conn).drop_duplicates(subset=["batchid"])
-        batch_list = [f"'{batchid}'" for batchid in df_crisperBatchs["batchid"]]
-        if len(batch_list) > 0:
-            sql_crisper_profile = (
-                f"SELECT * FROM aggcombatprofile WHERE metabatchid IN ({','.join(batch_list)})"
-            )
-
-            df_prof_crisper = sql_df(sql_crisper_profile, conn_profileDB)
-            df_prof_crisper = df_prof_crisper.merge(df_crisperBatchs.add_prefix(
-                'meta'), left_on='metabatchid', right_on='metabatchid').reset_index(drop=True)
+   
       
         
     # get CPD profiles 
-    df_prof = pd.DataFrame()
+    
     list_batchid = [f"'{batch}'" for batch in df_cpds["batchid"]]
     if server_name == "KEGG": ## JUST KEGG
         list_batchid = [f"'{batch}'" for batch in df_cpdGene_tmp["batchid"]]
@@ -258,89 +271,84 @@ if len(df_cpds) > 0:
         df_prof["metacpdname"] = df_prof["metacpdname"].fillna(
             df_prof["metabatchid"])
 
-        tab1, tab2, tab3, tab4 = st.tabs(
-            [
-                "compounds Profiles",
-                "compounds Summary",
-                "Crisper Profiles",
-                "Crisper Summary",
-            ]
-        )
-        tab1.write(df_prof)
-       
-        tab2.write(df_prof.describe().T)
-        if str(option) == "gene":
-            df_prof_crisper["metatype"] = "CRISPR"
-            df_prof_crisper["metaefficacy"] = "Unknown"
-            df_prof = pd.concat([df_prof, df_prof_crisper])
-            df_prof["metacpdname"] = df_prof["metacpdname"].fillna(
-                df_prof["metabatchid"])
-            tab3.write(df_prof_crisper)
-            tab4.write(df_prof_crisper.describe().T)
-            st.session_state["df_crisper"] = df_crisperBatchs
+tab1, tab2, tab3, tab4 = st.tabs(
+    [
+        "compounds Profiles",
+        "compounds Summary",
+        "Crisper Profiles",
+        "Crisper Summary",
+    ]
+)
 
-        # plot------------------------------------------------------------------------------------------------------------------
-        list_sources = df_prof.metasource.unique().tolist()
-        options = st.text_area("Enter sources")
-        var_t = options.split("\n")
-        var_t = [t.strip() for t in var_t]
+if  len(df_prof_crisper)>0:
+    tab3.write(df_prof_crisper)
+    tab4.write(df_prof_crisper.describe().T)
+    st.session_state["df_crisper"] = df_crisperBatchs
+    
+    
+if  len(df_prof)>0:
+    tab1.write(df_prof)
+    tab2.write(df_prof.describe().T)
+    
+    list_sources = df_prof.metasource.unique().tolist()
+    options = st.text_area("Enter sources")
+    var_t = options.split("\n")
+    var_t = [t.strip() for t in var_t]
 
-        if not options:
-            tmp = df_prof.copy()
-        else:
-            tmp = df_prof.loc[df_prof["metasource"].isin(var_t)]
-
-        if len(tmp) > 1:
-            import matplotlib.pyplot as plt
-            import seaborn as sns
-
-            plt_src, col_colors = get_col_colors(tmp)
-
-            fig_clusmap, ax1 = plt.subplots()
-            fig_clusmap = sns.clustermap(
-                plt_src,
-                metric="cosine",
-                col_colors=col_colors,
-                # method="ward",
-                xticklabels=False,
-                yticklabels=True,
-                col_cluster=False,
-                cmap="vlag",
-                center=0,
-                vmin=-5,
-                vmax=5,
-                figsize=(16, len(plt_src) / 2),
-            )
-
-            st.pyplot(fig_clusmap)
-            
-            # tmp = tmp
-            tmp["meta_name_source"] = tmp["metacpdname"] + "_" + tmp["metasource"]
-            cpd_names = tmp.meta_name_source.values
-            df_plt=tmp.drop_duplicates(subset='meta_name_source')
-            df_plt = df_plt.set_index("meta_name_source")
-            
-            df_plt = df_plt.drop('name',axis=1)
-            st.dataframe(df_plt)
-            filter_col = [
-                col for col in df_plt.columns if not col.startswith("meta")]
-            df_plt2 = df_plt[filter_col].T
-            sty = st.radio('Line Style',['linear','spline'])
-            fig_line = px.line(
-                df_plt2, x=filter_col, y=cpd_names, width=1400, height=1000,line_shape=sty, title="Profiles")
-            st.plotly_chart(fig_line, theme="streamlit",
-                            use_container_width=True)
-
-        st.session_state["df_profiles"] = tmp
-        #st.session_state["df_cpds"] = df_cpds
-        st.session_state["df_cpds"] = df_cpdGene
-        
-        # st.session_state["df_efficacy"] = df_efficacy
-        # st.session_state["df_crisper"] = df_prof_crisper
-
-
+    if not options:
+        tmp = df_prof.copy()
     else:
-        st.warning(" No Luck!! ")
+        tmp = df_prof.loc[df_prof["metasource"].isin(var_t)]
 
-    # conn_profileDB.close()
-    # conn.close()
+    if len(tmp) > 1:
+        import matplotlib.pyplot as plt
+        import seaborn as sns
+
+        plt_src, col_colors = get_col_colors(tmp)
+
+        fig_clusmap, ax1 = plt.subplots()
+        fig_clusmap = sns.clustermap(
+            plt_src,
+            metric="cosine",
+            col_colors=col_colors,
+            # method="ward",
+            xticklabels=False,
+            yticklabels=True,
+            col_cluster=False,
+            cmap="vlag",
+            center=0,
+            vmin=-5,
+            vmax=5,
+            figsize=(16, len(plt_src) / 2),
+        )
+
+        st.pyplot(fig_clusmap)
+        
+        # tmp = tmp
+        tmp["meta_name_source"] = tmp["metacpdname"] + "_" + tmp["metasource"]
+        cpd_names = tmp.meta_name_source.values
+        df_plt=tmp.drop_duplicates(subset='meta_name_source')
+        df_plt = df_plt.set_index("meta_name_source")
+        
+        df_plt = df_plt.drop('name',axis=1)
+        st.dataframe(df_plt)
+        filter_col = [
+            col for col in df_plt.columns if not col.startswith("meta")]
+        df_plt2 = df_plt[filter_col].T
+        sty = st.radio('Line Style',['linear','spline'])
+        fig_line = px.line(
+            df_plt2, x=filter_col, y=cpd_names, width=1400, height=1000,line_shape=sty, title="Profiles")
+        st.plotly_chart(fig_line, theme="streamlit",
+                        use_container_width=True)
+
+    st.session_state["df_profiles"] = tmp
+    #st.session_state["df_cpds"] = df_cpds
+    
+
+    # st.session_state["df_efficacy"] = df_efficacy
+    # st.session_state["df_crisper"] = df_prof_crisper
+
+
+
+# conn_profileDB.close()
+# conn.close()
