@@ -44,7 +44,7 @@ else:
         choix = st.selectbox("Select the Profile", cpdnames)
     df_sel = cpd_pro[(cpd_pro["metasource"] == choix_source)
                      & (cpd_pro["metacpdname"] == choix)].head(1)
-    title = f' similar compounds to {choix} in  {choix_source}'
+    title = f' compounds to {choix} in  {choix_source}'
     with mainCols[1]:
         st.write("Selected Profile", df_sel)
 
@@ -147,8 +147,7 @@ else:
                     df_keep_prof_cpd = df_keep_prof_cpd.merge(df_results_cpd.add_prefix(
                         'meta'), left_on='metabatchid', right_on='metabatchid').reset_index(drop=True)
                     
-                    
-                
+
                 st.session_state["df_sim_crisper"] = df_keep_cpd
                
             
@@ -173,7 +172,7 @@ else:
             fig_cols1 = st.columns(2)
             name = choix_source+choix
             with fig_cols1[0]:
-                st.write(f" {title} :  metadata")
+                st.write(f"{rad} {title} :  metadata")
                 st.write(df_keep_cpd)
             
             with fig_cols1[1]:  # Profile
@@ -187,7 +186,7 @@ else:
             fig_cols2 = st.columns(2)
             with fig_cols2[0]:
                 fig = px.pie(df_keep_cpd,  names='symbol',
-                             title=f'   {title} : symbol',
+                             title=f'{rad} {title} : symbol',
                              )
                 fig.update_traces(textposition='inside',
                                   textinfo='percent+label')
@@ -195,7 +194,7 @@ else:
                                 use_container_width=True)
             with fig_cols2[1]:
                 fig = px.pie(df_keep_cpd,  names='efficacy',
-                             title=f'{title} : efficacy',
+                             title=f'{rad} {title} : efficacy',
                              )
                 fig.update_traces(textposition='inside',
                                   textinfo='percent+label')
@@ -215,7 +214,7 @@ else:
                 y="umap2",
                 color="color",
                 color_discrete_sequence=["blue", "red", "green"],
-                title=f"{title} : UMAP ",
+                title=f"{rad} {title}:UMAP ",
                 hover_data=["metabatchid", "metaefficacy",
                             "metageneid", "metakeggid"],
             )
@@ -267,7 +266,7 @@ else:
                 col for col in df_plt.columns if not col.startswith("meta")]
             df_plt = df_plt[filter_col].T
             fig_clusmap = px.line(
-                df_plt, x=filter_col, y=cpd_names, width=1400, height=1000, title=f"{title} : 15 similar compounds")
+                df_plt, x=filter_col, y=cpd_names, width=1400, height=1000, title=f"{rad} {title}:15 similar compounds")
             st.plotly_chart(fig_clusmap, theme="streamlit",
                             use_container_width=True)
 
@@ -329,7 +328,7 @@ else:
                 fig_cols3 = st.columns(2)
                 name = choix_source+choix
                 with fig_cols3[0]:
-                    st.write(f" {title} MetaData NN")
+                    st.write(f"{title} MetaData NN")
                     st.write(knn_sim_df)
                 
                 with fig_cols3[1]:  # Profile
