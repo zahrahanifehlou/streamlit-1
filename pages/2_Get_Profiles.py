@@ -125,7 +125,7 @@ if str(option) == "gene" and len(df_res) > 0:
             df_prof_crisper["metacpdname"]=df_prof_crisper["metabatchid"]
             df_prof = pd.concat([df_prof, df_prof_crisper])
             df_prof["metacpdname"] = df_prof["metacpdname"].fillna(
-                        df_prof["metabatchid"])
+                            df_prof["metabatchid"])
     
 
         
@@ -270,6 +270,10 @@ if len(df_cpds) > 0:
         df_prof["metacpdname"] = df_prof["metacpdname"].str[:30]
         df_prof["metacpdname"] = df_prof["metacpdname"].fillna(
             df_prof["metabatchid"])
+        if len(df_prof_crisper)>0:
+            df_prof = pd.concat([df_prof, df_prof_crisper])
+            df_prof["metacpdname"] = df_prof["metacpdname"].fillna(
+                            df_prof["metabatchid"])
 
 tab1, tab2, tab3, tab4 = st.tabs(
     [
