@@ -97,7 +97,7 @@ else:
                 .reset_index(drop=True)
             )
         
-        st.write("hist_cpd",df_keep_cpd)
+       
                     
         batch_list_cpd = df_keep_cpd["metabatchid"].tolist()
         b_list_cpd = [
@@ -128,14 +128,6 @@ else:
                     df_keep_prof_cpd['metacpdname'] = df_keep_prof_cpd['metacpdname'].str[:30]
                     df_keep_prof_cpd['metacpdname'] = df_keep_prof_cpd['metacpdname'].fillna(
                         df_keep_prof_cpd['metabatchid'])
-
-            fig_clusmap_cpd = px.histogram(df_hist_cpd, x="sim")
-            fig_clusmap_cpd.add_vline(x=thres_cpd)
-
-            st.plotly_chart(fig_clusmap_cpd, theme="streamlit",
-                            use_container_width=True)
-            st.session_state["df_sim_cpd"] = df_results_cpd
-        
             if choix_source == "CRISPER":
                 sql_crisper2 = f"SELECT gene.symbol, gene.geneid,crisperbatchs.batchid  FROM crisperbatchs  inner join gene \
                 on gene.geneid=crisperbatchs.geneid  where crisperbatchs.batchid in ({','.join(b_list_cpd)})  group by gene.symbol, gene.geneid,crisperbatchs.batchid "
@@ -154,6 +146,16 @@ else:
                
                 df_keep_cpd["efficacy"] = None
                 st.session_state["df_sim_crisper"] = df_keep_cpd
+            
+            
+            fig_clusmap_cpd = px.histogram(df_hist_cpd, x="sim")
+            fig_clusmap_cpd.add_vline(x=thres_cpd)
+
+            st.plotly_chart(fig_clusmap_cpd, theme="streamlit",
+                            use_container_width=True)
+            st.session_state["df_sim_cpd"] = df_results_cpd
+        
+            
 
         if len(df_keep_cpd) > 0:
             st.write("\n")
