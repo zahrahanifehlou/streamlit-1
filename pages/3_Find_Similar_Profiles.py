@@ -97,7 +97,7 @@ else:
                 .reset_index(drop=True)
             )
         
-       
+        st.write('df_keep',df_keep_cpd)
                     
         batch_list_cpd = df_keep_cpd["metabatchid"].tolist()
         b_list_cpd = [
