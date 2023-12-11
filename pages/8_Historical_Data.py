@@ -11,6 +11,9 @@ from pygwalker.api.streamlit import init_streamlit_comm, get_streamlit_html
 from os import listdir
 from pathlib import Path
 import os
+from sklearn.feature_selection import VarianceThreshold
+from sklearn.preprocessing import MinMaxScaler
+import numpy as np
 
 
 st.set_page_config(
@@ -119,6 +122,43 @@ if on:
             df_data =  pd.concat(list_df)
             df_data=df_data.apply(pd.to_numeric,errors='ignore')
             components.html(get_pyg_html(df_data), height=1000, scrolling=True)
+            umap_on=st.sidebar.toggle('UMAP')
+            if umap_on:
+                
+                df_data.replace([np.inf, -np.inf], np.nan, inplace=True)
+                df_data.dropna(inplace=True, axis=1)
+                df_data.dropna(inplace=True)
+                # st.write('Data after removing Nan',data.head(2))
+                if len(df_data) > 2:
+                    selector = VarianceThreshold()
+                    numerics = ["int16", "int32", "int64", "float16", "float32", "float64"]
+                    df_num = df_data.select_dtypes(include=numerics)
+                    num_col = [x for x in df_num.columns if "Meta" not in x and "meta" not in x]
+                    df_num = df_num[num_col]
+                    dat_sel = selector.fit_transform(df_num)
+                    col_sel = selector.get_feature_names_out()
+                    data1 = pd.DataFrame(dat_sel, columns=col_sel).reset_index(drop=True)
+                    # st.write('Data after removing Meta, Var=0',data1.head(2))
+                    cols_alpha = df_data.select_dtypes(exclude=numerics).columns
+                    data = pd.concat([data1, df_data[cols_alpha].reset_index(drop=True)], axis=1)
+                    scaler = MinMaxScaler()
+                    col_sel = data.select_dtypes(include=numerics).columns.to_list()
+                    data_scaled = pd.DataFrame(
+                        scaler.fit_transform(data.select_dtypes(include=numerics)),
+                        columns=col_sel,
+                    )
+                    data_scaled = pd.concat([data_scaled, data[cols_alpha].reset_index(drop=True)], axis=1)
+                    import umap
+
+            #
+                    model = umap.UMAP(random_state=42, verbose=False).fit(data_scaled[col_sel])
+                    emb = model.transform(data_scaled[col_sel])
+                    # st.write('UMAP VISU')
+                    df_all_umap = pd.DataFrame()
+                    df_all_umap["X_umap"] = emb[:, 0]
+                    df_all_umap["Y_umap"] = emb[:, 1]
+                    df_all_umap = pd.concat([df_all_umap, data[cols_alpha].reset_index(drop=True)], axis=1)
+                    components.html(get_pyg_html(df_all_umap), height=1000, scrolling=True)
 # df=pivot_df.sample(100)
 # tab1,tab2=st.tabs([f"Profiles in {sel_proj}", f"Summary in {sel_proj}"])
 # 
