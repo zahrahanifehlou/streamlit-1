@@ -8,6 +8,10 @@ import streamlit as st
 import polars as pl
 import streamlit.components.v1 as components
 from pygwalker.api.streamlit import init_streamlit_comm, get_streamlit_html
+from os import listdir
+from pathlib import Path
+import os
+
 
 st.set_page_config(
     layout="wide",
@@ -90,6 +94,31 @@ def get_data_once(sel_projet):
 
 pivot_df=get_data_once(sel_proj)
 pivot_df=pivot_df.apply(pd.to_numeric, errors='ignore')
+components.html(get_pyg_html(pivot_df), height=1000, scrolling=True)
+
+on = st.sidebar.toggle('Search Data')
+if on:
+    list_proj=os.listdir('/mnt/shares/L/Projects/')
+    proj= st.selectbox('Choose your project',list_proj)
+    
+    paths = sorted(Path(f'/mnt/shares/L/Projects/{proj}/Checkout_Results/').iterdir(), key=os.path.getmtime, reverse=True)
+    
+    uploaded_files = st.multiselect("Choose result directories corresponding to this assay", paths)
+    list_df=[]
+    if uploaded_files:
+        for item in uploaded_files:
+            fth_file=[f for f in listdir(item) if f.startswith('ag')]
+            if len(fth_file)>0:
+                for fi in fth_file:
+                    # st.write(item.as_posix())
+                    if fi.endswith('.fth'):
+                        list_df.append(pd.read_feather(item.as_posix()+'/'+fi))
+                    else:
+                        list_df.append(pd.read_csv(item.as_posix()+'/'+fi))
+        if len(list_df)>0:
+            df_data =  pd.concat(list_df)
+            df_data=df_data.apply(pd.to_numeric,errors='ignore')
+            components.html(get_pyg_html(df_data), height=1000, scrolling=True)
 # df=pivot_df.sample(100)
 # tab1,tab2=st.tabs([f"Profiles in {sel_proj}", f"Summary in {sel_proj}"])
 # 
@@ -154,7 +183,7 @@ pivot_df=pivot_df.apply(pd.to_numeric, errors='ignore')
 # tab4.dataframe(df_res.describe())
 # # ,column_config={sel_col:st.column_config.BarChartColumn("PlotSel",y_min=val_data_min,y_max=val_data_max),}
 # df_res2=df_res.reset_index()
-components.html(get_pyg_html(pivot_df), height=1000, scrolling=True)
+
 # on_export = st.sidebar.toggle('export data as df_cpds')
 # if on_export:
 #     df_state=df_agg.reset_index()
