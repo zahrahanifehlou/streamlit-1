@@ -30,7 +30,7 @@ with tab1:
         
 with tab2:
     st.image("profile_db.png")
-    st.write("for profiles")
+ 
     st.write("Example for projects:  SELECT * from projectsprofile where project='PD'")
     st.write("Example for jump and crispr:  SELECT * from aggcombatprofile where metasource='CRISPER'")
     sql_line = st.text_area("Enter your search",help="select * from aggcombatprofile")
