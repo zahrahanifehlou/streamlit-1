@@ -128,7 +128,7 @@ if on:
                 df_data.replace([np.inf, -np.inf], np.nan, inplace=True)
                 df_data.dropna(inplace=True, axis=1)
                 df_data.dropna(inplace=True)
-                # st.write('Data after removing Nan',data.head(2))
+                st.write('Data after removing Nan',df_data.head(2))
                 if len(df_data) > 2:
                     selector = VarianceThreshold()
                     numerics = ["int16", "int32", "int64", "float16", "float32", "float64"]
