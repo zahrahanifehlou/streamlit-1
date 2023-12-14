@@ -105,8 +105,9 @@ if on:
     proj= st.selectbox('Choose your project',list_proj)
     
     paths = sorted(Path(f'/mnt/shares/L/Projects/{proj}/Checkout_Results/').iterdir(), key=os.path.getmtime, reverse=True)
-    
-    uploaded_files = st.multiselect("Choose result directories corresponding to this assay", paths)
+    # st.write(paths)
+    paths_clean=[f for f in paths if 'test' not in str(f)]
+    uploaded_files = st.multiselect("Choose result directories corresponding to this assay", paths_clean)
     list_df=[]
     if uploaded_files:
         for item in uploaded_files:
@@ -128,7 +129,7 @@ if on:
                 df_data.replace([np.inf, -np.inf], np.nan, inplace=True)
                 df_data.dropna(inplace=True, axis=1)
                 df_data.dropna(inplace=True)
-                st.write('Data after removing Nan',df_data.head(2))
+                # st.write('Data after removing Nan',df_data.head(2))
                 if len(df_data) > 2:
                     selector = VarianceThreshold()
                     numerics = ["int16", "int32", "int64", "float16", "float32", "float64"]
