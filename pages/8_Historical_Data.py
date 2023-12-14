@@ -119,6 +119,8 @@ if on:
                         list_df.append(pd.read_feather(item.as_posix()+'/'+fi))
                     else:
                         list_df.append(pd.read_csv(item.as_posix()+'/'+fi))
+            else:
+                st.warning('No data started with ag in this directory',icon="🚨" )
         if len(list_df)>0:
             df_data =  pd.concat(list_df)
             df_data=df_data.apply(pd.to_numeric,errors='ignore')
