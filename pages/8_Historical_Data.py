@@ -118,7 +118,8 @@ if on:
                     if fi.endswith('.fth'):
                         list_df.append(pd.read_feather(item.as_posix()+'/'+fi))
                     else:
-                        list_df.append(pd.read_csv(item.as_posix()+'/'+fi))
+                        # st.write(item.as_posix()+'/'+fi)
+                        list_df.append(pd.read_csv(item.as_posix()+'/'+fi, encoding='latin1'))
             else:
                 st.warning('No data started with ag in this directory',icon="🚨" )
         if len(list_df)>0:
