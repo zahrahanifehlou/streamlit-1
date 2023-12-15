@@ -66,128 +66,46 @@ list_df = load_files(uploaded_files)
 if len(list_df) > 0:
     data = filter_data(list_df)
     if "tags" in data.columns.tolist():
-        new=data['tags'].str.split(";",n=1,expand=True)
-        # st.write(len(new.columns))
+        new=data['tags'].str.split(";",n=1,expand=True)        
         for i in range(len(new.columns)):
             str_tag='tag'+'_'+str(i)
             data[str_tag]=new[i]
-    # pivot_df=pivot_df.apply(pd.to_numeric, errors='ignore')
+    
     components.html(get_pyg_html(data), height=1000, scrolling=True)
     if "tags" in data.columns.tolist():
         g = st.radio("MinMax", ["yes", "no"])
         col_sel = data.select_dtypes(include=numerics).columns.to_list()
-        if g == "no":
-            desc = st.multiselect("Select some descriptors", col_sel)
-            # st.write(desc)
-            fig1 = px.box(data, x="tags", y=desc, notched=True)
-            st.plotly_chart(fig1, theme="streamlit", use_container_width=False)
-
-            col1, col2 = st.columns(2)
-            desc1 = col1.multiselect("Select descriptors", col_sel)
-            # desc2 = col2.selectbox("Select descriptor 2", df_num.columns)
-            if len(desc1) < 2:
-                st.write("Please select 2 descriptors")
-            if len(desc1) == 2:
-                fig2 = px.scatter(
-                    data,
-                    x=desc1[0],
-                    y=desc1[1],
-                    hover_data=["Plate", "Well"],
-                    color="tags",
-                    title="Raw Scatter",
-                )
-                st.plotly_chart(fig2, theme="streamlit", use_container_width=False)
-
-        scaler = MinMaxScaler()
-        data_scaled = pd.DataFrame(
-            scaler.fit_transform(data.select_dtypes(include=numerics)), columns=col_sel
-        )
-
-        data_scaled["tags"] = data["tags"]
-        df_agg = data_scaled.groupby("tags").median().reset_index()
-        st.write(df_agg)
-        cpd_names = df_agg.tags.values
-        df_plt = df_agg.set_index("tags")
-        df_plt = df_plt[col_sel].T
-        fig3 = px.line(
-            df_plt,
-            x=col_sel,
-            y=cpd_names,
-            width=800,
-            height=800,
-            title="MinMax profiles",
-        )
-        st.plotly_chart(fig3, theme="streamlit", use_container_width=False)
-
         if g == "yes":
             scaler = MinMaxScaler()
             col_sel = data.select_dtypes(include=numerics).columns.to_list()
+            cols_alpha = data.select_dtypes(exclude=numerics).columns
             data_scaled = pd.DataFrame(
                 scaler.fit_transform(data.select_dtypes(include=numerics)),
                 columns=col_sel,
             )
 
-            data_scaled["tags"] = data["tags"]
-            desc = st.multiselect("Select some descriptors", col_sel)
-            fig1 = px.box(data_scaled, x="tags", y=desc, notched=True)
-            st.plotly_chart(fig1, theme="streamlit", use_container_width=False)
 
-            col1, col2 = st.columns(2)
-            desc1 = col1.multiselect("Select descriptors", col_sel)
-            # desc2 = col2.selectbox("Select descriptor 2", df_num.columns)
-            if len(desc1) < 2:
-                st.write("Please select 2 descriptors")
-            if len(desc1) == 2:
-                fig2 = px.scatter(
-                    data_scaled,
-                    x=desc1[0],
-                    y=desc1[1],
-                    color="tags",
-                    title="MinMax Scatter",
-                )
-                st.plotly_chart(fig2, theme="streamlit", use_container_width=False)
             import umap
 
             #
             model = umap.UMAP(random_state=42, verbose=False).fit(data_scaled[col_sel])
             emb = model.transform(data_scaled[col_sel])
-
+            
             df_all_umap = pd.DataFrame()
             df_all_umap["X_umap"] = emb[:, 0]
             df_all_umap["Y_umap"] = emb[:, 1]
-            df_all_umap["tags"] = data_scaled["tags"]
+            df_all_umap[cols_alpha] = data[cols_alpha]
+            df_all_umap[col_sel] = data_scaled[col_sel]
 
-            fig3 = px.scatter(
-                df_all_umap,
-                x="X_umap",
-                y="Y_umap",
-                title="umap",
-                hover_data=["tags"],
-                color="tags",
-            )
-            st.plotly_chart(fig3, theme="streamlit", use_container_width=False)  #
+            components.html(get_pyg_html(df_all_umap), height=1000, scrolling=True)
+
     else:
         st.warning("No column tags in your dataset")
         g = st.radio("MinMax", ["yes", "no"])
         if g == "no":
             col_sel = data.select_dtypes(include=numerics).columns.to_list()
-            desc = st.selectbox("Select descriptor", col_sel)
-            fig1 = px.box(data, y=desc, notched=True)
-            st.plotly_chart(fig1, theme="streamlit", use_container_width=False)
+            components.html(get_pyg_html(data), height=1000, scrolling=True)
 
-            col1, col2 = st.columns(2)
-            desc1 = col1.multiselect("Select descriptors", col_sel)
-            # desc2 = col2.selectbox("Select descriptor 2", df_num.columns)
-            if len(desc1) < 2:
-                st.write("Please select 2 descriptors")
-            if len(desc1) == 2:
-                fig2 = px.scatter(
-                    data,
-                    x=desc1[0],
-                    y=desc1[1],
-                    title="Raw Scatter",
-                )
-                st.plotly_chart(fig2, theme="streamlit", use_container_width=False)
 
         if g == "yes":
             col_sel = data.select_dtypes(include=numerics).columns.to_list()
@@ -197,34 +115,15 @@ if len(list_df) > 0:
                 columns=col_sel,
             )
 
-            desc = st.selectbox("Select descriptor", col_sel)
-            fig1 = px.box(data_scaled, y=desc, notched=True)
-            st.plotly_chart(fig1, theme="streamlit", use_container_width=False)
-
-            col1, col2 = st.columns(2)
-            desc1 = col1.multiselect("Select descriptors", col_sel)
-            # desc2 = col2.selectbox("Select descriptor 2", df_num.columns)
-            if len(desc1) < 2:
-                st.write("Please select 2 descriptors")
-            if len(desc1) == 2:
-                fig2 = px.scatter(
-                    data_scaled,
-                    x=desc1[0],
-                    y=desc1[1],
-                    title="MinMax Scatter",
-                )
-                st.plotly_chart(fig2, theme="streamlit", use_container_width=False)
             import umap
 
             model = umap.UMAP(random_state=42, verbose=False).fit(data_scaled[col_sel])
             emb = model.transform(data_scaled[col_sel])
             cols_alpha = data.select_dtypes(exclude=numerics).columns
             df_all_umap = pd.DataFrame()
-            df_all_umap = data[cols_alpha]
+            df_all_umap[cols_alpha] = data[cols_alpha]
+            df_all_umap[col_sel] = data_scaled[col_sel]
             df_all_umap["X_umap"] = emb[:, 0]
             df_all_umap["Y_umap"] = emb[:, 1]
+            components.html(get_pyg_html(df_all_umap), height=1000, scrolling=True)
 
-            fig3 = px.scatter(
-                df_all_umap, x="X_umap", y="Y_umap", title="umap", hover_data=cols_alpha
-            )
-            st.plotly_chart(fig3, theme="streamlit", use_container_width=False)
