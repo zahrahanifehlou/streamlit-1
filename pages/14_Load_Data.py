@@ -83,7 +83,22 @@ if len(list_df) > 0:
                 scaler.fit_transform(data.select_dtypes(include=numerics)),
                 columns=col_sel,
             )
-
+            data_scaled["tags"] = data["tags"]
+            df_agg = data_scaled.groupby("tags").median().reset_index()
+            st.write(df_agg)
+            cpd_names = df_agg.tags.values
+            df_plt = df_agg.set_index("tags")
+            df_plt = df_plt[col_sel].T
+            fig3 = px.line(
+                df_plt,
+                x=col_sel,
+                y=cpd_names,
+                width=800,
+                height=800,
+                title="MinMax profiles",
+            )
+            st.plotly_chart(fig3, theme="streamlit", use_container_width=True)
+            # components.html(get_pyg_html(df_plt), height=1000, scrolling=True)
 
             import umap
 
