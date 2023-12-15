@@ -4,6 +4,8 @@ import plotly.express as px
 import streamlit as st
 from sklearn.feature_selection import VarianceThreshold
 from sklearn.preprocessing import MinMaxScaler
+from pygwalker.api.streamlit import init_streamlit_comm, get_streamlit_html
+import streamlit.components.v1 as components
 
 st.header("Get a quick overview of your dataset", divider="rainbow")
 
@@ -13,7 +15,12 @@ numerics = ["int16", "int32", "int64", "float16", "float32", "float64"]
 
 # test
 #
-
+@st.cache_resource
+def get_pyg_html(df: pd.DataFrame) -> str:
+    # When you need to publish your application, you need set `debug=False`,prevent other users to write your config file.
+    # If you want to use feature of saving chart config, set `debug=True`
+    html = get_streamlit_html(df,spec="./chart_meta_0.json", themeKey='vega',use_kernel_calc=True, debug=False)
+    return html
 
 def load_files(uploaded_files):
     # st.write(uploaded_file)
@@ -58,6 +65,8 @@ list_df = load_files(uploaded_files)
 
 if len(list_df) > 0:
     data = filter_data(list_df)
+    # pivot_df=pivot_df.apply(pd.to_numeric, errors='ignore')
+    components.html(get_pyg_html(data), height=1000, scrolling=True)
     if "tags" in data.columns.tolist():
         g = st.radio("MinMax", ["yes", "no"])
         col_sel = data.select_dtypes(include=numerics).columns.to_list()
