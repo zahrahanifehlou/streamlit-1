@@ -65,6 +65,12 @@ list_df = load_files(uploaded_files)
 
 if len(list_df) > 0:
     data = filter_data(list_df)
+    if "tags" in data.columns.tolist():
+        new=data['tags'].str.split(";",n=1,expand=True)
+        # st.write(len(new.columns))
+        for i in range(len(new.columns)):
+            str_tag='tag'+'_'+str(i)
+            data[str_tag]=new[i]
     # pivot_df=pivot_df.apply(pd.to_numeric, errors='ignore')
     components.html(get_pyg_html(data), height=1000, scrolling=True)
     if "tags" in data.columns.tolist():
