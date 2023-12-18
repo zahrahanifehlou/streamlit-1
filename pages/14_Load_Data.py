@@ -77,7 +77,39 @@ if len(list_df) > 0:
     components.html(get_pyg_html(data), height=1000, scrolling=True)
     # if "tags" in data.columns.tolist():
         # data['tags']=data['Well']
-    g = st.radio("MinMax", ["yes", "no"])
+    col1,col2=st.columns(2)
+    t= col1.radio("Time Series", ["yes","no"],1)
+    col_sel = data.select_dtypes(include=numerics).columns.to_list()
+    if t=="yes":
+        st.warning("In dev....")
+        df_agg=data[col_sel]
+        df_agg[col_sel] = (-df_agg[col_sel]).add(df_agg[col_sel].min(axis=1), axis = 0).add(df_agg[col_sel].max(axis=1), axis = 0)
+        # df_agg.drop('tags',axis=1,inplace=True)
+        time_cols = sorted([col for col in df_agg.columns if 'time' in col],key=lambda x: int(x.split("_")[-1]))
+
+        df_agg['tags']=data['tags']
+        # col_sel = df_agg.select_dtypes(include=numerics).columns.to_list()
+        title='Temporal Profiles'
+        
+        # st.write(df_agg[df_agg.tags=='DP-exp4-plate5-cal-40x-BG_F07'])
+        cpd_names = df_agg.tags.values
+        df_plt = df_agg.set_index("tags")
+        df_plt = df_plt[time_cols].T
+        fig3 = px.line(
+            df_plt,
+            x=time_cols,
+            y=cpd_names,
+            width=800,
+            height=800,
+            title=title,
+            # line_shape='hv'
+            
+        )
+        st.plotly_chart(fig3, theme="streamlit", use_container_width=True)
+        # st.write(df_plt)
+        N=len(df_agg.columns)-1
+        
+    g = col2.radio("MinMax", ["yes", "no"])
     col_sel = data.select_dtypes(include=numerics).columns.to_list()
     if g == "yes":
         scaler = MinMaxScaler()
@@ -89,27 +121,30 @@ if len(list_df) > 0:
         )
         data_scaled["tags"] = data["tags"]
         df_agg = data_scaled.groupby("tags").median().reset_index()
-        t= st.radio("Time Series", ["yes","no"],1)
-        if t=="yes":
-            st.warning("In dev....")
-            df_agg.drop('tags',axis=1,inplace=True)
-            df_agg.columns = sorted([col for col in df_agg.columns if 'time' in col],key=lambda x: int(x.split("_")[-1]))
-            df_agg['tags']=data['tags']
-            col_sel = df_agg.select_dtypes(include=numerics).columns.to_list()
+        # t= st.radio("Time Series", ["yes","no"],1)
+        title="MinMax profiles"
+        # if t=="yes":
+        #     st.warning("In dev....")
+        #     df_agg=data[col_sel]
+        #     # df_agg.drop('tags',axis=1,inplace=True)
+        #     df_agg.columns = sorted([col for col in df_agg.columns if 'time' in col],key=lambda x: int(x.split("_")[-1]))
+        #     df_agg['tags']=data['tags']
+        #     col_sel = df_agg.select_dtypes(include=numerics).columns.to_list()
+        #     title='Temporal Profiles'
             
         st.write(df_agg)
         cpd_names = df_agg.tags.values
         df_plt = df_agg.set_index("tags")
         df_plt = df_plt[col_sel].T
-        fig3 = px.line(
+        fig4 = px.line(
             df_plt,
             x=col_sel,
             y=cpd_names,
             width=800,
             height=800,
-            title="MinMax profiles",
+            title=title,
         )
-        st.plotly_chart(fig3, theme="streamlit", use_container_width=True)
+        st.plotly_chart(fig4, theme="streamlit", use_container_width=True)
         # components.html(get_pyg_html(df_plt), height=1000, scrolling=True)
 
 
