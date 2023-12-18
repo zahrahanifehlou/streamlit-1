@@ -127,7 +127,7 @@ if len(list_df) > 0:
         df_fft['xf']=xf
         df_fft['yf']=2.0/N * np.abs(yf[:N//2])
         components.html(get_pyg_html(df_fft), height=1000, scrolling=True)
-        st.write('df_fft',df_fft)
+        # st.write('df_fft',df_fft)
         # fig_fft = px.scatter(df_fft,xf,yf)
         # st.plotly_chart(fig_fft, theme="streamlit", use_container_width=True)
 
