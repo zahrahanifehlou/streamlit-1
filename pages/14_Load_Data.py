@@ -75,84 +75,59 @@ if len(list_df) > 0:
         data['tags']=data['Plate']+'_'+data['Well']
     # st.write("Tags", data.tags)
     components.html(get_pyg_html(data), height=1000, scrolling=True)
-    if "tags" in data.columns.tolist():
+    # if "tags" in data.columns.tolist():
         # data['tags']=data['Well']
-        g = st.radio("MinMax", ["yes", "no"])
+    g = st.radio("MinMax", ["yes", "no"])
+    col_sel = data.select_dtypes(include=numerics).columns.to_list()
+    if g == "yes":
+        scaler = MinMaxScaler()
         col_sel = data.select_dtypes(include=numerics).columns.to_list()
-        if g == "yes":
-            scaler = MinMaxScaler()
-            col_sel = data.select_dtypes(include=numerics).columns.to_list()
-            cols_alpha = data.select_dtypes(exclude=numerics).columns
-            data_scaled = pd.DataFrame(
-                scaler.fit_transform(data.select_dtypes(include=numerics)),
-                columns=col_sel,
-            )
-            data_scaled["tags"] = data["tags"]
-            df_agg = data_scaled.groupby("tags").median().reset_index()
-            t= st.radio("Time Series", ["yes","no"],1)
-            if t=="yes":
-                st.warning("In dev....")
-                df_agg.drop('tags',axis=1,inplace=True)
-                df_agg.columns = sorted([col for col in df_agg.columns if 'time' in col],key=lambda x: int(x.split("_")[-1]))
-                df_agg['tags']=data['tags']
-                col_sel = df_agg.select_dtypes(include=numerics).columns.to_list()
-                
-            st.write(df_agg)
-            cpd_names = df_agg.tags.values
-            df_plt = df_agg.set_index("tags")
-            df_plt = df_plt[col_sel].T
-            fig3 = px.line(
-                df_plt,
-                x=col_sel,
-                y=cpd_names,
-                width=800,
-                height=800,
-                title="MinMax profiles",
-            )
-            st.plotly_chart(fig3, theme="streamlit", use_container_width=True)
-            # components.html(get_pyg_html(df_plt), height=1000, scrolling=True)
-
-
-
-            import umap
-
-            #
-            model = umap.UMAP(random_state=42, verbose=False).fit(data_scaled[col_sel])
-            emb = model.transform(data_scaled[col_sel])
+        cols_alpha = data.select_dtypes(exclude=numerics).columns
+        data_scaled = pd.DataFrame(
+            scaler.fit_transform(data.select_dtypes(include=numerics)),
+            columns=col_sel,
+        )
+        data_scaled["tags"] = data["tags"]
+        df_agg = data_scaled.groupby("tags").median().reset_index()
+        t= st.radio("Time Series", ["yes","no"],1)
+        if t=="yes":
+            st.warning("In dev....")
+            df_agg.drop('tags',axis=1,inplace=True)
+            df_agg.columns = sorted([col for col in df_agg.columns if 'time' in col],key=lambda x: int(x.split("_")[-1]))
+            df_agg['tags']=data['tags']
+            col_sel = df_agg.select_dtypes(include=numerics).columns.to_list()
             
-            df_all_umap = pd.DataFrame()
-            df_all_umap["X_umap"] = emb[:, 0]
-            df_all_umap["Y_umap"] = emb[:, 1]
-            df_all_umap[cols_alpha] = data[cols_alpha]
-            df_all_umap[col_sel] = data_scaled[col_sel]
+        st.write(df_agg)
+        cpd_names = df_agg.tags.values
+        df_plt = df_agg.set_index("tags")
+        df_plt = df_plt[col_sel].T
+        fig3 = px.line(
+            df_plt,
+            x=col_sel,
+            y=cpd_names,
+            width=800,
+            height=800,
+            title="MinMax profiles",
+        )
+        st.plotly_chart(fig3, theme="streamlit", use_container_width=True)
+        # components.html(get_pyg_html(df_plt), height=1000, scrolling=True)
 
-            components.html(get_pyg_html(df_all_umap), height=1000, scrolling=True)
-
-    # else:
-    #     st.warning("No column tags in your dataset")
-    #     g = st.radio("MinMax", ["yes", "no"])
-    #     if g == "no":
-    #         col_sel = data.select_dtypes(include=numerics).columns.to_list()
-    #         components.html(get_pyg_html(data), height=1000, scrolling=True)
 
 
-    #     if g == "yes":
-    #         col_sel = data.select_dtypes(include=numerics).columns.to_list()
-    #         scaler = MinMaxScaler()
-    #         data_scaled = pd.DataFrame(
-    #             scaler.fit_transform(data.select_dtypes(include=numerics)),
-    #             columns=col_sel,
-    #         )
+        import umap
 
-    #         import umap
+        #
+        model = umap.UMAP(random_state=42, verbose=False).fit(data_scaled[col_sel])
+        emb = model.transform(data_scaled[col_sel])
+        
+        df_all_umap = pd.DataFrame()
+        df_all_umap["X_umap"] = emb[:, 0]
+        df_all_umap["Y_umap"] = emb[:, 1]
+        df_all_umap[cols_alpha] = data[cols_alpha]
+        df_all_umap[col_sel] = data_scaled[col_sel]
 
-    #         model = umap.UMAP(random_state=42, verbose=False).fit(data_scaled[col_sel])
-    #         emb = model.transform(data_scaled[col_sel])
-    #         cols_alpha = data.select_dtypes(exclude=numerics).columns
-    #         df_all_umap = pd.DataFrame()
-    #         df_all_umap[cols_alpha] = data[cols_alpha]
-    #         df_all_umap[col_sel] = data_scaled[col_sel]
-    #         df_all_umap["X_umap"] = emb[:, 0]
-    #         df_all_umap["Y_umap"] = emb[:, 1]
-    #         components.html(get_pyg_html(df_all_umap), height=1000, scrolling=True)
+        components.html(get_pyg_html(df_all_umap), height=1000, scrolling=True)
+
+
+
 
