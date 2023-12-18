@@ -37,7 +37,7 @@ def load_files(uploaded_files):
 def filter_data(list_dfs):
     data = pd.concat(list_dfs)
     st.write("Raw Data", data.head(2))
-    data.replace([np.inf, -np.inf], np.nan, inplace=True)
+    data.replace([np.inf, -np.inf,''], np.nan, inplace=True)
     data.dropna(inplace=True, axis=1)
     data.dropna(inplace=True)
     # st.write('Data after removing Nan',data.head(2))
@@ -53,7 +53,7 @@ def filter_data(list_dfs):
         # st.write('Data after removing Meta, Var=0',data1.head(2))
         cols_alpha = data.select_dtypes(exclude=numerics).columns
         data = pd.concat([data1, data[cols_alpha].reset_index(drop=True)], axis=1)
-
+        data=data.dropna(axis=1)
         tab1, tab2, tab3 = st.tabs(["Dataframe", "Samples", "Summary"])
         tab1.write(data.head(2))
         tab2.write(data.sample(5))
@@ -70,9 +70,13 @@ if len(list_df) > 0:
         for i in range(len(new.columns)):
             str_tag='tag'+'_'+str(i)
             data[str_tag]=new[i]
-    
+    else:
+        st.warning("No column tags in your dataset or empty tags, taking Plate+Well as tags")
+        data['tags']=data['Plate']+'_'+data['Well']
+    # st.write("Tags", data.tags)
     components.html(get_pyg_html(data), height=1000, scrolling=True)
     if "tags" in data.columns.tolist():
+        # data['tags']=data['Well']
         g = st.radio("MinMax", ["yes", "no"])
         col_sel = data.select_dtypes(include=numerics).columns.to_list()
         if g == "yes":
@@ -85,6 +89,14 @@ if len(list_df) > 0:
             )
             data_scaled["tags"] = data["tags"]
             df_agg = data_scaled.groupby("tags").median().reset_index()
+            t= st.radio("Time Series", ["yes","no"],1)
+            if t=="yes":
+                st.warning("In dev....")
+                df_agg.drop('tags',axis=1,inplace=True)
+                df_agg.columns = sorted([col for col in df_agg.columns if 'time' in col],key=lambda x: int(x.split("_")[-1]))
+                df_agg['tags']=data['tags']
+                col_sel = df_agg.select_dtypes(include=numerics).columns.to_list()
+                
             st.write(df_agg)
             cpd_names = df_agg.tags.values
             df_plt = df_agg.set_index("tags")
@@ -100,6 +112,8 @@ if len(list_df) > 0:
             st.plotly_chart(fig3, theme="streamlit", use_container_width=True)
             # components.html(get_pyg_html(df_plt), height=1000, scrolling=True)
 
+
+
             import umap
 
             #
@@ -114,31 +128,31 @@ if len(list_df) > 0:
 
             components.html(get_pyg_html(df_all_umap), height=1000, scrolling=True)
 
-    else:
-        st.warning("No column tags in your dataset")
-        g = st.radio("MinMax", ["yes", "no"])
-        if g == "no":
-            col_sel = data.select_dtypes(include=numerics).columns.to_list()
-            components.html(get_pyg_html(data), height=1000, scrolling=True)
+    # else:
+    #     st.warning("No column tags in your dataset")
+    #     g = st.radio("MinMax", ["yes", "no"])
+    #     if g == "no":
+    #         col_sel = data.select_dtypes(include=numerics).columns.to_list()
+    #         components.html(get_pyg_html(data), height=1000, scrolling=True)
 
 
-        if g == "yes":
-            col_sel = data.select_dtypes(include=numerics).columns.to_list()
-            scaler = MinMaxScaler()
-            data_scaled = pd.DataFrame(
-                scaler.fit_transform(data.select_dtypes(include=numerics)),
-                columns=col_sel,
-            )
+    #     if g == "yes":
+    #         col_sel = data.select_dtypes(include=numerics).columns.to_list()
+    #         scaler = MinMaxScaler()
+    #         data_scaled = pd.DataFrame(
+    #             scaler.fit_transform(data.select_dtypes(include=numerics)),
+    #             columns=col_sel,
+    #         )
 
-            import umap
+    #         import umap
 
-            model = umap.UMAP(random_state=42, verbose=False).fit(data_scaled[col_sel])
-            emb = model.transform(data_scaled[col_sel])
-            cols_alpha = data.select_dtypes(exclude=numerics).columns
-            df_all_umap = pd.DataFrame()
-            df_all_umap[cols_alpha] = data[cols_alpha]
-            df_all_umap[col_sel] = data_scaled[col_sel]
-            df_all_umap["X_umap"] = emb[:, 0]
-            df_all_umap["Y_umap"] = emb[:, 1]
-            components.html(get_pyg_html(df_all_umap), height=1000, scrolling=True)
+    #         model = umap.UMAP(random_state=42, verbose=False).fit(data_scaled[col_sel])
+    #         emb = model.transform(data_scaled[col_sel])
+    #         cols_alpha = data.select_dtypes(exclude=numerics).columns
+    #         df_all_umap = pd.DataFrame()
+    #         df_all_umap[cols_alpha] = data[cols_alpha]
+    #         df_all_umap[col_sel] = data_scaled[col_sel]
+    #         df_all_umap["X_umap"] = emb[:, 0]
+    #         df_all_umap["Y_umap"] = emb[:, 1]
+    #         components.html(get_pyg_html(df_all_umap), height=1000, scrolling=True)
 
