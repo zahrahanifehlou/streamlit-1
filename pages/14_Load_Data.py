@@ -87,7 +87,7 @@ if len(list_df) > 0:
         # df_agg.drop('tags',axis=1,inplace=True)
         time_cols = sorted([col for col in df_agg.columns if 'time' in col],key=lambda x: int(x.split("_")[-1]))
 
-        df_agg['tags']=data['tags']
+        df_agg['tags']=data['tags']+'_'+data['Well']+'_'+data['Plate']
         # col_sel = df_agg.select_dtypes(include=numerics).columns.to_list()
         title='Temporal Profiles'
         
