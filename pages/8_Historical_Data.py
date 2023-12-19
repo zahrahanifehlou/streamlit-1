@@ -14,7 +14,10 @@ import os
 from sklearn.feature_selection import VarianceThreshold
 from sklearn.preprocessing import MinMaxScaler
 import numpy as np
-
+from pqdm.processes import pqdm
+import glob
+import tarfile
+import io
 
 st.set_page_config(
     layout="wide",
@@ -100,13 +103,14 @@ pivot_df=pivot_df.apply(pd.to_numeric, errors='ignore')
 components.html(get_pyg_html(pivot_df), height=1000, scrolling=True)
 
 on = st.sidebar.toggle('Search Data')
-if on:
+dl = st.sidebar.toggle('Deep Learning or cell by cell data')
+if on and not dl:
     list_proj=os.listdir('/mnt/shares/L/Projects/')
     proj= st.selectbox('Choose your project',list_proj)
     
     paths = sorted(Path(f'/mnt/shares/L/Projects/{proj}/Checkout_Results/').iterdir(), key=os.path.getmtime, reverse=True)
     # st.write(paths)
-    paths_clean=[f for f in paths if 'test' not in str(f)]
+    paths_clean=[f for f in paths if 'test' not in str((f)).lower()]
     uploaded_files = st.multiselect("Choose result directories corresponding to this assay", paths_clean)
     list_df=[]
     if uploaded_files:
@@ -163,6 +167,78 @@ if on:
                     df_all_umap["Y_umap"] = emb[:, 1]
                     df_all_umap = pd.concat([df_all_umap, data[cols_alpha].reset_index(drop=True)], axis=1)
                     components.html(get_pyg_html(df_all_umap), height=1000, scrolling=True)
+
+@st.cache_data
+def loadDeepTar(files):
+    with tarfile.open(files, 'r') as tar:
+        list_df=[]
+    # Replace 'your_file.feather' with the actual file name
+        for member in tar.getmembers():
+            # Check if the member is a file and has the '.feather' extension
+            if member.isfile() and member.name.endswith('.fth'):
+                # Extract the Feather file content
+                l = member.name.replace("\\", "/").replace(".fth", "").split("/")[-1].split("_")
+                # print(l)
+                feather_content = tar.extractfile(member).read()
+                try:
+                    df = pd.read_feather(io.BytesIO(feather_content))
+                    # df =cudf.read_feather
+                    df = df.drop('tags',axis=1)
+                    df["Well"] = l[1]
+                    df["Plate"] = l[0]
+                    list_df.append(df)
+                except:
+                    print("error")
+                # df_grp = df.groupby(["Plate", "Well"]).median()
+                # del df
+                # Read the Feather content into a DataFrame
+                # list_df.append(df)
+    df2=pd.concat(list_df).groupby(["Plate", "Well"]).median()
+    df2=df2.reset_index()
+    
+    return df2
+
+
+if on and dl:
+    sys.path.append("/mnt/shares/L/Code/KsilinkNotebooks/LIB/")
+    import tools
+    list_proj=os.listdir('/mnt/shares/L/Projects/')
+    proj= st.selectbox('Choose your project',list_proj)
+    
+    paths = sorted(Path(f'/mnt/shares/L/Projects/{proj}/Checkout_Results/').iterdir(), key=os.path.getmtime, reverse=True)
+    # st.write(paths)
+    paths_clean=[f for f in paths if 'test' not in str((f)).lower()]
+    uploaded_file = st.selectbox("Choose result directory corresponding to this assay", paths_clean)
+    list_df=[]
+    if uploaded_file:
+        files = glob.glob(f"{uploaded_file}/**/*deep_features.tar", 
+                   recursive = True)
+        
+        if len(files)>0:
+            with st.spinner(f'Wait for it... Loading {len(files)} files and computing UMAP'):
+                result_deep = pqdm(files, loadDeepTar, n_jobs=20)
+                alldata = pd.concat(result_deep).reset_index(drop=True)
+                alldata = tools.setCategories(tools.retrieve_tags(alldata))
+                alldata=tools.getScreenCategories(alldata)
+                cols = [x for x in alldata.columns if 'Feature_' in x]
+                cols_alpha = [x for x in alldata.columns if 'Feature_' not in x]
+                st.write(alldata.sample(5))
+                import umap
+
+                emb = umap.UMAP(random_state=42, verbose=False).fit_transform(alldata[cols])
+                df_all_umap = pd.DataFrame()
+                df_all_umap["X"] = emb[:, 0]
+                df_all_umap["Y"] = emb[:, 1]
+                df_all_umap[cols_alpha]=alldata[cols_alpha]
+                # df_all_umap["DrugsA"] = alldata['Drugs_from_cat']+'_'+alldata['Drugs']+'_'+alldata['CellLines']
+                # df_all_umap = pd.concat([df_all_umap, alldata[cols_alpha].reset_index(drop=True)], axis=1)
+                components.html(get_pyg_html(df_all_umap), height=1000, scrolling=True)
+            st.success('Done!')
+        # df_all_umap["tags"] =alldata['tags']
+        # df_all_umap["Plate"] = alldata['Plate']
+        # df_all_umap["Well"] = alldata['Well']
+        # df_all_umap["Drugs"] = alldata['Drugs']+'_'+alldata['Drugs_tag']+'_'+alldata['CellLines']
+
 # df=pivot_df.sample(100)
 # tab1,tab2=st.tabs([f"Profiles in {sel_proj}", f"Summary in {sel_proj}"])
 # 
