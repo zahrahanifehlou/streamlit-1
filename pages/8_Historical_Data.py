@@ -105,15 +105,17 @@ components.html(get_pyg_html(pivot_df), height=1000, scrolling=True)
 st.header("Dataset from Phenolink not validated",divider='rainbow')
 
 on = st.sidebar.toggle('Search Data')
-dl = st.sidebar.toggle('Deep Learning or cell by cell data')
-if on and not dl:
-    list_proj=os.listdir('/mnt/shares/L/Projects/')
-    proj= st.selectbox('Choose your project',list_proj)
-    
+dl = st.sidebar.toggle('Deep Learning Data')
+cbc = st.sidebar.toggle('Cell by Cell Data')
+list_proj=os.listdir('/mnt/shares/L/Projects/')
+proj= st.selectbox('Choose your project',list_proj)
+
+if on and not dl and not cbc:
     paths = sorted(Path(f'/mnt/shares/L/Projects/{proj}/Checkout_Results/').iterdir(), key=os.path.getmtime, reverse=True)
-    # st.write(paths)
+# st.write(paths)
     paths_clean=[f for f in paths if 'test' not in str((f)).lower()]
     uploaded_files = st.multiselect("Choose result directories corresponding to this assay", paths_clean)
+
     list_df=[]
     if uploaded_files:
         for item in uploaded_files:
@@ -204,8 +206,8 @@ def loadDeepTar(files):
 if on and dl:
     sys.path.append("/mnt/shares/L/Code/KsilinkNotebooks/LIB/")
     import tools
-    list_proj=os.listdir('/mnt/shares/L/Projects/')
-    proj= st.selectbox('Choose your project',list_proj)
+    # list_proj=os.listdir('/mnt/shares/L/Projects/')
+    # proj= st.selectbox('Choose your project',list_proj)
     
     paths = sorted(Path(f'/mnt/shares/L/Projects/{proj}/Checkout_Results/').iterdir(), key=os.path.getmtime, reverse=True)
     # st.write(paths)
@@ -240,6 +242,51 @@ if on and dl:
         # df_all_umap["Plate"] = alldata['Plate']
         # df_all_umap["Well"] = alldata['Well']
         # df_all_umap["Drugs"] = alldata['Drugs']+'_'+alldata['Drugs_tag']+'_'+alldata['CellLines']
+
+@st.cache_data
+def loadCellbyCell(file):
+    df2 = pd.read_feather(file)
+    l = file.replace("\\", "/").replace(".fth", "").split("/")[-1].split("_")
+    df2["Well"] = l[1]
+    df2["Plate"] = l[0]
+    return df2
+
+
+
+if on and cbc:
+    # list_proj=os.listdir('/mnt/shares/L/Projects/')
+    # proj= st.selectbox('Choose your cell by cell rproject',list_proj)
+    
+    paths = sorted(Path(f'/mnt/shares/L/Projects/{proj}/Checkout_Results/').iterdir(), key=os.path.getmtime, reverse=True)
+    # st.write(paths)
+    paths_clean=[f for f in paths if 'test' not in str((f)).lower()]
+    uploaded_file = st.selectbox("Choose result directory corresponding to this assay", paths_clean)
+    list_df=[]
+    if uploaded_file:
+        files = glob.glob(f"{uploaded_file}/**/*cell_by_cell.fth", 
+                   recursive = True)
+        
+        if len(files)>0:
+            with st.spinner(f'Wait for it... Loading {len(files)} files'):
+                result_deep=pqdm(files, loadCellbyCell,n_jobs=20)
+                alldata = pd.concat(result_deep).reset_index(drop=True)
+                # alldata.replace([np.inf, -np.inf,-1], np.nan, inplace=True)
+                # alldata.dropna(inplace=True, axis=1)
+                # alldata.dropna(inplace=True)                
+                # cols = [x for x in alldata.columns if 'Feature_' in x]
+                # cols_alpha = [x for x in alldata.columns if 'Feature_' not in x]
+                # st.write(alldata.sample(5))
+                # import umap
+
+                # emb = umap.UMAP(random_state=42, verbose=False).fit_transform(alldata[cols])
+                # df_all_umap = pd.DataFrame()
+                # df_all_umap["X"] = emb[:, 0]
+                # df_all_umap["Y"] = emb[:, 1]
+                # df_all_umap[cols_alpha]=alldata[cols_alpha]
+                # df_all_umap[cols]=alldata[cols]
+
+                components.html(get_pyg_html(alldata), height=1000, scrolling=True)
+            st.success('Done!')
 
 # df=pivot_df.sample(100)
 # tab1,tab2=st.tabs([f"Profiles in {sel_proj}", f"Summary in {sel_proj}"])
