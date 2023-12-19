@@ -102,6 +102,8 @@ pivot_df=get_data_once(sel_proj)
 pivot_df=pivot_df.apply(pd.to_numeric, errors='ignore')
 components.html(get_pyg_html(pivot_df), height=1000, scrolling=True)
 
+st.header("Dataset from Phenolink not validated",divider='rainbow')
+
 on = st.sidebar.toggle('Search Data')
 dl = st.sidebar.toggle('Deep Learning or cell by cell data')
 if on and not dl:
