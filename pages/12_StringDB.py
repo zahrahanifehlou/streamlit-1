@@ -141,7 +141,7 @@ if on:
                     df_genes = get_sample(df_genes)
                     unique_gene=df_genes[gene_col].unique()
             else:
-                st.warning('No columns symbol (i.e HDAC6,DHFR...) in your dataframe, check your file')
+                st.warning('No columns symbol (i.e HDAC6,DHFR...) in your dataframe, check your file',icon="⚠️")
                 exit(0)
             # get_relation(df_genes)
         # st.write(df_genes)
@@ -241,8 +241,8 @@ if not df_genes.empty:
             st.warning('Maybe you did not enter enough data or they are not symbols(i.e: HDAC6,DHFR)')
             exit(0)
     if len(df_inter)<thres_gene:
-        st.warning('your list of genes is pretty small, results will not be accurate or useful,\
-                    you can fixed it by changing min number of genes')
+        st.warning('the intersection between your list and our data is pretty small, results will not be accurate or useful,\
+                    you can fixed it by changing min number of genes or selecting CRISPR if not done yet',icon="⚠️")
         exit(0)
     ################################### NETWORK ##############################################
     st.write("## Loading StringDB PPI")
