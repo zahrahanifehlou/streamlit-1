@@ -111,7 +111,7 @@ if on and not df_known_drug.empty:
     df_drug = df_drug.loc[:, ~df_drug.columns.duplicated()].copy()
     df_drug=df_drug.drop_duplicates(subset=["keggid", "batchid"]).reset_index(drop=True)
     st.write("Drug Infos",df_drug)
-    on_save1 = st.sidebar.toggle('Save Drug Infos')
+    # on_save1 = st.sidebar.toggle('Save Drug Infos')
 
 
 
@@ -122,7 +122,7 @@ if on and not df_known_drug.empty:
     df_sel = df_ksi[df_ksi['assay']==sel_source]
     st.write(f'Data from source: {sel_source}',df_sel)
 
-    on_save = st.sidebar.toggle('Save Data from source')
+    # on_save = st.sidebar.toggle('Save Data from source')
     
      
 
