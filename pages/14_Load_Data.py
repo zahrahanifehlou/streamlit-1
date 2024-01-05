@@ -74,21 +74,22 @@ if len(list_df) > 0:
         st.warning("No column tags in your dataset or empty tags, taking Plate+Well as tags")
         data['tags']=data['Plate']+'_'+data['Well']
     # st.write("Tags", data.tags)
-    components.html(get_pyg_html(data), height=1000, scrolling=True)
-    # if "tags" in data.columns.tolist():
-        # data['tags']=data['Well']
-    col1,col2=st.columns(2)
+    col1,col2,col3=st.columns(3)
     t= col1.radio("Time Series", ["yes","no"],1)
+    
     col_sel = data.select_dtypes(include=numerics).columns.to_list()
     if t=="yes":
         st.warning("In dev....")
+        t2 = col2.radio("Analyse", ["Contractility","Calcium"],0)
         dt=0.031
         df_agg=data.copy()
         # df_agg=data[col_sel]
-        df_agg[col_sel] = (-df_agg[col_sel]).add(df_agg[col_sel].min(axis=1), axis = 0).add(df_agg[col_sel].max(axis=1), axis = 0)
+        if t2=='Calcium':
+            df_agg[col_sel] = (-df_agg[col_sel]).add(df_agg[col_sel].min(axis=1), axis = 0).add(df_agg[col_sel].max(axis=1), axis = 0)
         # df_agg.drop('tags',axis=1,inplace=True)
         time_cols = sorted([col for col in df_agg.columns if 'time' in col],key=lambda x: int(x.split("_")[-1]))
         sig_x=[i*dt for i in range(len(time_cols))]
+        
         # df_agg['tags']=data['tags']
         # 
         listofexp=df_agg['Plate'].unique()
@@ -101,10 +102,10 @@ if len(list_df) > 0:
             # st.write(cpd_names)
             df_plt = group.set_index("Well")
             df_plt = df_plt[time_cols].T
-         
+            df_plt['t(s)']=sig_x
             st.plotly_chart(px.line(
                 df_plt,
-                x=sig_x,
+                x='t(s)',
                 y=cpd_names,
                 width=800,
                 height=800,
@@ -112,6 +113,11 @@ if len(list_df) > 0:
                 # line_shape='hv'
                 
             ), theme="streamlit", use_container_width=True)
+    else:
+        
+    # if "tags" in data.columns.tolist():
+        # data['tags']=data['Well']
+
         # st.write(df_plt)
         # N=len(time_cols)
         # T=1.0/30.0
@@ -144,20 +150,23 @@ if len(list_df) > 0:
         # # plt.show()
         # st.pyplot(fig_fft, use_container_width=True)
         
-    g = col2.radio("MinMax", ["yes", "no"])
-    col_sel = data.select_dtypes(include=numerics).columns.to_list()
-    if g == "yes" and t=='no':
-        scaler = MinMaxScaler()
+        g = col3.radio("MinMax", ["yes", "no"])
         col_sel = data.select_dtypes(include=numerics).columns.to_list()
-        cols_alpha = data.select_dtypes(exclude=numerics).columns
-        data_scaled = pd.DataFrame(
-            scaler.fit_transform(data.select_dtypes(include=numerics)),
-            columns=col_sel,
-        )
-        data_scaled["tags"] = data["tags"]
-        df_agg = data_scaled.groupby("tags").median().reset_index()
-        # t= st.radio("Time Series", ["yes","no"],1)
-        title="MinMax profiles"
+        if g=='no' and t=='no':
+            components.html(get_pyg_html(data),height=600, scrolling=False)
+        if g == "yes" and t=='no':
+            scaler = MinMaxScaler()
+            col_sel = data.select_dtypes(include=numerics).columns.to_list()
+            cols_alpha = data.select_dtypes(exclude=numerics).columns
+            data_scaled = pd.DataFrame(
+                scaler.fit_transform(data.select_dtypes(include=numerics)),
+                columns=col_sel,
+            )
+            data_scaled["tags"] = data["tags"]
+            components.html(get_pyg_html(data_scaled), height=1000, scrolling=False)
+            df_agg = data_scaled.groupby("tags").median().reset_index()
+            # t= st.radio("Time Series", ["yes","no"],1)
+            title="MinMax profiles"
         # if t=="yes":
         #     st.warning("In dev....")
         #     df_agg=data[col_sel]
@@ -167,36 +176,36 @@ if len(list_df) > 0:
         #     col_sel = df_agg.select_dtypes(include=numerics).columns.to_list()
         #     title='Temporal Profiles'
             
-        st.write(df_agg)
-        cpd_names = df_agg.tags.values
-        df_plt = df_agg.set_index("tags")
-        df_plt = df_plt[col_sel].T
-        fig4 = px.line(
-            df_plt,
-            x=col_sel,
-            y=cpd_names,
-            width=800,
-            height=800,
-            title=title,
-        )
-        st.plotly_chart(fig4, theme="streamlit", use_container_width=True)
+            st.write(df_agg)
+            cpd_names = df_agg.tags.values
+            df_plt = df_agg.set_index("tags")
+            df_plt = df_plt[col_sel].T
+            fig4 = px.line(
+                df_plt,
+                x=col_sel,
+                y=cpd_names,
+                width=800,
+                height=800,
+                title=title,
+            )
+            st.plotly_chart(fig4, theme="streamlit", use_container_width=True)
         # components.html(get_pyg_html(df_plt), height=1000, scrolling=True)
 
 
 
-        import umap
+            import umap
 
-        #
-        model = umap.UMAP(random_state=42, verbose=False).fit(data_scaled[col_sel])
-        emb = model.transform(data_scaled[col_sel])
-        
-        df_all_umap = pd.DataFrame()
-        df_all_umap["X_umap"] = emb[:, 0]
-        df_all_umap["Y_umap"] = emb[:, 1]
-        df_all_umap[cols_alpha] = data[cols_alpha]
-        df_all_umap[col_sel] = data_scaled[col_sel]
+            #
+            model = umap.UMAP(random_state=42, verbose=False).fit(data_scaled[col_sel])
+            emb = model.transform(data_scaled[col_sel])
+            
+            df_all_umap = pd.DataFrame()
+            df_all_umap["X_umap"] = emb[:, 0]
+            df_all_umap["Y_umap"] = emb[:, 1]
+            df_all_umap[cols_alpha] = data[cols_alpha]
+            df_all_umap[col_sel] = data_scaled[col_sel]
 
-        components.html(get_pyg_html(df_all_umap), height=1000, scrolling=True)
+            components.html(get_pyg_html(df_all_umap),height=1000, scrolling=False)
 
 
 
