@@ -82,52 +82,58 @@ if len(list_df) > 0:
     col_sel = data.select_dtypes(include=numerics).columns.to_list()
     if t=="yes":
         st.warning("In dev....")
-        df_agg=data[col_sel]
+        dt=0.031
+        df_agg=data.copy()
+        # df_agg=data[col_sel]
         df_agg[col_sel] = (-df_agg[col_sel]).add(df_agg[col_sel].min(axis=1), axis = 0).add(df_agg[col_sel].max(axis=1), axis = 0)
         # df_agg.drop('tags',axis=1,inplace=True)
         time_cols = sorted([col for col in df_agg.columns if 'time' in col],key=lambda x: int(x.split("_")[-1]))
-
-        df_agg['tags']=data['tags']+'_'+data['Well']+'_'+data['Plate']
-        # col_sel = df_agg.select_dtypes(include=numerics).columns.to_list()
-        title='Temporal Profiles'
-        
-        # st.write(df_agg[df_agg.tags=='DP-exp4-plate5-cal-40x-BG_F07'])
-        cpd_names = df_agg.tags.values
-        df_plt = df_agg.set_index("tags")
-        df_plt = df_plt[time_cols].T
-        fig3 = px.line(
-            df_plt,
-            x=time_cols,
-            y=cpd_names,
-            width=800,
-            height=800,
-            title=title,
-            # line_shape='hv'
-            
-        )
-        st.plotly_chart(fig3, theme="streamlit", use_container_width=True)
+        sig_x=[i*dt for i in range(len(time_cols))]
+        # df_agg['tags']=data['tags']
+        # 
+        listofexp=df_agg['Plate'].unique()
+        sel_col_exp= st.selectbox("Chose exps",listofexp)
+        df_agg2=df_agg[df_agg['Plate']==sel_col_exp]
+        df_agg2=df_agg2.groupby(['tags'])
+        for name, group in df_agg2:     
+            title=group.tags.values[0]         
+            cpd_names = group.Well.values
+            # st.write(cpd_names)
+            df_plt = group.set_index("Well")
+            df_plt = df_plt[time_cols].T
+         
+            st.plotly_chart(px.line(
+                df_plt,
+                x=sig_x,
+                y=cpd_names,
+                width=800,
+                height=800,
+                title=title,
+                # line_shape='hv'
+                
+            ), theme="streamlit", use_container_width=True)
         # st.write(df_plt)
-        N=len(time_cols)
-        T=1.0/30.0
-        import scipy
-        from scipy import signal
-        import matplotlib.pyplot as plt
-        sel_col_fft= st.selectbox("Chose exp",df_plt.columns)
-        yy=df_plt[sel_col_fft].values
-        yf = scipy.fftpack.fft(yy)
-        widths = np.arange(1, N//8)
-        xf = np.linspace(0.0, 1.0/(2.0*T), N//2)
-        cwtmatr = signal.cwt(yy, signal.ricker, widths)
-        cwtmatr_yflip = np.flipud(cwtmatr)
-        fig_cwt, ax = plt.subplots()
-        ax.imshow(cwtmatr_yflip,  cmap='PRGn', aspect='auto',
-           vmax=abs(cwtmatr).max(), vmin=-abs(cwtmatr).max())
-        st.pyplot(fig_cwt, use_container_width=True)
-        df_fft=pd.DataFrame()
-        df_fft['xf']=xf
-        df_fft['yf']=2.0/N * np.abs(yf[:N//2])
-        components.html(get_pyg_html(df_fft), height=1000, scrolling=True)
-        # st.write('df_fft',df_fft)
+        # N=len(time_cols)
+        # T=1.0/30.0
+        # import scipy
+        # from scipy import signal
+        # import matplotlib.pyplot as plt
+        # sel_col_fft= st.selectbox("Chose exp",df_plt.columns)
+        # yy=df_plt[sel_col_fft].values
+        # yf = scipy.fftpack.fft(yy)
+        # widths = np.arange(1, N//8)
+        # xf = np.linspace(0.0, 1.0/(2.0*T), N//2)
+        # cwtmatr = signal.cwt(yy, signal.ricker, widths)
+        # cwtmatr_yflip = np.flipud(cwtmatr)
+        # fig_cwt, ax = plt.subplots()
+        # ax.imshow(cwtmatr_yflip,  cmap='PRGn', aspect='auto',
+        #    vmax=abs(cwtmatr).max(), vmin=-abs(cwtmatr).max())
+        # st.pyplot(fig_cwt, use_container_width=True)
+        # df_fft=pd.DataFrame()
+        # df_fft['xf']=xf
+        # df_fft['yf']=2.0/N * np.abs(yf[:N//2])
+        # components.html(get_pyg_html(df_fft), height=1000, scrolling=True)
+        # # st.write('df_fft',df_fft)
         # fig_fft = px.scatter(df_fft,xf,yf)
         # st.plotly_chart(fig_fft, theme="streamlit", use_container_width=True)
 
