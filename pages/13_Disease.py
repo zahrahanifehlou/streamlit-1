@@ -162,6 +162,7 @@ else:
 
 # from tdc.multi_pred import GDA
 # data = GDA(name = 'DisGeNET')
-# split = data.get_split()
-
+# # data2  =data[data['Disease_ID']=='C1449563']
+# st.write('TDC',data.get_data())
+# C1449563
 # st.write(split)
