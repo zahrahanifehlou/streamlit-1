@@ -84,8 +84,8 @@ df = sel_code(option1,conn)
 
 batch_list = [f"'{batchid}'" for batchid in df["batchid"].unique()]
 # src_list = [f"'{s}'" for s in [option2, option1]]
-#sql_profile = f"SELECT * FROM aggcombatprofile WHERE metabatchid IN ({','.join(batch_list)}) and metasource IN ({','.join(src_list)})"
-sql_profile = f"SELECT * FROM aggcombatprofile WHERE metabatchid IN ({','.join(batch_list)})"
+#sql_profile = f"SELECT * FROM aggprofile WHERE metabatchid IN ({','.join(batch_list)}) and metasource IN ({','.join(src_list)})"
+sql_profile = f"SELECT * FROM aggprofile WHERE metabatchid IN ({','.join(batch_list)})"
 df_prof = sql_df(sql_profile, conn_profileDB)
 df_prof=df_prof.drop_duplicates(subset=[ "metabatchid","metasource"]).reset_index(drop=True)
 st.write(df_prof["metasource"].value_counts())

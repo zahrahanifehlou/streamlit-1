@@ -201,7 +201,7 @@ if not df_genes.empty:
             bq.append("'" + bs + "'")
 
 
-        sql_profile = f"select * from aggcombatprofile where metabatchid  in (" + ",".join(bq) + ")"
+        sql_profile = f"select * from aggprofile where metabatchid  in (" + ",".join(bq) + ")"
 
         df_cpd_prof = sql_df(sql_profile, conn_prof)
         df_cpd_prof = df_cpd_prof[df_cpd_prof["metasource"] == choix_source].reset_index(drop=True)
@@ -229,7 +229,7 @@ if not df_genes.empty:
         bq = []
         for bs in unique_gene:
             bq.append("'" + bs + "'")
-        sql_genes = "select gene.*,crisperbatchs.batchid from gene  INNER JOIN crisperbatchs ON  crisperbatchs.geneid=gene.geneid where symbol  in (" + ",".join(bq) + ")  "
+        sql_genes = "select gene.*,genebatchss.batchid from gene  INNER JOIN genebatchss ON  genebatchss.geneid=gene.geneid where symbol  in (" + ",".join(bq) + ")  "
         df_inter = sql_df(sql_genes, conn_meta)
         if not df_inter.empty:
             df_inter.drop_duplicates(inplace=True)
