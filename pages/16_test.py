@@ -23,8 +23,8 @@ df_rep= df_rep.append({'symbol':'DMSO'},ignore_index=True)
 # for bs in df_rep['symbol1']:
 #     bq.append("'" + bs.upper() + "'")
     
-# sql_umqpemd =  f"SELECT * FROM aggprofile where metasource='CRISPER' and metabatchid  in (" + ",".join(bq) + ") "
-sql_umqpemd =  f"SELECT * FROM aggprofile where metasource='CRISPER'"
+# sql_umqpemd =  f"SELECT * FROM aggcombatprofile where metasource='CRISPER' and metabatchid  in (" + ",".join(bq) + ") "
+sql_umqpemd =  f"SELECT * FROM aggcombatprofile where metasource='CRISPER'"
 df_src_emd = sql_df(sql_umqpemd, conn_prof)
 # st.write(df_src_emd)
 df_sel = df_src_emd[df_src_emd["metabatchid"]=='DMSO']
@@ -67,7 +67,7 @@ alpha = model.iloc[0]["px_fit_results"].params[0]
 beta = model.iloc[0]["px_fit_results"].params[1]
 st.write(f'alpha={alpha}, beta={beta}')
 # def toto():
-#     sql_umqpemd =  f"SELECT * FROM aggprofile where metasource='CRISPER'"
+#     sql_umqpemd =  f"SELECT * FROM aggcombatprofile where metasource='CRISPER'"
 #     df_src_emd = sql_df(sql_umqpemd, conn_prof)
 #     return df_src_emd
 

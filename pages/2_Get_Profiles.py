@@ -109,16 +109,16 @@ if str(option) == "gene" and len(df_res) > 0:
         
         sql_crisper = f"SELECT gene.symbol, gene.geneid,genebatchs.batchid  FROM genebatchs  inner join gene \
             on gene.geneid=genebatchs.geneid  WHERE genebatchs.geneid IN ({','.join(geneid_lis)})  group by gene.symbol, gene.geneid,genebatchs.batchid "
-        df_genebatchss = sql_df(
+        df_crisperBatchs = sql_df(
             sql_crisper, conn).drop_duplicates(subset=["batchid"])
-        batch_list = [f"'{batchid}'" for batchid in df_genebatchss["batchid"]]
+        batch_list = [f"'{batchid}'" for batchid in df_crisperBatchs["batchid"]]
         if len(batch_list) > 0:
             sql_crisper_profile = (
                 f"SELECT * FROM aggprofile WHERE metabatchid IN ({','.join(batch_list)})"
             )
 
             df_prof_crisper = sql_df(sql_crisper_profile, conn_profileDB)
-            df_prof_crisper = df_prof_crisper.merge(df_genebatchss.add_prefix(
+            df_prof_crisper = df_prof_crisper.merge(df_crisperBatchs.add_prefix(
                 'meta'), left_on='metabatchid', right_on='metabatchid').reset_index(drop=True)
             df_prof_crisper["metatype"] = "CRISPR"
             df_prof_crisper["metaefficacy"] = "Unknown"
@@ -287,7 +287,7 @@ tab1, tab2, tab3, tab4 = st.tabs(
 if  len(df_prof_crisper)>0:
     tab3.write(df_prof_crisper)
     tab4.write(df_prof_crisper.describe().T)
-    st.session_state["df_crisper"] = df_genebatchss
+    st.session_state["df_crisper"] = df_crisperBatchs
     
     
 if  len(df_prof)>0:
