@@ -125,7 +125,7 @@ else:
         
         st.write("\n")  # ----------plot sim cpds in UMAP
         df_src_emd = get_umap(choix_source=choix_source)
-        st.write('df_genes',df_src_emd)
+        st.write('df_src_emd',df_src_emd)
         df_src_emd["color"] = "others"
         df_src_emd.loc[df_src_emd["metageneid"].isin(
             df_results_cpd.geneid), "color"] = "similar compounds"
@@ -133,7 +133,7 @@ else:
         df_src_emd.loc[df_src_emd["metageneid"] ==
                         choix_batch, "color"] = "selected compounds"
         
-        st.write(choix_batch)
+        # st.write(choix_batch)
         # st.write('choix',df_src_emd[df_src_emd["metabatchid"]==
         #                 df_sel['metabatchid'].values[0]])
         fig = px.scatter(
