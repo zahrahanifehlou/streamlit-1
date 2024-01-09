@@ -49,10 +49,10 @@ else:
         st.write("Selected Profile", df_sel)
 
     # ---- source and crisper profile ----------------------------------------------------------------------------
-    sql_profile = f"select * from aggcombatprofile where metasource='{choix_source}'"
+    sql_profile = f"select * from aggprofile where metasource='{choix_source}'"
     df_source = sql_df(sql_profile, profile_conn)
 
-    sql_crisper_profile = f"SELECT * FROM aggcombatprofile WHERE metasource='CRISPER'"
+    sql_crisper_profile = f"SELECT * FROM aggprofile WHERE metasource='CRISPER' or metasource='Broad-ORF'"
     df_prof_crisper = sql_df(sql_crisper_profile, profile_conn)
 
     # umap--------------------------------------------------------
@@ -106,7 +106,7 @@ else:
         df_keep_prof_cpd = pd.DataFrame()
         
         if len(b_list_cpd) > 0:
-            if choix_source != "CRISPER":
+            if (choix_source != "CRISPER") and (choix_source != "Broad-ORF"):
                 sql_cpds = f"SELECT cpd.pubchemid, cpd.keggid, cpd.cpdname, gene.symbol, cpd.smile, cpdgene.geneid, cpdbatchs.batchid, keggcpd.efficacy FROM cpd \
                             INNER JOIN cpdbatchs ON cpd.pubchemid=cpdbatchs.pubchemid \
                             LEFT JOIN cpdgene ON cpdbatchs.pubchemid=cpdgene.pubchemid \
@@ -122,9 +122,9 @@ else:
                     df_keep_prof_cpd.loc[df_keep_prof_cpd.metacpdname == "No result", 'metacpdname'] = None
                     df_keep_prof_cpd['metacpdname'] = df_keep_prof_cpd['metacpdname'].str[:30].fillna(df_keep_prof_cpd['metabatchid'])
 
-            if choix_source == "CRISPER":
-                sql_crisper2 = f"SELECT gene.symbol, gene.geneid, crisperbatchs.batchid FROM crisperbatchs INNER JOIN gene \
-                                ON gene.geneid=crisperbatchs.geneid WHERE crisperbatchs.batchid IN ({','.join(b_list_cpd)}) GROUP BY gene.symbol, gene.geneid, crisperbatchs.batchid"
+            if (choix_source == "CRISPER") or (choix_source == "Broad-ORF"):
+                sql_crisper2 = f"SELECT gene.symbol, gene.geneid, genebatchs.batchid FROM genebatchs INNER JOIN gene \
+                                ON gene.geneid=genebatchs.geneid WHERE genebatchs.batchid IN ({','.join(b_list_cpd)}) GROUP BY gene.symbol, gene.geneid, genebatchs.batchid"
                 df_results_cpd = sql_df(sql_crisper2, conn).drop_duplicates(subset=["batchid"])
                 
                 if len(df_results_cpd) > 0:

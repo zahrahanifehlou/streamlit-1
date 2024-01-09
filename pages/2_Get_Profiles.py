@@ -107,14 +107,14 @@ df_prof = pd.DataFrame()
 if str(option) == "gene" and len(df_res) > 0:
         geneid_lis = [f"'{geneid}'" for geneid in df_res["geneid"]]
         
-        sql_crisper = f"SELECT gene.symbol, gene.geneid,crisperbatchs.batchid  FROM crisperbatchs  inner join gene \
-            on gene.geneid=crisperbatchs.geneid  WHERE crisperbatchs.geneid IN ({','.join(geneid_lis)})  group by gene.symbol, gene.geneid,crisperbatchs.batchid "
+        sql_crisper = f"SELECT gene.symbol, gene.geneid,genebatchs.batchid  FROM genebatchs  inner join gene \
+            on gene.geneid=genebatchs.geneid  WHERE genebatchs.geneid IN ({','.join(geneid_lis)})  group by gene.symbol, gene.geneid,genebatchs.batchid "
         df_crisperBatchs = sql_df(
             sql_crisper, conn).drop_duplicates(subset=["batchid"])
         batch_list = [f"'{batchid}'" for batchid in df_crisperBatchs["batchid"]]
         if len(batch_list) > 0:
             sql_crisper_profile = (
-                f"SELECT * FROM aggcombatprofile WHERE metabatchid IN ({','.join(batch_list)})"
+                f"SELECT * FROM aggprofile WHERE metabatchid IN ({','.join(batch_list)})"
             )
 
             df_prof_crisper = sql_df(sql_crisper_profile, conn_profileDB)
@@ -254,7 +254,7 @@ if len(df_cpds) > 0:
         list_batchid = [f"'{batch}'" for batch in df_cpdGene_tmp["batchid"]]
     if len(list_batchid)>0:
         sql_profile = (
-            "select * from aggcombatprofile where metabatchid in ("
+            "select * from aggprofile where metabatchid in ("
             + ",".join(list_batchid)
             + ")"
         )
@@ -279,8 +279,8 @@ tab1, tab2, tab3, tab4 = st.tabs(
     [
         "compounds Profiles",
         "compounds Summary",
-        "Crisper Profiles",
-        "Crisper Summary",
+        "Crispr/ORF Profiles",
+        "Crispr/ORF Summary",
     ]
 )
 
