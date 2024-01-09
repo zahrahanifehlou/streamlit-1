@@ -122,7 +122,7 @@ if str(option) == "gene" and len(df_res) > 0:
                 'meta'), left_on='metabatchid', right_on='metabatchid').reset_index(drop=True)
             df_prof_crisper["metatype"] = "CRISPR"
             df_prof_crisper["metaefficacy"] = "Unknown"
-            df_prof_crisper["metacpdname"]=df_prof_crisper["metabatchid"]
+            df_prof_crisper["metacpdname"]=df_prof_crisper["metasymbol"]
             df_prof = pd.concat([df_prof, df_prof_crisper])
             df_prof["metacpdname"] = df_prof["metacpdname"].fillna(
                             df_prof["metabatchid"])
@@ -202,7 +202,7 @@ if len(df_cpds) > 0:
     with tabs[1]:
         server_name = st.radio(
             "select server",
-            ("all", "pubchem", "KEGG"),
+            ("all", "pubchem", "KEGG", "broad"),
             horizontal=True,
         )
         df_cpdGene_tmp = df_cpdGene.copy()
@@ -310,10 +310,11 @@ if  len(df_prof)>0:
     df_plt = df_plt.set_index("meta_name_source")
     
     # df_plt = df_plt.drop('name',axis=1)
-    st.dataframe(df_plt)
+    
     filter_col = [
         col for col in df_plt.columns if not col.startswith("meta")]
     df_plt2 = df_plt[filter_col].T
+  
     sty = st.radio('Line Style',['linear','spline'])
     fig_line = px.line(
         df_plt2, x=filter_col, y=cpd_names, width=1400, height=1000,line_shape=sty, title="Profiles")
