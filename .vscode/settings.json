@@ -5,5 +5,27 @@
     "python.formatting.provider": "none",
     "python.analysis.extraPaths": [
         "./lib"
+    ],
+    "sqltools.connections": [
+        {
+            "previewLimit": 50,
+            "server": "192.168.2.131",
+            "port": 5432,
+            "askForPassword": true,
+            "driver": "PostgreSQL",
+            "name": "postgres",
+            "database": "ksi_cpds",
+            "username": "arno"
+        },
+        {
+            "previewLimit": 50,
+            "server": "192.168.2.131",
+            "port": 5432,
+            "askForPassword": true,
+            "driver": "PostgreSQL",
+            "database": "ksilink_cpds",
+            "username": "arno",
+            "name": "postgres"
+        }
     ]
 }
