@@ -258,8 +258,18 @@ else:
 
             st.write("\n")  # ----------plot PROFILE
             tmp = df_keep_prof_cpd.head(15)
+            
+            # if choix_source=="CRISPER" or choix_source=="ORF-Broad" :
+            #     tmp["metacpdname"]=tmp["metasymbol"]
+            
+           
+           
             cpd_names = tmp.metacpdname.values
+         
             df_plt = tmp.set_index("metacpdname")
+         
+            
+            
             filter_col = [
                 col for col in df_plt.columns if not col.startswith("meta")]
             df_plt = df_plt[filter_col].T
@@ -288,22 +298,24 @@ else:
                 )
 
                 st.pyplot(fig_clusmap)
-
+                
+#--------------------------------------------------------------------------------------------------------
     with knn_sim_tab:  # Similar CPDs with UMAP
         from sklearn.neighbors import NearestNeighbors
         nb_cluster = st.slider(
             'Number of neighbors', min_value=2, max_value=30, value=10, step=1)
 
+        st.write(df_src_emd)
         X = df_src_emd[["umap1", "umap2"]].to_numpy()
         neigh = NearestNeighbors(n_neighbors=nb_cluster, n_jobs=-1)
         neigh.fit(X)
-        if choix in df_src_emd["metacpdname"].values:
+        if choix in df_src_emd["metaname"].values:
 
-            points = df_src_emd[df_src_emd["metacpdname"]
+            points = df_src_emd[df_src_emd["metaname"]
                                 == choix][["umap1", "umap2"]]
 
             distances, indices = neigh.kneighbors(points)
-            knn_sim_df=pd.concat([df_src_emd[df_src_emd["metacpdname"]==choix],df_src_emd.loc[indices[0,1:]]])
+            knn_sim_df=pd.concat([df_src_emd[df_src_emd["metaname"]==choix],df_src_emd.loc[indices[0,1:]]])
             knn_sim_df.reset_index(inplace=True, drop=True)
 
             # knn_sim_df.drop(columns=["metasource"],inplace=True)
@@ -313,12 +325,12 @@ else:
             
             
 
-            df_keep_prof_cpd_knn = df_keep_prof_cpd_knn.merge(knn_sim_df[["metabatchid", "metaefficacy", "metageneid", "metagenesymbol",
-                                                              "metasmile", "metakeggid", "metacpdname"]], left_on='metabatchid', right_on='metabatchid').reset_index(drop=True)
-            df_keep_prof_cpd_knn.loc[df_keep_prof_cpd_knn.metacpdname ==
-                                     "No result", 'metacpdname'] = None
-            df_keep_prof_cpd_knn['metacpdname'] = df_keep_prof_cpd_knn['metacpdname'].str[:30]
-            df_keep_prof_cpd_knn['metacpdname'] = df_keep_prof_cpd_knn['metacpdname'].fillna(
+            df_keep_prof_cpd_knn = df_keep_prof_cpd_knn.merge(knn_sim_df[["metabatchid", "metaname", 
+                                                              ]], left_on='metabatchid', right_on='metabatchid').reset_index(drop=True)
+            df_keep_prof_cpd_knn.loc[df_keep_prof_cpd_knn.metaname ==
+                                     "No result", 'metaname'] = None
+            df_keep_prof_cpd_knn['metaname'] = df_keep_prof_cpd_knn['metaname'].str[:30]
+            df_keep_prof_cpd_knn['metaname'] = df_keep_prof_cpd_knn['metaname'].fillna(
                 df_keep_prof_cpd_knn['metabatchid'])
 
             if len(knn_sim_df) > 0:
@@ -338,7 +350,7 @@ else:
                 st.write("\n")
                 fig_cols4 = st.columns(2)
                 with fig_cols4[0]:
-                    fig = px.pie(knn_sim_df,  names='metagenesymbol',
+                    fig = px.pie(knn_sim_df,  names='metaname',
                                  title=f' {title}  : gene symbol',
                                  )
                     fig.update_traces(textposition='inside',
@@ -371,8 +383,8 @@ else:
                      color_discrete_sequence=["blue", "red", "green"],
 
                     title=f" {title}  :UMAP ",
-                    hover_data=["metabatchid", "metaefficacy",
-                                "metageneid", "metakeggid"]
+                    hover_data=["metabatchid", "metaname",
+                               ]
                 )
                 if choix_source not in(["Ksilink_625","Ksilink_25","CRISPER"]):
                     st.plotly_chart(figUMAP_knn, theme="streamlit",

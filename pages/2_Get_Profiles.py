@@ -197,7 +197,7 @@ if len(df_cpds) > 0:
             "compounds efficacy info",
         ]
     )
-    tabs[0].write(df_cpds)
+    # tabs[0].write(df_cpds)
   
     with tabs[1]:
         server_name = st.radio(
