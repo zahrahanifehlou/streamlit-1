@@ -240,7 +240,7 @@ def convert_df(df):
     return df.to_csv(index=False).encode("utf-8")
 
 
-def get_col_colors(df):
+def get_col_colors(df, inex_col_name="name"):
     list_col = [col for col in df.columns if not col.startswith("Meta")]
     ER = [
         x
@@ -281,13 +281,11 @@ def get_col_colors(df):
     list_fin.extend(mito)
 
     list_fin = list(dict.fromkeys(list_fin))
-    if "name" not in df.columns:
-        df["name"] = df["metacpdname"] + "_" + df["metasource"]
-
-    list_fin.append("name")
+    
+    list_fin.append(inex_col_name)
 
     df_plt = df[list_fin]
-    df_plt.set_index("name", inplace=True)
+    df_plt.set_index(inex_col_name, inplace=True)
     col_colors = []
 
     for col in df_plt.columns:

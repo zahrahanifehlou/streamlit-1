@@ -122,9 +122,9 @@ if str(option) == "gene" and len(df_res) > 0:
                 'meta'), left_on='metabatchid', right_on='metabatchid').reset_index(drop=True)
             df_prof_crisper["metatype"] = "CRISPR"
             df_prof_crisper["metaefficacy"] = "Unknown"
-            df_prof_crisper["metacpdname"]=df_prof_crisper["metasymbol"]
+            df_prof_crisper["metaname"]=df_prof_crisper["metasymbol"]
             df_prof = pd.concat([df_prof, df_prof_crisper])
-            df_prof["metacpdname"] = df_prof["metacpdname"].fillna(
+            df_prof["metaname"] = df_prof["metaname"].fillna(
                             df_prof["metabatchid"])
     
 
@@ -150,7 +150,7 @@ if len(df_cpds) > 0:
         left_on="pubchemid",
         right_on="pubchemid",
     ).reset_index(drop=True)
-
+    
     # compounds efficacy info
     sql = f"SELECT cpd.pubchemid, keggcpd.efficacy, keggcpd.keggid FROM keggcpd\
             INNER JOIN cpd ON keggcpd.keggid=cpd.keggid\
@@ -197,7 +197,7 @@ if len(df_cpds) > 0:
             "compounds efficacy info",
         ]
     )
-    # tabs[0].write(df_cpds)
+    tabs[0].write(df_cpds)
   
     with tabs[1]:
         server_name = st.radio(
@@ -265,14 +265,14 @@ if len(df_cpds) > 0:
         df_prof = df_prof.merge(
             df_cpds.add_prefix("meta"), left_on="metabatchid", right_on="metabatchid"
         ).reset_index(drop=True)
-
-        df_prof.loc[df_prof.metacpdname == "No result", "metacpdname"] = None
-        df_prof["metacpdname"] = df_prof["metacpdname"].str[:30]
-        df_prof["metacpdname"] = df_prof["metacpdname"].fillna(
+        df_prof.rename(columns={'metacpdname':'metaname'},inplace=True)
+        df_prof.loc[df_prof.metaname == "No result", "metaname"] = None
+        df_prof["metaname"] = df_prof["metaname"].str[:30]
+        df_prof["metaname"] = df_prof["metaname"].fillna(
             df_prof["metabatchid"])
         if len(df_prof_crisper)>0:
             df_prof = pd.concat([df_prof, df_prof_crisper])
-            df_prof["metacpdname"] = df_prof["metacpdname"].fillna(
+            df_prof["metaname"] = df_prof["metaname"].fillna(
                             df_prof["metabatchid"])
 
 tab1, tab2, tab3, tab4 = st.tabs(
@@ -303,8 +303,8 @@ if  len(df_prof)>0:
         tmp = df_prof.copy()
     else:
         tmp = df_prof.loc[df_prof["metasource"].isin(var_t)]
-    
-    tmp["meta_name_source"] = tmp["metacpdname"] + "_" + tmp["metasource"]
+    st.write(tmp)
+    tmp["meta_name_source"] = tmp["metaname"] + "_" + tmp["metasource"]
     cpd_names = tmp.meta_name_source.values
     df_plt=tmp.drop_duplicates(subset='meta_name_source')
     df_plt = df_plt.set_index("meta_name_source")
@@ -324,8 +324,10 @@ if  len(df_prof)>0:
     if len(tmp) > 1:
         import matplotlib.pyplot as plt
         import seaborn as sns
-
-        plt_src, col_colors = get_col_colors(tmp)
+       
+        tmp["Metaname"] = tmp["metaname"] + "_" + tmp["metasource"]
+        
+        plt_src, col_colors = get_col_colors(tmp, "metaname")
 
         fig_clusmap, ax1 = plt.subplots()
         fig_clusmap = sns.clustermap(
