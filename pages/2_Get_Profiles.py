@@ -325,9 +325,9 @@ if  len(df_prof)>0:
         import matplotlib.pyplot as plt
         import seaborn as sns
        
-        tmp["Metaname"] = tmp["metaname"] + "_" + tmp["metasource"]
-        
-        plt_src, col_colors = get_col_colors(tmp, "metaname")
+     
+      
+        plt_src, col_colors = get_col_colors(tmp, inex_col_name="meta_name_source")
 
         fig_clusmap, ax1 = plt.subplots()
         fig_clusmap = sns.clustermap(

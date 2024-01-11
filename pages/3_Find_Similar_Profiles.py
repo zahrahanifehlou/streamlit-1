@@ -40,13 +40,15 @@ else:
     with mainCols[0]:
         choix_source = st.selectbox("Select the Source", list_sources)
         cpdnames = cpd_pro[cpd_pro["metasource"]
-                           == choix_source]["metacpdname"].values
+                           == choix_source]["metaname"].values
         choix = st.selectbox("Select the Profile", cpdnames)
+       
     df_sel = cpd_pro[(cpd_pro["metasource"] == choix_source)
-                     & (cpd_pro["metacpdname"] == choix)].head(1)
+                     & (cpd_pro["metaname"] == choix)].head(1)
     title = f' compounds to {choix} in  {choix_source}'
     with mainCols[1]:
         st.write("Selected Profile", df_sel)
+        choix_batchid=df_sel["metabatchid"].values[0]
 
     # ---- source and crisper profile ----------------------------------------------------------------------------
     sql_profile = f"select * from aggprofile where metasource='{choix_source}'"
@@ -65,15 +67,11 @@ else:
         return df_src_emd
     df_src_emd = get_umap(choix_source=choix_source)
     
-    
-    
-
-
-
+   
     # cpds---------------------------------------------------------------------------------------------------------------------
-
     cosine_sim_tab, knn_sim_tab = st.tabs(
         ["Similar CPDs with cosine", "Similar CPDs with KNN in UMAP  "])
+    # with cosine similarity
     with cosine_sim_tab:  
         rad = st.radio('Pos or Neg',['Correl', 'AntiCorrel'])# Similar CPDs with cosine
         thr_cols = st.columns(2)
@@ -111,37 +109,43 @@ else:
         df_keep_prof_cpd = pd.DataFrame()
         
         if len(b_list_cpd) > 0:
-            if (choix_source != "CRISPER") and (choix_source != "ORF-Broad"):
-                sql_cpds = f"SELECT cpd.pubchemid, cpd.keggid, cpd.cpdname, gene.symbol, cpd.smile, cpdgene.geneid, cpdbatchs.batchid, keggcpd.efficacy FROM cpd \
-                            INNER JOIN cpdbatchs ON cpd.pubchemid=cpdbatchs.pubchemid \
-                            LEFT JOIN cpdgene ON cpdbatchs.pubchemid=cpdgene.pubchemid \
-                            LEFT JOIN gene ON gene.geneid=cpdgene.geneid \
-                            LEFT JOIN keggcpd ON cpd.keggid=keggcpd.keggid \
-                            WHERE cpdbatchs.batchid IN ({','.join(b_list_cpd)}) GROUP BY cpd.pubchemid, cpd.keggid, cpd.cpdname, gene.symbol, cpd.smile, cpdgene.geneid, cpdbatchs.batchid, keggcpd.efficacy"
-                df_results_cpd = sql_df(sql_cpds, conn)
+           # if (choix_source != "CRISPER") and (choix_source != "ORF-Broad"):
+            sql_cpds = f"SELECT cpd.pubchemid, cpd.keggid, cpd.cpdname, gene.symbol, cpd.smile, cpdgene.geneid, cpdbatchs.batchid, keggcpd.efficacy FROM cpd \
+                        INNER JOIN cpdbatchs ON cpd.pubchemid=cpdbatchs.pubchemid \
+                        LEFT JOIN cpdgene ON cpdbatchs.pubchemid=cpdgene.pubchemid \
+                        LEFT JOIN gene ON gene.geneid=cpdgene.geneid \
+                        LEFT JOIN keggcpd ON cpd.keggid=keggcpd.keggid \
+                        WHERE cpdbatchs.batchid IN ({','.join(b_list_cpd)}) GROUP BY cpd.pubchemid, cpd.keggid, cpd.cpdname, gene.symbol, cpd.smile, cpdgene.geneid, cpdbatchs.batchid, keggcpd.efficacy"
+            df_results_cpd = sql_df(sql_cpds, conn)
+            
+            
+            if len(df_results_cpd) > 0:
+                df_results_cpd.drop_duplicates(subset=["pubchemid"], inplace=True)
+                df_keep_prof_cpd = df_source[df_source["metabatchid"].isin(df_keep_cpd["metabatchid"].values)].reset_index(drop=True)
+                df_keep_prof_cpd = df_keep_prof_cpd.merge(df_results_cpd.add_prefix('meta'), left_on='metabatchid', right_on='metabatchid').reset_index(drop=True)
                 
-                if len(df_results_cpd) > 0:
-                    df_results_cpd.drop_duplicates(subset=["pubchemid"], inplace=True)
-                    df_keep_prof_cpd = df_source[df_source["metabatchid"].isin(df_keep_cpd["metabatchid"].values)].reset_index(drop=True)
-                    df_keep_prof_cpd = df_keep_prof_cpd.merge(df_results_cpd.add_prefix('meta'), left_on='metabatchid', right_on='metabatchid').reset_index(drop=True)
-                    df_keep_prof_cpd.loc[df_keep_prof_cpd.metacpdname == "No result", 'metacpdname'] = None
-                    df_keep_prof_cpd['metacpdname'] = df_keep_prof_cpd['metacpdname'].str[:30].fillna(df_keep_prof_cpd['metabatchid'])
-
+                df_keep_prof_cpd.rename(columns={"metacpdname":"metaname"},inplace=True)
+                df_keep_prof_cpd.loc[df_keep_prof_cpd.metaname == "No result", 'metaname'] = None
+                df_keep_prof_cpd['metaname'] = df_keep_prof_cpd['metaname'].str[:30].fillna(df_keep_prof_cpd['metabatchid'])
+                
             if (choix_source == "CRISPER") or (choix_source == "ORF-Broad"):
                 sql_crisper2 = f"SELECT gene.symbol, gene.geneid, genebatchs.batchid FROM genebatchs INNER JOIN gene \
                                 ON gene.geneid=genebatchs.geneid WHERE genebatchs.batchid IN ({','.join(b_list_cpd)}) GROUP BY gene.symbol, gene.geneid, genebatchs.batchid"
-                df_results_cpd = sql_df(sql_crisper2, conn).drop_duplicates(subset=["batchid"])
+                df_results_gene = sql_df(sql_crisper2, conn).drop_duplicates(subset=["batchid"])
                 
-                if len(df_results_cpd) > 0:
-                    df_results_cpd.drop_duplicates(subset=["geneid"], inplace=True)
-                    df_keep_prof_cpd = df_prof_crisper[df_prof_crisper["metabatchid"].isin(df_keep_cpd["metabatchid"].values)].reset_index(drop=True)
-                    meta_cols = [col for col in df_keep_prof_cpd.columns if col.startswith("meta")]
-                    df_keep_cpd[meta_cols] = df_keep_prof_cpd[meta_cols]
-                    df_keep_cpd["metacpdname"] = df_keep_cpd["metabatchid"]
+                if len(df_results_gene) > 0:
+                    df_results_gene.drop_duplicates(subset=["geneid"], inplace=True)
+                    df_keep_prof_gene = df_prof_crisper[df_prof_crisper["metabatchid"].isin(df_keep_cpd["metabatchid"].values)].reset_index(drop=True)
+                    meta_cols = [col for col in df_keep_prof_gene.columns if col.startswith("meta")]
+                    df_keep_cpd[meta_cols] = df_keep_prof_gene[meta_cols]
+                    df_keep_cpd["metaname"] = df_keep_cpd["metabatchid"]
                     df_keep_cpd["efficacy"] = None
-                    df_keep_prof_cpd['metacpdname'] = df_keep_prof_cpd['metabatchid']
-                    df_keep_prof_cpd = df_keep_prof_cpd.merge(df_results_cpd.add_prefix('meta'), left_on='metabatchid', right_on='metabatchid').reset_index(drop=True)
-
+                    df_keep_prof_gene['metaname'] = df_keep_prof_gene['metabatchid']
+                    df_keep_prof_gene = df_keep_prof_gene.merge(df_results_gene.add_prefix('meta'), left_on='metabatchid', right_on='metabatchid').reset_index(drop=True)
+                    
+                    df_keep_prof_cpd=pd.concat([df_keep_prof_cpd, df_keep_prof_gene])
+                    df_results_cpd=pd.concat([df_results_gene, df_results_cpd])
+               
                                 
 
                 st.session_state["df_sim_crisper"] = df_keep_cpd
@@ -157,8 +161,10 @@ else:
         
             
 
-        if len(df_keep_cpd) > 0:
+        if len(df_keep_cpd) > 1:
             st.write("\n")
+          
+           
             
             df_keep_cpd = df_keep_cpd.merge(
                 df_results_cpd, left_on='metabatchid', right_on='batchid').reset_index(drop=True)
@@ -180,6 +186,7 @@ else:
          
             st.write("\n")
             fig_cols2 = st.columns(2)
+            
             with fig_cols2[0]:
                 fig = px.pie(df_keep_cpd,  names='symbol',
                              title=f'{rad} {title} : symbol',
@@ -198,12 +205,12 @@ else:
                                 use_container_width=True)
 
             st.write("\n")  # ----------plot sim cpds in UMAP
-       
+          
             df_src_emd["color"] = "others"
             df_src_emd.loc[df_src_emd["metabatchid"].isin(
                 batch_list_cpd), "color"] = "similar compounds"
-            df_src_emd.loc[df_src_emd["metaname"] ==
-                           choix, "color"] = "selected compounds"
+            df_src_emd.loc[df_src_emd["metabatchid"] ==
+                           choix_batchid, "color"] = "selected compounds"
            
             fig = px.scatter(
                 df_src_emd,
@@ -229,7 +236,7 @@ else:
                 
                     tmp = df_src_emd.loc[(df_src_emd['umap1']==x) & (df_src_emd['umap2'] == y) ]
                     batch=tmp.metabatchid.values[0]
-                    name=tmp.metacpdname.values[0]
+                    name=tmp.metaname.values[0]
              
                     sql_point = f"select * from platemap where batchid='{batch}' and assay='{choix_source}'"
                     df_plates= sql_df(sql_point, conn)
@@ -260,13 +267,13 @@ else:
             tmp = df_keep_prof_cpd.head(15)
             
             # if choix_source=="CRISPER" or choix_source=="ORF-Broad" :
-            #     tmp["metacpdname"]=tmp["metasymbol"]
+            #     tmp["metaname"]=tmp["metasymbol"]
             
            
            
-            cpd_names = tmp.metacpdname.values
+            cpd_names = tmp.metaname.values
          
-            df_plt = tmp.set_index("metacpdname")
+            df_plt = tmp.set_index("metaname")
          
             
             
