@@ -32,8 +32,8 @@ with tab2:
     st.image("profile_db.png")
  
     st.write("Example for projects:  SELECT * from projectsprofile where project='PD'")
-    st.write("Example for jump and crispr:  SELECT * from aggcombatprofile where metasource='CRISPER'")
-    sql_line = st.text_area("Enter your search",help="select * from aggcombatprofile")
+    st.write("Example for jump and crispr:  SELECT * from aggprofile where metasource='CRISPER'")
+    sql_line = st.text_area("Enter your search",help="select * from aggprofile")
     if len(sql_line)>0:
         st.write("your SQL is :",sql_line)
         df_profiles= sql_df(sql_line, profile_conn)

@@ -73,7 +73,7 @@ profile_conn = psycopg2.connect(
 #     database="ksilink_cpds",
 #     password="12345",
 # )
-# sql_profile = f"select * from aggcombatprofile where metabatchid  in (" + ",".join(bq) + ")"
+# sql_profile = f"select * from aggprofile where metabatchid  in (" + ",".join(bq) + ")"
 
 # df_cpd_prof = sql_df(sql_profile, conn2)
 # df_cpd_prof = df_cpd_prof[df_cpd_prof["metasource"] == choix_source].reset_index(drop=True)
@@ -98,7 +98,7 @@ profile_conn = psycopg2.connect(
 # for bs in b_list2:
 #     bq.append("'" + bs + "'")
 
-# sql_crispr = "select * from crisperbatchs where geneid  in (" + ",".join(bq) + ")"
+# sql_crispr = "select * from genebatchs where geneid  in (" + ",".join(bq) + ")"
 # df_crispr = sql_df(sql_crispr, conn)
 
 # df_crispr["pathid"]=df_crispr["geneid"].map(dict1)
@@ -131,7 +131,7 @@ profile_conn = psycopg2.connect(
 # for bs in b_list2:
 #     bq.append("'" + bs + "'")
 
-# sql_crispr_prof = "select * from aggcombatprofile where metabatchid  in (" + ",".join(bq) + ")"
+# sql_crispr_prof = "select * from aggprofile where metabatchid  in (" + ",".join(bq) + ")"
 # df_crispr_prof = sql_df(sql_crispr_prof, conn2)
 # df_crispr_merge = df_crispr_prof.merge(df_crispr, left_on="metabatchid", right_on="batchid").reset_index(drop=True)
 

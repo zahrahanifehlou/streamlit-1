@@ -90,7 +90,7 @@ if 'CRISPER' not in sel_source:
                         group by  cpdbatchs.batchid,cpd.pubchemid,cpd.keggid,cpd.cpdname,cpdgene.geneid"
 # sql_data="select * from platemap"
 else:
-    sql_data='select * from crisperbatchs'
+    sql_data='select * from genebatchs'
 data = sql_df(sql_data, conn)
 if 'CRISPER' not in sel_source:
     data.dropna(subset='keggid',inplace=True)
@@ -106,8 +106,8 @@ st.write(data.sample(2))
 list_batch = [f"'{meta_batchid}'" for meta_batchid in data["meta_batchid"]]
 
 # st.write(len(data))
-sql_drug_profile = f"select * from aggcombatprofile where metabatchid  in (" + ",".join(list_batch) + ")"
-# sql_drug_profile = f"SELECT * FROM aggcombatprofile \
+sql_drug_profile = f"select * from aggprofile where metabatchid  in (" + ",".join(list_batch) + ")"
+# sql_drug_profile = f"SELECT * FROM aggprofile \
 # WHERE metabatchid IN ({','.join(list_batch)})"
 df_prof_drug = sql_df(sql_drug_profile, conn_profileDB)
 df_prof_drug_meta=df_prof_drug.merge(data,left_on='metabatchid',right_on='meta_batchid').reset_index(drop=True)

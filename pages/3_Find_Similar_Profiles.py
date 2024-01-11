@@ -49,19 +49,24 @@ else:
         st.write("Selected Profile", df_sel)
 
     # ---- source and crisper profile ----------------------------------------------------------------------------
-    sql_profile = f"select * from aggcombatprofile where metasource='{choix_source}'"
+    sql_profile = f"select * from aggprofile where metasource='{choix_source}'"
     df_source = sql_df(sql_profile, profile_conn)
 
-    sql_crisper_profile = f"SELECT * FROM aggcombatprofile WHERE metasource='CRISPER'"
+    sql_crisper_profile = f"SELECT * FROM aggprofile WHERE metasource='CRISPER' or metasource='ORF-Broad'"
     df_prof_crisper = sql_df(sql_crisper_profile, profile_conn)
 
     # umap--------------------------------------------------------
     @st.cache_data
     def get_umap(choix_source):
         sql_umqpemd = f"select * from umapemd where metasource='{choix_source}'"
+      
         df_src_emd = sql_df(sql_umqpemd, profile_conn)
+        
         return df_src_emd
     df_src_emd = get_umap(choix_source=choix_source)
+    
+    
+    
 
 
 
@@ -106,7 +111,7 @@ else:
         df_keep_prof_cpd = pd.DataFrame()
         
         if len(b_list_cpd) > 0:
-            if choix_source != "CRISPER":
+            if (choix_source != "CRISPER") and (choix_source != "ORF-Broad"):
                 sql_cpds = f"SELECT cpd.pubchemid, cpd.keggid, cpd.cpdname, gene.symbol, cpd.smile, cpdgene.geneid, cpdbatchs.batchid, keggcpd.efficacy FROM cpd \
                             INNER JOIN cpdbatchs ON cpd.pubchemid=cpdbatchs.pubchemid \
                             LEFT JOIN cpdgene ON cpdbatchs.pubchemid=cpdgene.pubchemid \
@@ -122,9 +127,9 @@ else:
                     df_keep_prof_cpd.loc[df_keep_prof_cpd.metacpdname == "No result", 'metacpdname'] = None
                     df_keep_prof_cpd['metacpdname'] = df_keep_prof_cpd['metacpdname'].str[:30].fillna(df_keep_prof_cpd['metabatchid'])
 
-            if choix_source == "CRISPER":
-                sql_crisper2 = f"SELECT gene.symbol, gene.geneid, crisperbatchs.batchid FROM crisperbatchs INNER JOIN gene \
-                                ON gene.geneid=crisperbatchs.geneid WHERE crisperbatchs.batchid IN ({','.join(b_list_cpd)}) GROUP BY gene.symbol, gene.geneid, crisperbatchs.batchid"
+            if (choix_source == "CRISPER") or (choix_source == "ORF-Broad"):
+                sql_crisper2 = f"SELECT gene.symbol, gene.geneid, genebatchs.batchid FROM genebatchs INNER JOIN gene \
+                                ON gene.geneid=genebatchs.geneid WHERE genebatchs.batchid IN ({','.join(b_list_cpd)}) GROUP BY gene.symbol, gene.geneid, genebatchs.batchid"
                 df_results_cpd = sql_df(sql_crisper2, conn).drop_duplicates(subset=["batchid"])
                 
                 if len(df_results_cpd) > 0:
@@ -193,10 +198,11 @@ else:
                                 use_container_width=True)
 
             st.write("\n")  # ----------plot sim cpds in UMAP
+       
             df_src_emd["color"] = "others"
             df_src_emd.loc[df_src_emd["metabatchid"].isin(
                 batch_list_cpd), "color"] = "similar compounds"
-            df_src_emd.loc[df_src_emd["metacpdname"] ==
+            df_src_emd.loc[df_src_emd["metaname"] ==
                            choix, "color"] = "selected compounds"
            
             fig = px.scatter(
@@ -207,8 +213,8 @@ else:
                 opacity=0.5,
                 color_discrete_sequence=["blue", "red", "green"],
                 title=f"{rad} {title}:UMAP ",
-                hover_data=["metabatchid", "metaefficacy",
-                            "metageneid", "metakeggid"],
+                hover_data=["metabatchid","metaname"
+                            ],
             )
             if choix_source not in(["Ksilink_625","Ksilink_25","CRISPER"]):
                 st.plotly_chart(fig, theme="streamlit",
@@ -392,7 +398,7 @@ else:
                             plate=df_plates.plate[i]
                             well=df_plates.well[i]
                             fpath=f"/mnt/shares/L/PROJECTS/JUMP-CP/Checkout_Results/BirdView/{plate}/{plate}_{well}.jpg"
-                            if choix_source=="CRISPER":
+                            if choix_source=="CRISPR":
                                  fpath=f"/mnt/shares/L/PROJECTS/JUMP-CRISPR/Checkout_Results/BirdView/{plate}/{plate}_{well}.jpg"
                             if os.path.isfile(fpath):
                                 image = Image.open(fpath)

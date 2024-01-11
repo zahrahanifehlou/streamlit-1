@@ -107,14 +107,14 @@ df_prof = pd.DataFrame()
 if str(option) == "gene" and len(df_res) > 0:
         geneid_lis = [f"'{geneid}'" for geneid in df_res["geneid"]]
         
-        sql_crisper = f"SELECT gene.symbol, gene.geneid,crisperbatchs.batchid  FROM crisperbatchs  inner join gene \
-            on gene.geneid=crisperbatchs.geneid  WHERE crisperbatchs.geneid IN ({','.join(geneid_lis)})  group by gene.symbol, gene.geneid,crisperbatchs.batchid "
+        sql_crisper = f"SELECT gene.symbol, gene.geneid,genebatchs.batchid  FROM genebatchs  inner join gene \
+            on gene.geneid=genebatchs.geneid  WHERE genebatchs.geneid IN ({','.join(geneid_lis)})  group by gene.symbol, gene.geneid,genebatchs.batchid "
         df_crisperBatchs = sql_df(
             sql_crisper, conn).drop_duplicates(subset=["batchid"])
         batch_list = [f"'{batchid}'" for batchid in df_crisperBatchs["batchid"]]
         if len(batch_list) > 0:
             sql_crisper_profile = (
-                f"SELECT * FROM aggcombatprofile WHERE metabatchid IN ({','.join(batch_list)})"
+                f"SELECT * FROM aggprofile WHERE metabatchid IN ({','.join(batch_list)})"
             )
 
             df_prof_crisper = sql_df(sql_crisper_profile, conn_profileDB)
@@ -122,7 +122,7 @@ if str(option) == "gene" and len(df_res) > 0:
                 'meta'), left_on='metabatchid', right_on='metabatchid').reset_index(drop=True)
             df_prof_crisper["metatype"] = "CRISPR"
             df_prof_crisper["metaefficacy"] = "Unknown"
-            df_prof_crisper["metacpdname"]=df_prof_crisper["metabatchid"]
+            df_prof_crisper["metacpdname"]=df_prof_crisper["metasymbol"]
             df_prof = pd.concat([df_prof, df_prof_crisper])
             df_prof["metacpdname"] = df_prof["metacpdname"].fillna(
                             df_prof["metabatchid"])
@@ -202,7 +202,7 @@ if len(df_cpds) > 0:
     with tabs[1]:
         server_name = st.radio(
             "select server",
-            ("all", "pubchem", "KEGG"),
+            ("all", "pubchem", "KEGG", "broad"),
             horizontal=True,
         )
         df_cpdGene_tmp = df_cpdGene.copy()
@@ -254,7 +254,7 @@ if len(df_cpds) > 0:
         list_batchid = [f"'{batch}'" for batch in df_cpdGene_tmp["batchid"]]
     if len(list_batchid)>0:
         sql_profile = (
-            "select * from aggcombatprofile where metabatchid in ("
+            "select * from aggprofile where metabatchid in ("
             + ",".join(list_batchid)
             + ")"
         )
@@ -279,8 +279,8 @@ tab1, tab2, tab3, tab4 = st.tabs(
     [
         "compounds Profiles",
         "compounds Summary",
-        "Crisper Profiles",
-        "Crisper Summary",
+        "Crispr/ORF Profiles",
+        "Crispr/ORF Summary",
     ]
 )
 
@@ -310,10 +310,11 @@ if  len(df_prof)>0:
     df_plt = df_plt.set_index("meta_name_source")
     
     # df_plt = df_plt.drop('name',axis=1)
-    st.dataframe(df_plt)
+    
     filter_col = [
         col for col in df_plt.columns if not col.startswith("meta")]
     df_plt2 = df_plt[filter_col].T
+  
     sty = st.radio('Line Style',['linear','spline'])
     fig_line = px.line(
         df_plt2, x=filter_col, y=cpd_names, width=1400, height=1000,line_shape=sty, title="Profiles")
