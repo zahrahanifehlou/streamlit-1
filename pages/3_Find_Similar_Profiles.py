@@ -59,9 +59,14 @@ else:
     @st.cache_data
     def get_umap(choix_source):
         sql_umqpemd = f"select * from umapemd where metasource='{choix_source}'"
+      
         df_src_emd = sql_df(sql_umqpemd, profile_conn)
+        
         return df_src_emd
     df_src_emd = get_umap(choix_source=choix_source)
+    
+    
+    
 
 
 
@@ -193,10 +198,11 @@ else:
                                 use_container_width=True)
 
             st.write("\n")  # ----------plot sim cpds in UMAP
+       
             df_src_emd["color"] = "others"
             df_src_emd.loc[df_src_emd["metabatchid"].isin(
                 batch_list_cpd), "color"] = "similar compounds"
-            df_src_emd.loc[df_src_emd["metacpdname"] ==
+            df_src_emd.loc[df_src_emd["metaname"] ==
                            choix, "color"] = "selected compounds"
            
             fig = px.scatter(
@@ -207,8 +213,8 @@ else:
                 opacity=0.5,
                 color_discrete_sequence=["blue", "red", "green"],
                 title=f"{rad} {title}:UMAP ",
-                hover_data=["metabatchid", "metaefficacy",
-                            "metageneid", "metakeggid"],
+                hover_data=["metabatchid","metaname"
+                            ],
             )
             if choix_source not in(["Ksilink_625","Ksilink_25","CRISPER"]):
                 st.plotly_chart(fig, theme="streamlit",
