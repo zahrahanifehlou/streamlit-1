@@ -300,158 +300,158 @@ else:
                 st.pyplot(fig_clusmap)
                 
 #--------------------------------------------------------------------------------------------------------
-    with knn_sim_tab:  # Similar CPDs with UMAP
-        from sklearn.neighbors import NearestNeighbors
-        nb_cluster = st.slider(
-            'Number of neighbors', min_value=2, max_value=30, value=10, step=1)
+    # with knn_sim_tab:  # Similar CPDs with UMAP
+    #     from sklearn.neighbors import NearestNeighbors
+    #     nb_cluster = st.slider(
+    #         'Number of neighbors', min_value=2, max_value=30, value=10, step=1)
 
-        st.write(df_src_emd)
-        X = df_src_emd[["umap1", "umap2"]].to_numpy()
-        neigh = NearestNeighbors(n_neighbors=nb_cluster, n_jobs=-1)
-        neigh.fit(X)
-        if choix in df_src_emd["metaname"].values:
+    #     st.write(df_src_emd)
+    #     X = df_src_emd[["umap1", "umap2"]].to_numpy()
+    #     neigh = NearestNeighbors(n_neighbors=nb_cluster, n_jobs=-1)
+    #     neigh.fit(X)
+    #     if choix in df_src_emd["metaname"].values:
 
-            points = df_src_emd[df_src_emd["metaname"]
-                                == choix][["umap1", "umap2"]]
+    #         points = df_src_emd[df_src_emd["metaname"]
+    #                             == choix][["umap1", "umap2"]]
 
-            distances, indices = neigh.kneighbors(points)
-            knn_sim_df=pd.concat([df_src_emd[df_src_emd["metaname"]==choix],df_src_emd.loc[indices[0,1:]]])
-            knn_sim_df.reset_index(inplace=True, drop=True)
+    #         distances, indices = neigh.kneighbors(points)
+    #         knn_sim_df=pd.concat([df_src_emd[df_src_emd["metaname"]==choix],df_src_emd.loc[indices[0,1:]]])
+    #         knn_sim_df.reset_index(inplace=True, drop=True)
 
-            # knn_sim_df.drop(columns=["metasource"],inplace=True)
-            df_keep_prof_cpd_knn =df_source[df_source['metabatchid'].isin(knn_sim_df['metabatchid'].values)]  
+    #         # knn_sim_df.drop(columns=["metasource"],inplace=True)
+    #         df_keep_prof_cpd_knn =df_source[df_source['metabatchid'].isin(knn_sim_df['metabatchid'].values)]  
         
-            df_keep_prof_cpd_knn.reset_index(inplace=True, drop=True)
+    #         df_keep_prof_cpd_knn.reset_index(inplace=True, drop=True)
             
             
 
-            df_keep_prof_cpd_knn = df_keep_prof_cpd_knn.merge(knn_sim_df[["metabatchid", "metaname", 
-                                                              ]], left_on='metabatchid', right_on='metabatchid').reset_index(drop=True)
-            df_keep_prof_cpd_knn.loc[df_keep_prof_cpd_knn.metaname ==
-                                     "No result", 'metaname'] = None
-            df_keep_prof_cpd_knn['metaname'] = df_keep_prof_cpd_knn['metaname'].str[:30]
-            df_keep_prof_cpd_knn['metaname'] = df_keep_prof_cpd_knn['metaname'].fillna(
-                df_keep_prof_cpd_knn['metabatchid'])
+    #         df_keep_prof_cpd_knn = df_keep_prof_cpd_knn.merge(knn_sim_df[["metabatchid", "metaname", 
+    #                                                           ]], left_on='metabatchid', right_on='metabatchid').reset_index(drop=True)
+    #         df_keep_prof_cpd_knn.loc[df_keep_prof_cpd_knn.metaname ==
+    #                                  "No result", 'metaname'] = None
+    #         df_keep_prof_cpd_knn['metaname'] = df_keep_prof_cpd_knn['metaname'].str[:30]
+    #         df_keep_prof_cpd_knn['metaname'] = df_keep_prof_cpd_knn['metaname'].fillna(
+    #             df_keep_prof_cpd_knn['metabatchid'])
 
-            if len(knn_sim_df) > 0:
-                st.write("\n")
-                fig_cols3 = st.columns(2)
-                name = choix_source+choix
-                with fig_cols3[0]:
-                    st.write(f"{title} MetaData NN")
-                    st.write(knn_sim_df)
+    #         if len(knn_sim_df) > 0:
+    #             st.write("\n")
+    #             fig_cols3 = st.columns(2)
+    #             name = choix_source+choix
+    #             with fig_cols3[0]:
+    #                 st.write(f"{title} MetaData NN")
+    #                 st.write(knn_sim_df)
                 
-                with fig_cols3[1]:  # Profile
-                    st.write(f" {title} Profile NN")
-                    st.write(df_keep_prof_cpd_knn.head(10))
+    #             with fig_cols3[1]:  # Profile
+    #                 st.write(f" {title} Profile NN")
+    #                 st.write(df_keep_prof_cpd_knn.head(10))
        
                     
 
-                st.write("\n")
-                fig_cols4 = st.columns(2)
-                with fig_cols4[0]:
-                    fig = px.pie(knn_sim_df,  names='metaname',
-                                 title=f' {title}  : gene symbol',
-                                 )
-                    fig.update_traces(textposition='inside',
-                                      textinfo='percent+label')
-                    st.plotly_chart(fig, theme="streamlit",
-                                    use_container_width=True)
-                with fig_cols4[1]:
-                    fig = px.pie(knn_sim_df,  names='metaefficacy',
-                                 title=f' {title} : efficacy',
-                                 )
-                    fig.update_traces(textposition='inside',
-                                      textinfo='percent+label')
-                    st.plotly_chart(fig, theme="streamlit",
-                                    use_container_width=True)
+    #             st.write("\n")
+    #             fig_cols4 = st.columns(2)
+    #             with fig_cols4[0]:
+    #                 fig = px.pie(knn_sim_df,  names='metaname',
+    #                              title=f' {title}  : gene symbol',
+    #                              )
+    #                 fig.update_traces(textposition='inside',
+    #                                   textinfo='percent+label')
+    #                 st.plotly_chart(fig, theme="streamlit",
+    #                                 use_container_width=True)
+    #             with fig_cols4[1]:
+    #                 fig = px.pie(knn_sim_df,  names='efficacy',
+    #                              title=f' {title} : efficacy',
+    #                              )
+    #                 fig.update_traces(textposition='inside',
+    #                                   textinfo='percent+label')
+    #                 st.plotly_chart(fig, theme="streamlit",
+    #                                 use_container_width=True)
 
-                # -------------------------------------------
-                st.write("\n")
-                df_src_emd["color"] = "others"
-                df_src_emd.loc[indices[0,1:], "color"] = "similar compounds"
-                # df_src_emd.loc[df_src_emd["metacpdname"].isin(
-                #     nearest_neighbor_name), "color"] = "similar compounds"
-                df_src_emd.loc[df_src_emd["metacpdname"] ==
-                               choix, "color"] = "selected compounds"
-                figUMAP_knn = px.scatter(
-                    df_src_emd,
-                    x="umap1",
-                    y="umap2",
-                    color="color",
-                    opacity=0.5,
-                     color_discrete_sequence=["blue", "red", "green"],
+    #             # -------------------------------------------
+    #             st.write("\n")
+    #             df_src_emd["color"] = "others"
+    #             df_src_emd.loc[indices[0,1:], "color"] = "similar compounds"
+    #             # df_src_emd.loc[df_src_emd["metacpdname"].isin(
+    #             #     nearest_neighbor_name), "color"] = "similar compounds"
+    #             df_src_emd.loc[df_src_emd["metacpdname"] ==
+    #                            choix, "color"] = "selected compounds"
+    #             figUMAP_knn = px.scatter(
+    #                 df_src_emd,
+    #                 x="umap1",
+    #                 y="umap2",
+    #                 color="color",
+    #                 opacity=0.5,
+    #                  color_discrete_sequence=["blue", "red", "green"],
 
-                    title=f" {title}  :UMAP ",
-                    hover_data=["metabatchid", "metaname",
-                               ]
-                )
-                if choix_source not in(["Ksilink_625","Ksilink_25","CRISPER"]):
-                    st.plotly_chart(figUMAP_knn, theme="streamlit",
-                                    use_container_width=True)
+    #                 title=f" {title}  :UMAP ",
+    #                 hover_data=["metabatchid", "metaname",
+    #                            ]
+    #             )
+    #             if choix_source not in(["Ksilink_625","Ksilink_25","CRISPER"]):
+    #                 st.plotly_chart(figUMAP_knn, theme="streamlit",
+    #                                 use_container_width=True)
 
-                else:
-                    selected_point_knn = plotly_events(figUMAP_knn,click_event=True)
-                    if selected_point_knn:
-                        x=selected_point_knn[0]['x']
-                        y=selected_point_knn[0]['y']
+    #             else:
+    #                 selected_point_knn = plotly_events(figUMAP_knn,click_event=True)
+    #                 if selected_point_knn:
+    #                     x=selected_point_knn[0]['x']
+    #                     y=selected_point_knn[0]['y']
                     
-                        tmp = df_src_emd.loc[(df_src_emd['umap1']==x) & (df_src_emd['umap2'] == y) ]
-                        batch_knn=tmp.metabatchid.values[0]
-                        name_knn=tmp.metacpdname.values[0]
+    #                     tmp = df_src_emd.loc[(df_src_emd['umap1']==x) & (df_src_emd['umap2'] == y) ]
+    #                     batch_knn=tmp.metabatchid.values[0]
+    #                     name_knn=tmp.metacpdname.values[0]
                     
                        
-                        sql_point = f"select * from platemap where batchid='{batch_knn}' and assay='{choix_source}'"
-                        df_plates= sql_df(sql_point, conn)                        
-                        plt_len=len(df_plates)
-                        if plt_len>0:
-                            br_cols = st.columns(plt_len)
-                        for i in range(len(df_plates)):
-                            plate=df_plates.plate[i]
-                            well=df_plates.well[i]
-                            fpath=f"/mnt/shares/L/PROJECTS/JUMP-CP/Checkout_Results/BirdView/{plate}/{plate}_{well}.jpg"
-                            if choix_source=="CRISPR":
-                                 fpath=f"/mnt/shares/L/PROJECTS/JUMP-CRISPR/Checkout_Results/BirdView/{plate}/{plate}_{well}.jpg"
-                            if os.path.isfile(fpath):
-                                image = Image.open(fpath)
-                                with br_cols[i]:
-                                    st.image(image, caption=f"{name_knn} : {plate} {well}", width =256)
+    #                     sql_point = f"select * from platemap where batchid='{batch_knn}' and assay='{choix_source}'"
+    #                     df_plates= sql_df(sql_point, conn)                        
+    #                     plt_len=len(df_plates)
+    #                     if plt_len>0:
+    #                         br_cols = st.columns(plt_len)
+    #                     for i in range(len(df_plates)):
+    #                         plate=df_plates.plate[i]
+    #                         well=df_plates.well[i]
+    #                         fpath=f"/mnt/shares/L/PROJECTS/JUMP-CP/Checkout_Results/BirdView/{plate}/{plate}_{well}.jpg"
+    #                         if choix_source=="CRISPR":
+    #                              fpath=f"/mnt/shares/L/PROJECTS/JUMP-CRISPR/Checkout_Results/BirdView/{plate}/{plate}_{well}.jpg"
+    #                         if os.path.isfile(fpath):
+    #                             image = Image.open(fpath)
+    #                             with br_cols[i]:
+    #                                 st.image(image, caption=f"{name_knn} : {plate} {well}", width =256)
 
     
                     
 
-                #
-                st.write("\n")  # ----------plot PROFILE
-                tmp = df_keep_prof_cpd_knn.head(15)
-                cpd_names = tmp.metacpdname.values
-                df_plt = tmp.set_index("metacpdname")
-                filter_col = [
-                    col for col in df_plt.columns if not col.startswith("meta")]
-                df_plt = df_plt[filter_col].T
-                fig_clusmap = px.line(
-                    df_plt, x=filter_col, y=cpd_names, width=1400, height=1000, title=f"{title} : Profile")
-                st.plotly_chart(fig_clusmap, theme="streamlit",
-                                use_container_width=True)
+    #             #
+    #             st.write("\n")  # ----------plot PROFILE
+    #             tmp = df_keep_prof_cpd_knn.head(15)
+    #             cpd_names = tmp.metacpdname.values
+    #             df_plt = tmp.set_index("metacpdname")
+    #             filter_col = [
+    #                 col for col in df_plt.columns if not col.startswith("meta")]
+    #             df_plt = df_plt[filter_col].T
+    #             fig_clusmap = px.line(
+    #                 df_plt, x=filter_col, y=cpd_names, width=1400, height=1000, title=f"{title} : Profile")
+    #             st.plotly_chart(fig_clusmap, theme="streamlit",
+    #                             use_container_width=True)
 
-                st.write("\n")  # ----------plot PROFILE heatmap
-                tmp = df_keep_prof_cpd_knn.copy()
-                if len(tmp) > 1:
-                    plt_src, col_colors = get_col_colors(tmp)
-                    fig_clusmap, ax1 = plt.subplots()
-                    fig_clusmap = sns.clustermap(
-                        plt_src,
-                        metric="cosine",
-                        col_colors=col_colors,
-                        # method="ward",
-                        xticklabels=False,
-                        yticklabels=True,
-                        col_cluster=False,
-                        cmap="vlag",
-                        center=0,
-                        vmin=-5,
-                        vmax=5,
-                        figsize=(16, len(plt_src)/2),
-                    )
+    #             st.write("\n")  # ----------plot PROFILE heatmap
+    #             tmp = df_keep_prof_cpd_knn.copy()
+    #             if len(tmp) > 1:
+    #                 plt_src, col_colors = get_col_colors(tmp)
+    #                 fig_clusmap, ax1 = plt.subplots()
+    #                 fig_clusmap = sns.clustermap(
+    #                     plt_src,
+    #                     metric="cosine",
+    #                     col_colors=col_colors,
+    #                     # method="ward",
+    #                     xticklabels=False,
+    #                     yticklabels=True,
+    #                     col_cluster=False,
+    #                     cmap="vlag",
+    #                     center=0,
+    #                     vmin=-5,
+    #                     vmax=5,
+    #                     figsize=(16, len(plt_src)/2),
+    #                 )
 
-                    st.pyplot(fig_clusmap)
+    #                 st.pyplot(fig_clusmap)
 
