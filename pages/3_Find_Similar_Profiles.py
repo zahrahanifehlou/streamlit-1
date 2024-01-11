@@ -139,7 +139,7 @@ else:
                     meta_cols = [col for col in df_keep_prof_gene.columns if col.startswith("meta")]
                     df_keep_cpd[meta_cols] = df_keep_prof_gene[meta_cols]
                     df_keep_cpd["metaname"] = df_keep_cpd["metabatchid"]
-                    df_keep_cpd["efficacy"] = None
+                    
                     df_keep_prof_gene['metaname'] = df_keep_prof_gene['metabatchid']
                     df_keep_prof_gene = df_keep_prof_gene.merge(df_results_gene.add_prefix('meta'), left_on='metabatchid', right_on='metabatchid').reset_index(drop=True)
                     
@@ -163,6 +163,7 @@ else:
 
         if len(df_keep_cpd) > 1:
             st.write("\n")
+            
           
            
             
@@ -287,8 +288,9 @@ else:
 
             st.write("\n")  # ----------plot PROFILE heatmap
             tmp = df_keep_prof_cpd.copy()
+           
             if len(tmp) > 1:
-                plt_src, col_colors = get_col_colors(tmp)
+                plt_src, col_colors = get_col_colors(tmp, inex_col_name="metaname")
                 fig_clusmap, ax1 = plt.subplots()
                 fig_clusmap = sns.clustermap(
                     plt_src,
