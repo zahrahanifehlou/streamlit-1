@@ -319,7 +319,9 @@ def loadCellbyCell(file):
 
 
 
-if on and cbc:    
+if on and cbc:
+    sys.path.append("/mnt/shares/L/Code/KsilinkNotebooks/LIB/")
+    import tools    
     paths = sorted(Path(f'/mnt/shares/L/Projects/{proj}/Checkout_Results/').iterdir(), key=os.path.getmtime, reverse=True)
     # st.write(paths)
     paths_clean=[f for f in paths if 'test' not in str((f)).lower()]
@@ -332,6 +334,31 @@ if on and cbc:
         if len(files)>0:
             with st.spinner(f'Wait for it... Loading {len(files)} files'):
                 result_deep=pqdm(files, loadCellbyCell,n_jobs=20)
-                alldata = pd.concat(result_deep).reset_index(drop=True)
-                components.html(get_pyg_html(alldata), height=1000, scrolling=True)
+                df_data = pd.concat(result_deep).reset_index(drop=True)
+                df_data = tools.setCategories(tools.retrieve_tags(df_data))
+                df_data=tools.getScreenCategories(df_data)
+                # st.write('df_data',df_data)
+                len_1=len(df_data)
+                df_data.replace([np.inf, -np.inf], np.nan, inplace=True)
+
+                df_data= df_data.dropna()
+                len_2=len(df_data)
+                df_data=df_data.apply(pd.to_numeric,errors='ignore')
+                if len_1!=len_2:
+                    st.warning(f'{len_1-len_2} rows were removed due to NaN values',icon="🚨")
+                len_col=len(df_data.columns)
+                corr_matrix = df_data.corr().abs()
+
+                # Select upper triangle of correlation matrix
+                upper = corr_matrix.where(np.triu(np.ones(corr_matrix.shape), k=1).astype(np.bool))
+
+                # Find index of feature columns with correlation greater than 0.95
+                to_drop = [column for column in upper.columns if any(upper[column] > 0.95)]
+
+                # Drop features 
+                df_data = df_data.drop(df_data[to_drop], axis=1)
+                len_col2=len(df_data.columns)
+                if len_col!=len_col2:
+                    st.warning(f'{len_col-len_col2} out of {len_col} columns were removed due to correlation > |0.95| ',icon="🚨")
+                    components.html(get_pyg_html(df_data), height=1000, scrolling=True)
             st.success('Done!')
