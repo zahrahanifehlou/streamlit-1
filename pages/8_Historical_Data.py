@@ -119,6 +119,7 @@ if on and tp:
         df_data=df_data.apply(pd.to_numeric,errors='ignore')
         if len_1!=len_2:
             st.warning(f'{len_1-len_2} rows were removed due to NaN values')
+        # Create correlation matrix
         
     else:
         exit(0)
@@ -192,7 +193,21 @@ if on and not dl and not cbc and not tp:
             len_2=len(df_data)
             df_data=df_data.apply(pd.to_numeric,errors='ignore')
             if len_1!=len_2:
-                st.warning(f'{len_1-len_2} rows were removed due to NaN values')
+                st.warning(f'{len_1-len_2} rows were removed due to NaN values',icon="🚨")
+            len_col=len(df_data.columns)
+            corr_matrix = df_data.corr().abs()
+
+            # Select upper triangle of correlation matrix
+            upper = corr_matrix.where(np.triu(np.ones(corr_matrix.shape), k=1).astype(np.bool))
+
+            # Find index of feature columns with correlation greater than 0.95
+            to_drop = [column for column in upper.columns if any(upper[column] > 0.95)]
+
+            # Drop features 
+            df_data = df_data.drop(df_data[to_drop], axis=1)
+            len_col2=len(df_data.columns)
+            if len_col!=len_col2:
+                st.warning(f'{len_col-len_col2} out of {len_col} columns were removed due to correlation > |0.95| ',icon="🚨")
             components.html(get_pyg_html(df_data), height=1000, scrolling=True)
             umap_on=st.sidebar.toggle('UMAP')
             if umap_on:
