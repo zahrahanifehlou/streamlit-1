@@ -111,7 +111,15 @@ if on and tp:
                 st.warning('No data started with ag in this directory',icon="🚨" )
     if len(list_df)>0:
         df_data =  pd.concat(list_df)
+        len_1=len(df_data)
+        df_data.replace([np.inf, -np.inf], np.nan, inplace=True)
+
+        df_data= df_data.dropna()
+        len_2=len(df_data)
         df_data=df_data.apply(pd.to_numeric,errors='ignore')
+        if len_1!=len_2:
+            st.warning(f'{len_1-len_2} rows were removed due to NaN values')
+        
     else:
         exit(0)
     st.warning("In dev....")
@@ -177,7 +185,14 @@ if on and not dl and not cbc and not tp:
                 st.warning('No data started with ag in this directory',icon="🚨" )
         if len(list_df)>0:
             df_data =  pd.concat(list_df)
+            len_1=len(df_data)
+            df_data.replace([np.inf, -np.inf], np.nan, inplace=True)
+
+            df_data= df_data.dropna()
+            len_2=len(df_data)
             df_data=df_data.apply(pd.to_numeric,errors='ignore')
+            if len_1!=len_2:
+                st.warning(f'{len_1-len_2} rows were removed due to NaN values')
             components.html(get_pyg_html(df_data), height=1000, scrolling=True)
             umap_on=st.sidebar.toggle('UMAP')
             if umap_on:
