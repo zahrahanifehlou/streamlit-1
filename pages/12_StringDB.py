@@ -340,8 +340,8 @@ if not df_genes.empty:
         df_umap=sql_df(umap_sql,conn_prof)
 
         if choice=='Cpds':
-            df_umap=df_umap.dropna(subset='metakeggid',axis=0)
-            df_umap=df_umap.set_index('metakeggid')
+            df_umap=df_umap.dropna(subset='keggid',axis=0)
+            df_umap=df_umap.set_index('keggid')
             df_umap_cluster = df_umap_cluster.set_index('keggid')
             df_umap['cluster']=df_umap_cluster['cluster']
             df_umap["target"] = df_umap_cluster['symbol']
@@ -349,7 +349,7 @@ if not df_genes.empty:
             df_umap_cluster=df_umap_cluster.reset_index()
             df_umap=df_umap.reset_index()
             df_umap['size']=5
-            df_umap["size"]= df_umap["metakeggid"].apply(lambda x:0.5 if x not in df_umap_cluster['keggid'].to_list() else 5)
+            df_umap["size"]= df_umap["keggid"].apply(lambda x:0.5 if x not in df_umap_cluster['keggid'].to_list() else 5)
             # dict1 = df_umap_cluster.set_index('keggid').to_dict()['cluster']
             # df_umap["cluster"] = df_umap['metakeggid'].map(dict1)
         else:
@@ -410,7 +410,7 @@ if not df_genes.empty:
 
         G=nx.Graph(name='Protein Interaction Graph')
         interactions = np.array(interactions)
-
+        # st.write(interactions)
         for i in range(len(interactions)):
             interaction = interactions[i]
             a = interaction[0] # protein a node
