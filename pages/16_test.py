@@ -87,7 +87,9 @@ if t:
     import torchvision.transforms as T
     import multiprocessing
     from torchvision.models import efficientnet_b0, EfficientNet_B0_Weights
+    import gc
     m_cpu = multiprocessing.cpu_count()
+    
     torch.cuda.empty_cache()
     # exit(0)
     # Load the model
@@ -102,7 +104,7 @@ if t:
         # st.write(dir(model))
         # st.write(help(model.prediction))
         weights = EfficientNet_B0_Weights.DEFAULT
-        model = efficientnet_b0(weights=weights)
+        model = nn.DataParallel(efficientnet_b0(weights=weights))
         # preprocess = weights.transforms()
 
         # model=efficientnet_b0(EfficientNet_B0_Weights)
@@ -243,11 +245,20 @@ if t:
         # temp=model(batch.to(device)).squeeze(0)
         # emb.append(temp)
         prediction = model(nuc.to(device)).softmax(0)
-        # class_id = prediction.argmax().item()
+        class_id = prediction.argmax(dim=1)
+        # st.write(class_id.shape)
         # score = prediction[class_id].item()
+        category_name = [weights.meta["categories"][w] for w in class_id ]
         # category_name = weights.meta["categories"][class_id]
-        return prediction
+        return category_name
 
+    def embed(nuc):
+        with torch.no_grad():
+            embeddings = model.module.features(nuc.to(device))
+            embed = nn.AvgPool2d(7)
+            toto =embed(embeddings).squeeze()
+            temp = np.array(toto.cpu().numpy())
+            return temp
 
     import time
 
@@ -263,26 +274,36 @@ if t:
     del tif_files
     # st.write(list_df[0])
     flat_list = [item for sublist in list_df for item in sublist]
-    st.write(len(flat_list))
-    del list_df
+    # st.write(len(flat_list))
+    # del list_df
     b=np.squeeze(torch.stack(flat_list))
 
-    st.write(b.shape)
+    # st.write(b.shape)
     del flat_list
-    g = np.array_split(b,250)
+    g = np.array_split(b,1000)
     del b
+    list_pred=[]
+    list_emb=[]
+    # c=torch.tensor(0)
     for i,item in enumerate(g):
 
-        list_pred = gpu_comp(item)
-        st.write('remaining: ', len(g)-i)
+        list_pred.extend(gpu_comp(item))
+        list_emb.append(embed(item))
+        # st.write('remaining: ', len(g)-i)
     end = time.time()
     st.write('Total Exec Time= ', (end - start)/60)
-    # for i,item in enumerate(list_df):
-    #     b=np.squeeze(torch.stack(list_df[i]))
-    #     st.write(b.shape)
-    #     list_pred = gpu_comp(b)
-    #     st.write(len(list_pred))
-    # st.write(list_img)
+
+    out= np.concatenate(list_emb,axis=0)
+
+    # st.write(len(list_pred))
+    # st.write(out.shape)
+    # b=[]
+    # for i,item in enumerate(list_pred):
+    #     b.append(np.squeeze(list_pred[i]))
+    #     # st.write(b.shape)
+    #     # list_pred = gpu_comp(b)
+    #     # st.write(len(list_pred))
+    # st.write(b)
     # feature=[process_image(f"{path_test}/{file}") for file in tif_files]
     # list_df=[]
     # for i,file in enumerate(tif_files):
@@ -291,26 +312,28 @@ if t:
     #     st.write("Remaining Images:",len(tif_files)-i)
     # # embedding_list = list(feature.values())
     # flat_list = [item for sublist in feature for item in sublist]
-    exit(0)
+    # exit(0)
     import umap
 
     # embed = np.array(embedding_list).reshape(-1, 384)
-    df=pd.concat(list_df,ignore_index=True)
+    # df=pd.concat(list_df,ignore_index=True)
     # df['Plate']
     # st.write(df)
-    st.write(df['Category'].value_counts())
+    # st.write(df['Category'].value_counts())
     # exit(0)
     numerics = ["int16", "int32", "int64", "float16", "float32", "float64"]
-    emb = umap.UMAP(random_state=42, verbose=False).fit_transform(df.select_dtypes(include=numerics))
+    emb = umap.UMAP(random_state=42, verbose=False).fit_transform(out)
     df_all_umap = pd.DataFrame()
     df_all_umap["X"] = emb[:, 0]
     df_all_umap["Y"] = emb[:, 1]
-    df_all_umap['Plate']=df['Plate']
-    df_all_umap['Well']=df['Well']
-    df_all_umap['Category']=df['Category']
-    fig = px.scatter(df_all_umap,x='X',y='Y',hover_data=['Plate','Well'],color='Category')
+    # df_all_umap['Plate']=df['Plate']
+    # df_all_umap['Well']=df['Well']
+    df_all_umap['Category']=list_pred
+    fig = px.scatter(df_all_umap,x='X',y='Y',color='Category')
     st.plotly_chart(fig, theme="streamlit", use_container_width=True)
     del model
+    gc.collect()
+    # torch.cuda.
 # st.write(df)
 # exit(0)
 
