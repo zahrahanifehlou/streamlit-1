@@ -354,10 +354,10 @@ if not df_genes.empty:
             # df_umap["cluster"] = df_umap['metakeggid'].map(dict1)
         else:
             dict1 = df_umap_cluster.set_index('symbol').to_dict()['cluster']
-            df_umap["cluster"] = df_umap['metagenesymbol'].map(dict1)
+            df_umap["cluster"] = df_umap['metaname'].map(dict1)
             df_umap['size']=5
-            df_umap["size"]= df_umap["metagenesymbol"].apply(lambda x:0.5 if x not in df_umap_cluster['symbol'].to_list() else 5)
-            df_umap["target"] = df_umap['metagenesymbol']
+            df_umap["size"]= df_umap["metaname"].apply(lambda x:0.5 if x not in df_umap_cluster['symbol'].to_list() else 5)
+            df_umap["target"] = df_umap['metaname']
             df_umap["target"]= df_umap["target"].apply(lambda x:x if x in df_umap_cluster['symbol'].to_list() else '')
             
 
@@ -374,35 +374,35 @@ if not df_genes.empty:
         col_dict=dict(zip(list(cluster.cluster.unique()), [tuple(int(c*255) for c in cs) for cs in sns.color_palette("husl", len(cluster.cluster.unique()))]))
         cluster['color'] = cluster['cluster'] .map(col_dict)
         cluster['color']=cluster['color'].fillna("yellow")
-        gene_color=cluster.set_index('metagenesymbol').to_dict()['color']
+        gene_color=cluster.set_index('metaname').to_dict()['color']
         sql_sim = "select * from crisprcos"
         df_sim = sql_df(sql_sim, conn_prof)
     
         df_sim.drop_duplicates(inplace=True)
         df_sim.rename(columns={"symbol1":"Gene_1", "symbol2":"Gene_2" ,"sim":"Cosine_similarity"},inplace=True)
-        df_sim=df_sim[df_sim['Gene_1'].isin(cluster.metagenesymbol)]
-        df_sim=df_sim[df_sim['Gene_2'].isin(cluster.metagenesymbol)]
-        df_sim=df_sim[df_sim['Cosine_similarity']>0.70]
+        df_sim=df_sim[df_sim['Gene_1'].isin(cluster.metaname)]
+        df_sim=df_sim[df_sim['Gene_2'].isin(cluster.metaname)]
+        # df_sim=df_sim[df_sim['Cosine_similarity']>0.70]
         df_sim.reset_index(inplace=True, drop=True)
         final_df = (
             df_sim.merge(
-                cluster, left_on="Gene_1", right_on="metagenesymbol", how="inner"
+                cluster, left_on="Gene_1", right_on="metaname", how="inner"
             )
 
-            .merge(cluster, left_on="Gene_2", right_on="metagenesymbol", how="inner")
-        .drop(columns=["metagenesymbol_y", "metagenesymbol_x"])
+            .merge(cluster, left_on="Gene_2", right_on="metaname", how="inner")
+        .drop(columns=["metaname_y", "metaname_x"])
             .rename(columns={"gene_group_name": "Gene_2_gene_group_name"})
         )
-
+        # st.write(final_df)
         interactions=final_df[["Gene_1","Gene_2","Cosine_similarity"]]
         inter =  np.array(final_df[['Gene_1','Gene_2']])
         tup_inter=list(map(tuple,inter))
-        # st.write(inter)
+        # st.write(tup_inter)
         list_sim=final_df['Cosine_similarity'].to_list()
         # G2 = nx.Graph()
         G2 = nx.Graph(tup_inter)  
         IG = ig.Graph.from_networkx(G2)
-        partition2 = la.find_partition(IG, la.ModularityVertexPartition,n_iterations=-1,weights=list_sim)
+        partition2 = la.find_partition(IG, la.ModularityVertexPartition,n_iterations=-1)
         subax2=ig.plot(partition2,vertex_label=partition2.graph.vs['_nx_name'],vertex_label_size=lab_size,vertex_size=vert_size,
                     margin=10, bbox=(0,0,box_size, box_size))
         # nx.draw(GG, with_labels=True,node_size=10,font_size=4)
