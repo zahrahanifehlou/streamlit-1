@@ -22,17 +22,18 @@ def convert_df(df):
 
 pub  =st.toggle("Search in Pubchem")
 if pub:
-  uploaded_fil = st.file_uploader("Choose files to search", accept_multiple_files=False)
+  list_pub=[]
+  uploaded_fil = st.file_uploader("Choose files to search", accept_multiple_files=False,help="your file should contain one of these columns:['name','smiles','sdf','inchi','inchikey','formula']")
   if uploaded_fil:
     df_pub=pd.read_csv(uploaded_fil)
-    sel_col_pub = st.selectbox("Choose col to search", df_pub.columns)
+    sel_col_pub = st.selectbox("Choose col to search", ['name','smiles','sdf','inchi','inchikey','formula'])
     # st.write(sel_col_pub)
-    list_pub=[]
+    
     for item in df_pub[sel_col_pub]:
       list_pub.append(pcp.get_compounds(item,sel_col_pub,as_dataframe=True))
-  df_res=pd.concat(list_pub)
+    df_res=pd.concat(list_pub)
   # df_res['Pubchemid']=list_pub
-  st.write(df_res)
+    st.write(df_res)
       # st.write(a)
 # def init_connection():
 #     return psycopg2.connect(**st.secrets["postgres"])
