@@ -202,7 +202,7 @@ if len(df_cpds) > 0:
     with tabs[1]:
         server_name = st.radio(
             "select server",
-            ("all", "pubchem", "KEGG", "broad"),
+            ("all", "pubchem", "KEGG", "broad","SelectChem"),
             horizontal=True,
         )
         df_cpdGene_tmp = df_cpdGene.copy()
