@@ -16,8 +16,7 @@ def init_connection():
 conn_meta = "postgres://arno:123456@192.168.2.131:5432/ksi_cpds"
 # conn_meta.close()
 
-def convert_df(df):
-       return df.to_csv(index=False).encode('utf-8')
+
 
 
 pub  =st.toggle("Search in Pubchem")
@@ -113,17 +112,13 @@ if jump_st:
         sql_genes = f"select * from gene where {sel_match}  in  (" + ",".join(bq) + ")"
         df_genes = sql_df(sql_genes,conn_meta)
         st.write(df_genes)
-        df_pub=df_genes
+        df_pub=df_genes       
 
-        
-        st.download_button(
-                  label="Save",data=convert_df(df_genes),file_name=f"{sel_data}.csv",mime='csv')
       if sel_data=='cpds in Jump with geneinfos':
         sel_match = col3.selectbox("Choose matching col", df_cpd_meta.columns)
         df_cpds= df_cpd_meta[df_cpd_meta[sel_match].astype(str).str.contains('|'.join(b_list2))].drop_duplicates(subset='pubchemid').reset_index(drop=True)
         st.write(df_cpds)
-        st.download_button(
-                  label="Save",data=convert_df(df_cpds),file_name=f"{sel_data}.csv",mime='csv')
+        
         df_pub=df_cpds
 
       
@@ -131,8 +126,7 @@ if jump_st:
         sel_match = col3.selectbox("Choose matching col", df_kegg.columns)
         df_kegg= df_kegg[df_kegg[sel_match].astype(str).str.contains('|'.join(b_list2))].drop_duplicates(subset=['keggid']).reset_index(drop=True)
         st.write(df_kegg)
-        st.download_button(
-                  label="Save",data=convert_df(df_kegg),file_name=f"{sel_data}.csv",mime='csv')
+        
         df_pub=df_kegg
       if sel_data=='cpds in Jump':
         sql_jump="select * from cpd"
@@ -140,8 +134,7 @@ if jump_st:
         sel_match = col3.selectbox("Choose matching col", df_jump.columns)
         df_jump= df_jump[df_jump[sel_match].astype(str).str.contains('|'.join(b_list2))].drop_duplicates(subset=['pubchemid']).reset_index(drop=True)
         st.write(df_jump)
-        st.download_button(
-                  label="Save",data=convert_df(df_jump),file_name=f"{sel_data}.csv",mime='csv')
+        
         df_pub=df_jump
       st.session_state['Convert']=df_pub
 # conn_meta.close()
