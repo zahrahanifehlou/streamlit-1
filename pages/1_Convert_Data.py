@@ -92,7 +92,7 @@ if jump_st:
 
   if len(list_df) > 0:
       df = pd.concat(list_df)
-      st.write('Your Data:', st.data_editor(df))
+      st.write('Your Data:', df)
     
   #test
   # test test
