@@ -2,7 +2,7 @@
 import pandas as pd
 import streamlit as st
 import psycopg2
-
+import pubchempy as pcp
 
 st.set_page_config(layout="wide")
 import sys
@@ -19,6 +19,21 @@ conn_meta = "postgres://arno:123456@192.168.2.131:5432/ksi_cpds"
 def convert_df(df):
        return df.to_csv(index=False).encode('utf-8')
 
+
+pub  =st.toggle("Search in Pubchem")
+if pub:
+  uploaded_fil = st.file_uploader("Choose files to search", accept_multiple_files=False)
+  if uploaded_fil:
+    df_pub=pd.read_csv(uploaded_fil)
+    sel_col_pub = st.selectbox("Choose col to search", df_pub.columns)
+    # st.write(sel_col_pub)
+    list_pub=[]
+    for item in df_pub[sel_col_pub]:
+      list_pub.append(pcp.get_compounds(item,sel_col_pub,as_dataframe=True))
+  df_res=pd.concat(list_pub)
+  # df_res['Pubchemid']=list_pub
+  st.write(df_res)
+      # st.write(a)
 # def init_connection():
 #     return psycopg2.connect(**st.secrets["postgres"])
 # conn = init_connection()
