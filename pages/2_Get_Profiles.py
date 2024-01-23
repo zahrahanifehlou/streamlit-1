@@ -71,6 +71,7 @@ if len(var_t) > 0 and var_t[0] != "":
         ]
     )
     df_res = data.loc[mask.any(axis=1)]
+    df_res.reset_index(inplace=True, drop=True)
     with col4:
         st.write(f"Result in  {str(option)} table:", df_res)
     st.write(f"\n")
@@ -121,9 +122,11 @@ if str(option) == "gene" and len(df_res) > 0:
             df_prof_crisper = df_prof_crisper.merge(df_crisperBatchs.add_prefix(
                 'meta'), left_on='metabatchid', right_on='metabatchid').reset_index(drop=True)
             df_prof_crisper["metatype"] = "CRISPR"
+       
             df_prof_crisper["metaefficacy"] = "Unknown"
             df_prof_crisper["metaname"]=df_prof_crisper["metasymbol"]
             df_prof = pd.concat([df_prof, df_prof_crisper])
+            
             df_prof["metaname"] = df_prof["metaname"].fillna(
                             df_prof["metabatchid"])
     
@@ -210,6 +213,7 @@ if len(df_cpds) > 0:
             df_cpdGene_tmp = df_cpdGene[
                 df_cpdGene["server"] == server_name
             ].drop_duplicates(subset=["pubchemid", "geneid", "batchid"])
+            df_cpdGene_tmp.reset_index(inplace=True, drop=True)
         fig_cols = st.columns(2)
         with fig_cols[0]:
             st.write(df_cpdGene_tmp)
@@ -303,7 +307,10 @@ if  len(df_prof)>0:
         tmp = df_prof.copy()
     else:
         tmp = df_prof.loc[df_prof["metasource"].isin(var_t)]
-    st.write(tmp)
+    tmp.reset_index(inplace=True, drop=True)
+    meta_cols=[col for col in tmp.columns if col.startswith("meta")]
+    st.write(tmp[meta_cols])
+    
     tmp["meta_name_source"] = tmp["metaname"] + "_" + tmp["metasource"]
     cpd_names = tmp.meta_name_source.values
     df_plt=tmp.drop_duplicates(subset='meta_name_source')
