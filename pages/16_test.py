@@ -89,7 +89,7 @@ if t:
     from torchvision.models import efficientnet_b0, EfficientNet_B0_Weights
     import gc
     m_cpu = multiprocessing.cpu_count()
-    
+     
     torch.cuda.empty_cache()
     # exit(0)
     # Load the model
