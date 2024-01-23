@@ -26,21 +26,29 @@ if pub:
   uploaded_fil = st.file_uploader("Choose files to search", accept_multiple_files=False,help="your file should contain one of these columns:['name','smiles','sdf','inchi','inchikey','formula']")
   if uploaded_fil:
     df_pub=pd.read_csv(uploaded_fil)
-    sel_col_pub = st.selectbox("Choose col to search", ['name','smiles','sdf','inchi','inchikey','formula'])
+    cola,colb=st.columns(2)
+    sel_col = cola.selectbox("Choose your column", df_pub.columns)
+    
+    sel_col_pub = colb.selectbox("Choose col to search", ['name','smiles','sdf','inchi','inchikey','formula'])
     # st.write(sel_col_pub)
     
-    for item in df_pub[sel_col_pub]:
-      list_pub.append(pcp.get_compounds(item,sel_col_pub,as_dataframe=True))
-    df_res=pd.concat(list_pub)
-  # df_res['Pubchemid']=list_pub
-    st.write(df_res)
+    for item in df_pub[sel_col]:
+      try:
+        list_pub.append(pcp.get_compounds(item,sel_col_pub,as_dataframe=True))
+      except:
+        st.warning("No Matching Data, input columns should correspond to:['name','smiles','sdf','inchi','inchikey','formula']")
+        break
+    if len(list_pub)>0:
+      df_res=pd.concat(list_pub)
+    # df_res['Pubchemid']=list_pub
+      st.write(df_res)
       # st.write(a)
 # def init_connection():
 #     return psycopg2.connect(**st.secrets["postgres"])
 # conn = init_connection()
 sql_query = 'select * from gene'
 df_meta = sql_df(sql_query, conn_meta)
-st.write("Example in Genes", df_meta.sample(5))
+st.write("Example in Genes", df_meta.sample(2))
 len_df = len(df_meta['geneid'].unique())
 
 st.write(f'{len_df} Unique Genes Registered')
@@ -58,7 +66,7 @@ sql_cpd="select cpd.*, cpdbatchs.batchid, keggcpdgene.geneid, gene.* from cpd \
 df_cpd_meta = sql_df(sql_cpd, conn_meta)
 df_cpd_meta = df_cpd_meta.loc[:, ~df_cpd_meta.columns.duplicated()]
 # df_cpd_meta.drop_duplicates()
-st.write("Example in Cpds with geneid", df_cpd_meta.sample(5))
+st.write("Example in Cpds with geneid", df_cpd_meta.sample(1))
 len_df = len(df_cpd_meta['pubchemid'].unique())
 st.write(f'{len_df} Unique Cpds in Jump with geneid Registered')
 
