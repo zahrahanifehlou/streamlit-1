@@ -1,4 +1,3 @@
-
 from streamlib import sql_df
 import sys
 
@@ -12,16 +11,16 @@ from rdkit import Chem, DataStructs
 from rdkit.Chem import AllChem, Draw
 from sklearn.metrics.pairwise import cosine_similarity
 
-sys.path.append('/mnt/shares/L/PROJECTS/JUMP-CRISPR/Code/streamlit-1/lib/')
+sys.path.append("/mnt/shares/L/PROJECTS/JUMP-CRISPR/Code/streamlit-1/lib/")
 
 st.set_page_config(
     layout="wide",
 )
-st.header("Find Similar Structures", divider='rainbow')
+st.header("Find Similar Structures", divider="rainbow")
 
 
 def convert_df(df):
-    return df.to_csv(index=False).encode('utf-8')
+    return df.to_csv(index=False).encode("utf-8")
 
 
 def init_connection():
@@ -44,8 +43,9 @@ def find_umap(df, title):
     df_emb = pd.DataFrame({"x": embedding[:, 0], "y": embedding[:, 1]})
     df_emb[meta_cols] = df[meta_cols]
 
-    fig = px.scatter(df_emb, x="x", y="y", hover_data=meta_cols,
-                     color="Type", title=title)
+    fig = px.scatter(
+        df_emb, x="x", y="y", hover_data=meta_cols, color="Type", title=title
+    )
     st.plotly_chart(fig, theme="streamlit", use_container_width=True)
 
 
@@ -58,7 +58,6 @@ def plot_smile(mol_list, df_str):
         if cpt == 5:
             cpt = 0
         try:
-
             cols[cpt].image(Draw.MolToImage(mol), df_str["pubchemid"][ik])
             ik = ik + 1
             cpt = cpt + 1
@@ -98,42 +97,32 @@ def upload_files():
     return list_df
 
 
-
 # Load or fetch data
 def load_data():
     if "df_tmap" in st.session_state:
         df_tmap = st.session_state["df_tmap"]
     else:
         sql = "SELECT * FROM tmap"
-     
+
         conn_profileDB = "postgres://arno:12345@192.168.2.131:5432/ksilink_cpds"
         df_tmap = sql_df(sql, conn_profileDB).reset_index(drop=True)
         # conn_profileDB.close()
-       # st.session_state["df_tmap"] = df_tmap
+    # st.session_state["df_tmap"] = df_tmap
     return df_tmap
 
 
 # Plot TMAP
 def plot_tmap(df_tmap, color_col, l):
-
     fig = px.scatter(
         df_tmap,
         x="x",
         y="y",
-        hover_data=[
-            "pubchemid",
-            "name",
-            "genetarget",
-            "efficacy",
-            "disname",
-            "keggid"
-        ],
+        hover_data=["pubchemid", "name", "genetarget", "efficacy", "disname", "keggid"],
         color_discrete_sequence=l,
         opacity=0.3,
         color=color_col,
         width=1500,
         height=1000,
-
     )
     st.plotly_chart(fig, theme="streamlit", use_container_width=True)
     st.write("\n")
@@ -147,6 +136,7 @@ def process_compound_data(df_cpds):
     df_cpds = df_cpds.drop_duplicates(subset=["pubchemid"])
 
     return df_cpds
+
 
 # ------------------------------------------------------------------------------------------
 
@@ -179,10 +169,11 @@ with cols1[0]:
 
 with cols1[1]:
     list_pubchem = st.text_area(
-        "Enter your search", help='pubchemid separated by enter')
+        "Enter your search", help="pubchemid separated by enter"
+    )
     if len(list_pubchem) > 0:
-        list_pubchem = list_pubchem.split('\n')
-        df_cpds = pd.DataFrame({'pubchemid': list_pubchem})
+        list_pubchem = list_pubchem.split("\n")
+        df_cpds = pd.DataFrame({"pubchemid": list_pubchem})
 
 with cols1[2]:
     list_df2 = upload_files()
@@ -190,11 +181,10 @@ with cols1[2]:
         df_cpds = pd.concat(list_df2)
 
 if len(df_cpds) > 0:
-    df_cpds['pubchemid'] = df_cpds['pubchemid'].astype(
-        str).str.split('.').str[0]
+    df_cpds["pubchemid"] = df_cpds["pubchemid"].astype(str).str.split(".").str[0]
     smile_list = []
     mol_list = []
-    for pubchemid in df_cpds['pubchemid'].values:
+    for pubchemid in df_cpds["pubchemid"].values:
         try:
             smiles = pcp.Compound.from_cid(pubchemid).canonical_smiles
             mol_list.append(Chem.MolFromSmiles(smiles))
@@ -210,20 +200,22 @@ if len(df_cpds) > 0:
     with mainTabs[0]:
         df_str = df_cpds.copy()
         df_tmap["selected compounds"] = "others"
-        df_tmap.loc[df_tmap['pubchemid'].isin(
-            df_str.pubchemid), 'selected compounds'] = "selected compounds"
+        df_tmap.loc[
+            df_tmap["pubchemid"].isin(df_str.pubchemid), "selected compounds"
+        ] = "selected compounds"
         tmap2 = st.toggle("TMAP plt of selected compounds")
         if tmap2:
             plot_tmap(df_tmap, "selected compounds", ["red", "blue"])
 
-     # plot similarity-----------------------------------------------------------------------------------
+        # plot similarity-----------------------------------------------------------------------------------
         # st.write("DATA frame",df_str)
 
         df_c = get_struc(mol_list)
         name_list = [f"`{t}`" for t in df_str["pubchemid"]]
-        df_c = df_c.rename(index=dict(enumerate(name_list, 0)),
-                           columns=dict(enumerate(name_list, 0)))
-        fig = px.imshow(df_c, color_continuous_scale='RdBu_r')
+        df_c = df_c.rename(
+            index=dict(enumerate(name_list, 0)), columns=dict(enumerate(name_list, 0))
+        )
+        fig = px.imshow(df_c, color_continuous_scale="RdBu_r")
         st.plotly_chart(fig)
         # df_str['sim']=1
         # plot smile-----------------------------------------------------------------------------------
@@ -238,12 +230,13 @@ if len(df_cpds) > 0:
         mol_list_jump = []
         find_list = []
         bits = 1024
-        for smiles in jump_df['smile']:
+        for smiles in jump_df["smile"]:
             find = 1
             try:
                 mol = Chem.MolFromSmiles(smiles)
                 morgan = AllChem.GetMorganFingerprintAsBitVect(
-                    mol, useChirality=True, radius=3, nBits=bits)
+                    mol, useChirality=True, radius=3, nBits=bits
+                )
                 mol_list_jump.append(morgan)
                 # mol= mol=Chem.MolFromSmiles(smiles)
                 # fp=Chem.RDKFingerprint(mol)
@@ -262,14 +255,14 @@ if len(df_cpds) > 0:
         # 17397405
 
         for pubchemid in list_pubchem:
-
             try:
                 mol = Chem.MolFromSmiles(
-                    pcp.Compound.from_cid(pubchemid).canonical_smiles)
+                    pcp.Compound.from_cid(pubchemid).canonical_smiles
+                )
                 fp = AllChem.GetMorganFingerprintAsBitVect(
-                    mol, useChirality=True, radius=3, nBits=bits)
-                similarities = DataStructs.BulkTanimotoSimilarity(
-                    fp, mol_list_jump)
+                    mol, useChirality=True, radius=3, nBits=bits
+                )
+                similarities = DataStructs.BulkTanimotoSimilarity(fp, mol_list_jump)
 
                 sim_df = pd.DataFrame()
                 name_list = []
@@ -277,7 +270,6 @@ if len(df_cpds) > 0:
                 mol_list2 = []
                 # thre_sim = st.sidebar.slider('Similarity Threshold',min_value=0.3,max_value=1.0,value=0.49,step=0.1)
                 for name, value in zip(jump_df.pubchemid, similarities):
-
                     if value > 0.49:
                         name_list.append(name)
                         value_list.append(value)
@@ -291,18 +283,14 @@ if len(df_cpds) > 0:
                 st.write("\n")
 
                 if len(mol_list2) > 0:
-
                     s_mail = pcp.Compound.from_cid(pubchemid).canonical_smiles
                     mol_main = Chem.MolFromSmiles(s_mail)
-                    st.write(
-                        f" similar compounds of {pubchemid} with  structure :")
+                    st.write(f" similar compounds of {pubchemid} with  structure :")
                     st.image(Draw.MolToImage(mol_main), pubchemid)
                     plot_smile(mol_list2, sim_df)
-                    st.write(
-                        f"************************************************\n")
+                    st.write(f"************************************************\n")
 
                 # df_sim_result[pubchemid]=similarities
 
             except:
                 print("cant find this pubchemid", pubchemid)
-       

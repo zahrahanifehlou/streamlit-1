@@ -24,7 +24,8 @@ profile_conn = psycopg2.connect(
     port="5432",
     user="arno",
     database="ksilink_cpds",
-    password="12345",)
+    password="12345",
+)
 
 ####################################
 

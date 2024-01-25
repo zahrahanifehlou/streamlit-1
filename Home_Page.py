@@ -13,10 +13,12 @@ st.set_page_config(
 )
 st.image("Postgresql.png")
 st.write("# Welcome to Ksilink Databases")
-st.write('Can be access locally on : http://192.168.2.131:8501; http://192.168.2.130:8501')
+st.write(
+    "Can be access locally on : http://192.168.2.131:8501; http://192.168.2.130:8501"
+)
 # st.sidebar.success("Select a demo above.")
- #- [CRISPR & CPDS](http://192.168.2.131:8501/CRISPR_&_CPDS) compute the similarities between crispr and cpds.
-#  - [Pathway Interaction](http://192.168.2.131:8501/Pathway_Interaction) display the involved genes in a specific pathway    
+# - [CRISPR & CPDS](http://192.168.2.131:8501/CRISPR_&_CPDS) compute the similarities between crispr and cpds.
+#  - [Pathway Interaction](http://192.168.2.131:8501/Pathway_Interaction) display the involved genes in a specific pathway
 #      - [Clustering](http://192.168.2.131:8501/Clustering) Clustering Jump Profiles with known targets
 #     - [Alignement](http://192.168.2.131:8501/Align_Data) Tentative of data alignement between sources (In progress)
 st.markdown(
@@ -45,13 +47,15 @@ st.markdown(
 
 """
 )
-tab1,tab2,tab3,tab4=st.tabs(["MetaDatabase", "Sources", "Cpds Per Sources","Profiles Database"])
+tab1, tab2, tab3, tab4 = st.tabs(
+    ["MetaDatabase", "Sources", "Cpds Per Sources", "Profiles Database"]
+)
 tab1.image("DB.png")
 tab2.image("sources.png")
-tab3.image('cpds_per_sources.png')
-tab4.image('profile_db.png')
-#st.write(st.session_state)
+tab3.image("cpds_per_sources.png")
+tab4.image("profile_db.png")
+# st.write(st.session_state)
 
-if st.button('Clear Cache'):
+if st.button("Clear Cache"):
     for key in st.session_state.keys():
         del st.session_state[key]

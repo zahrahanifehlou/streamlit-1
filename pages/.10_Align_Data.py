@@ -1,6 +1,3 @@
-
-
-
 import sys
 
 import bbknn
@@ -11,42 +8,48 @@ import scanpy as sc
 import streamlit as st
 import umap
 
-sys.path.append('/mnt/shares/L/PROJECTS/JUMP-CRISPR/Code/streamlit-1/lib/')
+sys.path.append("/mnt/shares/L/PROJECTS/JUMP-CRISPR/Code/streamlit-1/lib/")
 from streamlib import sql_df
 
 conn_profileDB = psycopg2.connect(
-        host="192.168.2.131",
-        port="5432",
-        user="arno",
-        database="ksilink_cpds",
-        password="12345",
-    )
+    host="192.168.2.131",
+    port="5432",
+    user="arno",
+    database="ksilink_cpds",
+    password="12345",
+)
 
 col1, col2 = st.columns(2)
 list_sources = [
-    "Amgen" ,
+    "Amgen",
     "Astrazeneca",
-     "Bayer",
-     "Broad",
-     "Eisai",
+    "Bayer",
+    "Broad",
+    "Eisai",
     "Janssen",
-     "Ksilink_25",
-     "Ksilink_625",
-     "Merck",
+    "Ksilink_25",
+    "Ksilink_625",
+    "Merck",
     "Pfizer",
-     "Servier" ,
-    "Takeda" ,
-    "CRISPER"
+    "Servier",
+    "Takeda",
+    "CRISPER",
 ]
+
+
 def init_connection():
     return psycopg2.connect(**st.secrets["postgres"])
+
+
 conn = "postgres://arno:123456@192.168.2.131:5432/ksi_cpds"
 
 #  where batchid like 'BR%'
 # choix_source = st.selectbox("Select the Source", list_sources)
 
+
 def clean_pubchemid(pubchemid):
-    return str(pubchemid).split('.')[0]
+    return str(pubchemid).split(".")[0]
+
 
 def sel_code(option, conn):
     # sql = f"SELECT cpdbatchs.pubchemid, cpdbatchs.batchid, platemap.plate, platemap.ctrltype, platemap.well \
@@ -54,9 +57,10 @@ def sel_code(option, conn):
     sql = f"SELECT cpdbatchs.pubchemid, cpdbatchs.batchid, platemap.plate, platemap.ctrltype, platemap.well FROM platemap \
     INNER JOIN cpdbatchs ON cpdbatchs.batchid = platemap.batchid and platemap.ctrltype= '{option}' "
     df = sql_df(sql, conn)
-    df['pubchemid'] = df['pubchemid'].apply(clean_pubchemid)
-    df=df.drop_duplicates(subset=[ "plate", "well"]).reset_index(drop=True)
+    df["pubchemid"] = df["pubchemid"].apply(clean_pubchemid)
+    df = df.drop_duplicates(subset=["plate", "well"]).reset_index(drop=True)
     return df
+
 
 # with col1:
 #     option1 = st.selectbox("Pick one table", list_sources, key='src1')
@@ -74,9 +78,9 @@ def sel_code(option, conn):
 # st.write(df_src2[df_src2["ctrltype"]=="poscon_cp"])
 
 # df=pd.concat([df_src2,df_src1])
-list_cont=['poscon_diverse','poscon_cp','trt','poscon_orf']
-option1 = st.selectbox("Pick one ctrl", list_cont, key='src1')
-df = sel_code(option1,conn)
+list_cont = ["poscon_diverse", "poscon_cp", "trt", "poscon_orf"]
+option1 = st.selectbox("Pick one ctrl", list_cont, key="src1")
+df = sel_code(option1, conn)
 # df=df[df["ctrltype"]=="poscon_cp"]
 # st.write(df)
 # exit(0)
@@ -84,30 +88,32 @@ df = sel_code(option1,conn)
 
 batch_list = [f"'{batchid}'" for batchid in df["batchid"].unique()]
 # src_list = [f"'{s}'" for s in [option2, option1]]
-#sql_profile = f"SELECT * FROM aggprofile WHERE metabatchid IN ({','.join(batch_list)}) and metasource IN ({','.join(src_list)})"
+# sql_profile = f"SELECT * FROM aggprofile WHERE metabatchid IN ({','.join(batch_list)}) and metasource IN ({','.join(src_list)})"
 sql_profile = f"SELECT * FROM aggprofile WHERE metabatchid IN ({','.join(batch_list)})"
 df_prof = sql_df(sql_profile, conn_profileDB)
-df_prof=df_prof.drop_duplicates(subset=[ "metabatchid","metasource"]).reset_index(drop=True)
+df_prof = df_prof.drop_duplicates(subset=["metabatchid", "metasource"]).reset_index(
+    drop=True
+)
 st.write(df_prof["metasource"].value_counts())
-if option1=='trt':
-
-
-    samp = st.number_input('sample per source :snail:',min_value=100,max_value=1000,value=200,step=100)
-    if samp>200:
-        df_prof=df_prof[df_prof["metasource"]!='Broad']
-    df_prof=df_prof.groupby('metasource').sample(n=samp).reset_index()
+if option1 == "trt":
+    samp = st.number_input(
+        "sample per source :snail:", min_value=100, max_value=1000, value=200, step=100
+    )
+    if samp > 200:
+        df_prof = df_prof[df_prof["metasource"] != "Broad"]
+    df_prof = df_prof.groupby("metasource").sample(n=samp).reset_index()
 df_prof.reset_index(drop=True, inplace=True)
 # st.write(df_prof[["metasource","metabatchid"]])
 # st.write("profile")
-num_col=[col for col in df_prof if 'meta' not in col]
-adata=sc.AnnData(df_prof[num_col],obs=df_prof[["metasource"]])
+num_col = [col for col in df_prof if "meta" not in col]
+adata = sc.AnnData(df_prof[num_col], obs=df_prof[["metasource"]])
 # adata = sc.read('pancreas.h5ad', backup_url='https://www.dropbox.com/s/qj1jlm9w10wmt0u/pancreas.h5ad?dl=1')
-sc.tl.pca(adata,svd_solver='arpack')
-bbknn.bbknn(adata, batch_key='metasource')
+sc.tl.pca(adata, svd_solver="arpack")
+bbknn.bbknn(adata, batch_key="metasource")
 # df_prof=sc.AnnData.to_df(adata)
 
 
-#df_conc= pd.concat([df_src1,df_src2]).reset_index()
+# df_conc= pd.concat([df_src1,df_src2]).reset_index()
 
 model = umap.UMAP(random_state=42, verbose=False).fit(df_prof[num_col])
 emb = model.transform(df_prof[num_col])
@@ -127,12 +133,14 @@ fig3 = px.scatter(
     hover_data=["source"],
     color="source",
 )
-st.plotly_chart(fig3, theme="streamlit", use_container_width=True)#
+st.plotly_chart(fig3, theme="streamlit", use_container_width=True)  #
 
 
 from sklearn.manifold import TSNE
 
-emb = TSNE(n_components=2, learning_rate='auto',init='random', perplexity=10).fit_transform(df_prof[num_col])
+emb = TSNE(
+    n_components=2, learning_rate="auto", init="random", perplexity=10
+).fit_transform(df_prof[num_col])
 df_tsne = pd.DataFrame()
 df_tsne["X_Tsne"] = emb[:, 0]
 df_tsne["Y_Tsne"] = emb[:, 1]
@@ -146,7 +154,7 @@ fig4 = px.scatter(
     hover_data=["source"],
     color="source",
 )
-st.plotly_chart(fig4, theme="streamlit", use_container_width=True)#
+st.plotly_chart(fig4, theme="streamlit", use_container_width=True)  #
 
 import pacmap
 
@@ -166,5 +174,4 @@ fig5 = px.scatter(
     hover_data=["source"],
     color="source",
 )
-st.plotly_chart(fig5, theme="streamlit", use_container_width=True)#
-
+st.plotly_chart(fig5, theme="streamlit", use_container_width=True)  #

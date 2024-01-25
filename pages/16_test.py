@@ -1,12 +1,15 @@
 import streamlit as st
+
 # from streamlit_plotly_events import plotly_events
 import numpy as np
 import plotly.express as px
+
 # from streamlib import sql_df,find_sim_cpds
 import pandas as pd
 from sklearn.cluster import KMeans
 from sklearn.metrics.pairwise import cosine_similarity
 import streamlit.components.v1 as components
+
 # import webbrowser
 # webbrowser.open_new_tab("http://librenms.ksilink.int/overview?dashboard=1")
 
@@ -27,7 +30,7 @@ import streamlit.components.v1 as components
 # # bq = []
 # # for bs in df_rep['symbol1']:
 # #     bq.append("'" + bs.upper() + "'")
-    
+
 # # sql_umqpemd =  f"SELECT * FROM aggprofile where metasource='CRISPER' and metabatchid  in (" + ",".join(bq) + ") "
 # sql_umqpemd =  f"SELECT * FROM aggprofile where metasource='CRISPER'"
 # df_src_emd = sql_df(sql_umqpemd, conn_prof)
@@ -73,8 +76,7 @@ import streamlit.components.v1 as components
 # st.write(f'alpha={alpha}, beta={beta}')
 
 
-
-t= st.toggle('Compute')
+t = st.toggle("Compute")
 if t:
     import os
     import cv2
@@ -88,8 +90,9 @@ if t:
     import multiprocessing
     from torchvision.models import efficientnet_b0, EfficientNet_B0_Weights
     import gc
+
     m_cpu = multiprocessing.cpu_count()
-     
+
     torch.cuda.empty_cache()
     # exit(0)
     # Load the model
@@ -98,8 +101,8 @@ if t:
     dinov2_vits14 = torch.hub.load("facebookresearch/dinov2", "dinov2_vits14")
     num_gpus = torch.cuda.device_count()
     st.write(num_gpus)
-    if m_cpu>30:
-        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    if m_cpu > 30:
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         # model=nn.DataParallel(dinov2_vits14,device_ids=list(range(num_gpus)))
         # st.write(dir(model))
         # st.write(help(model.prediction))
@@ -109,14 +112,16 @@ if t:
 
         # model=efficientnet_b0(EfficientNet_B0_Weights)
     else:
-        device = torch.device('cpu')
-        model=dinov2_vits14
+        device = torch.device("cpu")
+        model = dinov2_vits14
 
     model.to(device)
     model.eval()
     # st.write(help(model.features))
     # exit(0)
-    transform_image = T.Compose([T.ToTensor(), T.Resize(244), T.CenterCrop(224), T.Normalize([0.5], [0.5])])
+    transform_image = T.Compose(
+        [T.ToTensor(), T.Resize(244), T.CenterCrop(224), T.Normalize([0.5], [0.5])]
+    )
     # model.eval()
 
     # Create a new model that outputs the features from the second to last layer
@@ -125,15 +130,15 @@ if t:
     def process_image(file1):
         # Construct the file names for the other channels
         l = file1.replace("\\", "/").replace(".tif", "").split("/")[-1].split("_")
-        Plate=l[0]
-        Well=l[1]
+        Plate = l[0]
+        Well = l[1]
         # st.write(Well)
-        file2 = file1.replace('C01.tif', 'C02.tif')
-        file2 = file2.replace('A01', 'A02')
-        file3 = file1.replace('C01.tif', 'C03.tif')
-        file3 = file2.replace('A01', 'A03')
+        file2 = file1.replace("C01.tif", "C02.tif")
+        file2 = file2.replace("A01", "A02")
+        file3 = file1.replace("C01.tif", "C03.tif")
+        file3 = file2.replace("A01", "A03")
         # st.write(file1)
-    
+
         # Read the images
         img1 = cv2.imread(file1, -1)
         img2 = cv2.imread(file2, -1)
@@ -141,16 +146,18 @@ if t:
         # st.write(img2)
         # Convert to grayscale for processing
         # gray = cv2.cvtColor(img1, cv2.COLOR_BGR2GRAY)
-        
+
         # Thresholding and morphological operations to isolate nuclei
         _, thresh = cv2.threshold(img1, 250, 65535, cv2.THRESH_BINARY)
         thresh = cv2.convertScaleAbs(thresh)
-        nb_blobs, im_with_separated_blobs, stats, _ = cv2.connectedComponentsWithStats(thresh)
+        nb_blobs, im_with_separated_blobs, stats, _ = cv2.connectedComponentsWithStats(
+            thresh
+        )
         sizes = stats[:, -1]
-        
+
         sizes = sizes[1:]
-        nb_blobs -= 1    
-        min_size = 2000  
+        nb_blobs -= 1
+        min_size = 2000
 
         # output image with only the kept components
         im_result = np.zeros_like(im_with_separated_blobs)
@@ -160,7 +167,9 @@ if t:
                 # see description of im_with_separated_blobs above
                 im_result[im_with_separated_blobs == blob + 1] = 255
         im_result = cv2.convertScaleAbs(im_result)
-        contours, _ = cv2.findContours(im_result, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        contours, _ = cv2.findContours(
+            im_result, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
+        )
         # st.image(im_result)
         # exit(0)
         # all_embeddings ={}
@@ -169,27 +178,36 @@ if t:
         # list_well=[]
         # list_score=[]
         # list_cat=[]
-        nuclei=[]
-        for i,contour in enumerate(contours):
+        nuclei = []
+        for i, contour in enumerate(contours):
             # Get bounding box coordinates
             x, y, w, h = cv2.boundingRect(contour)
-            h2=22
-            w2=22
+            h2 = 22
+            w2 = 22
             # Crop the nucleus from each channel
-            if y-h>0 and x-w>0 and y+h<img1.shape[0] and x+w<img1.shape[1]:
-                nucleus1 = img1[y-h2:y+h+h2, x-w2:x+w+w2]
-                nucleus2 = img2[y-h2:y+h+h2, x-w2:x+w+w2]
-                nucleus3 = img3[y-h2:y+h+h2, x-w2:x+w+w2]
+            if (
+                y - h > 0
+                and x - w > 0
+                and y + h < img1.shape[0]
+                and x + w < img1.shape[1]
+            ):
+                nucleus1 = img1[y - h2 : y + h + h2, x - w2 : x + w + w2]
+                nucleus2 = img2[y - h2 : y + h + h2, x - w2 : x + w + w2]
+                nucleus3 = img3[y - h2 : y + h + h2, x - w2 : x + w + w2]
                 # st.write((h,w))
                 # Stack nuclei along the third axis to create a multi-channel nucleusq
                 nucleus = np.dstack([nucleus3, nucleus3, nucleus3])
-                
+
                 # Resize to match the input size expected by the model
-                nucleus = cv2.resize(nucleus, (224, 224))  # Replace with your input size
+                nucleus = cv2.resize(
+                    nucleus, (224, 224)
+                )  # Replace with your input size
                 # st.image(nucleus,clamp=True)
                 # Normalize the image
-                nucleus=np.float32(nucleus / np.max(nucleus))  # Use 65535 for 16-bit images
-            
+                nucleus = np.float32(
+                    nucleus / np.max(nucleus)
+                )  # Use 65535 for 16-bit images
+
                 # Convert to PyTorch tensor and add an extra dimension
                 transform = transforms.Compose([transforms.ToTensor()])
                 # nucleus  = transform_image(np.float32(nucleus)).unsqueeze(0)
@@ -219,11 +237,11 @@ if t:
         #             temp = np.squeeze(np.array(toto[0].cpu().numpy())).tolist()
         #             # temp2 = np.squeeze(np.array(temp).reshape(-1, 384))
         #             # st.write(toto.shape)
-                    
+
         #             # flat_list = [item for sublist in temp2 for item in sublist]
         #             emb.append(temp)
         #     # Process the features as needed
-            # ...q
+        # ...q
         # flat_list = [item for sublist in emb for item in sublist]q
         # df2=pd.DataFrame()
         # df2['Plate']=list_plate
@@ -231,11 +249,11 @@ if t:
         # df2['Score']=list_score
         # df2['Category']=list_cat
         # del model
-        
+
         return nuclei
 
     def gpu_comp(nuc):
-            # Convert to PyTorch tensor and add an extra dimension
+        # Convert to PyTorch tensor and add an extra dimension
         # transform = transforms.Compose([transforms.ToTensor()])
         # # nucleus  = transform_image(np.float32(nucleus)).unsqueeze(0)
         # # st.write(nucleus)
@@ -248,7 +266,7 @@ if t:
         class_id = prediction.argmax(dim=1)
         # st.write(class_id.shape)
         # score = prediction[class_id].item()
-        category_name = [weights.meta["categories"][w] for w in class_id ]
+        category_name = [weights.meta["categories"][w] for w in class_id]
         # category_name = weights.meta["categories"][class_id]
         return category_name
 
@@ -256,7 +274,7 @@ if t:
         with torch.no_grad():
             embeddings = model.module.features(nuc.to(device))
             embed = nn.AvgPool2d(7)
-            toto =embed(embeddings).squeeze()
+            toto = embed(embeddings).squeeze()
             temp = np.array(toto.cpu().numpy())
             return temp
 
@@ -265,35 +283,36 @@ if t:
     start = time.time()
     # Get list of all C01.tif files (nuclei)
     path_dcm = "/mnt/shares/O/BTSData/MeasurementData/DCM Exp31 LDC 4doses DRC/DCM-LDC-PL03c_20231119_041305/DCM-LDC-PL03c"
-    path_test ="/mnt/shares/L/Temp/DC/"
+    path_test = "/mnt/shares/L/Temp/DC/"
     # tif_files = [f for f in os.listdir(path_dcm) if f.endswith('C01.tif')]
-    tif_files = [f for f in os.listdir(path_dcm) if f.endswith('C01.tif')]
+    tif_files = [f for f in os.listdir(path_dcm) if f.endswith("C01.tif")]
     # img1 = cv2.imread(tif_files[0], -1)
     # st.write(tif_files)
-    list_df= Parallel(n_jobs=-1,prefer="threads",max_nbytes=None)(delayed(process_image)(f"{path_dcm}/{file}") for file in tif_files)
+    list_df = Parallel(n_jobs=-1, prefer="threads", max_nbytes=None)(
+        delayed(process_image)(f"{path_dcm}/{file}") for file in tif_files
+    )
     del tif_files
     # st.write(list_df[0])
     flat_list = [item for sublist in list_df for item in sublist]
     # st.write(len(flat_list))
     # del list_df
-    b=np.squeeze(torch.stack(flat_list))
+    b = np.squeeze(torch.stack(flat_list))
 
     # st.write(b.shape)
     del flat_list
-    g = np.array_split(b,1000)
+    g = np.array_split(b, 1000)
     del b
-    list_pred=[]
-    list_emb=[]
+    list_pred = []
+    list_emb = []
     # c=torch.tensor(0)
-    for i,item in enumerate(g):
-
+    for i, item in enumerate(g):
         list_pred.extend(gpu_comp(item))
         list_emb.append(embed(item))
         # st.write('remaining: ', len(g)-i)
     end = time.time()
-    st.write('Total Exec Time= ', (end - start)/60)
+    st.write("Total Exec Time= ", (end - start) / 60)
 
-    out= np.concatenate(list_emb,axis=0)
+    out = np.concatenate(list_emb, axis=0)
 
     # st.write(len(list_pred))
     # st.write(out.shape)
@@ -328,8 +347,8 @@ if t:
     df_all_umap["Y"] = emb[:, 1]
     # df_all_umap['Plate']=df['Plate']
     # df_all_umap['Well']=df['Well']
-    df_all_umap['Category']=list_pred
-    fig = px.scatter(df_all_umap,x='X',y='Y',color='Category')
+    df_all_umap["Category"] = list_pred
+    fig = px.scatter(df_all_umap, x="X", y="Y", color="Category")
     st.plotly_chart(fig, theme="streamlit", use_container_width=True)
     del model
     gc.collect()
@@ -353,7 +372,6 @@ if t:
 # cols_num = df_dcp.select_dtypes(include=numerics).columns
 # for col in cols_num:
 #     df_dcp[col] = df_dcp[col].apply(lambda x: "{:.2e}".format(x))
-
 
 
 # st.dataframe(df_dcp)
@@ -394,12 +412,12 @@ if t:
 #                 x="pca1",
 #                 y="pca2",
 #                 color="Cluster",
-            
-               
+
+
 #                 title=f" PCA ",
 #                 # hover_data=["metabatchid"],
 #             )
-            
+
 # st.plotly_chart(fig1, theme="streamlit",
 #                                 use_container_width=True)
 
@@ -421,12 +439,12 @@ if t:
 #                 x="umap1",
 #                 y="umap2",
 #                 color="Cluster",
-              
-                
+
+
 #                 title=f" UMAP ",
 #                 # hover_data=["metabatchid"],
 #             )
-            
+
 # st.plotly_chart(fig, theme="streamlit",
 #                                 use_container_width=True)
 # from cuml.metrics import trustworthiness
@@ -488,7 +506,7 @@ if t:
 #         #,alpha = .3
 #     )
 # ])
- 
+
 # x = np.linspace(-4, 4, 9)
 # y = np.linspace(-5, 5, 11)
 # random_data = np.random.random((11, 9))
