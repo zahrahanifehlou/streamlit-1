@@ -1,4 +1,13 @@
-import matplotlib.pyplot as plt
+import sys
+import plotly.graph_objs as go
+from streamlib import (
+    get_list_category,
+    get_stringDB_enr,
+    int_to_str,
+    sql_df,
+    str_to_float,
+)
+
 import seaborn as sns
 import networkx as nx
 import igraph as ig
@@ -7,24 +16,11 @@ import numpy as np
 import pandas as pd
 import plotly.express as px
 import streamlit as st
-import umap
-import psycopg2
 import requests
 
 st.set_page_config(layout="wide")
-import sys
-import chart_studio.plotly as py
-import plotly.graph_objs as go
 
 sys.path.append("/mnt/shares/L/PROJECTS/JUMP-CRISPR/Code/streamlit-1/lib/")
-from streamlib import (
-    get_cpds,
-    get_list_category,
-    get_stringDB_enr,
-    int_to_str,
-    sql_df,
-    str_to_float,
-)
 
 
 conn_meta = "postgres://arno:123456@192.168.2.131:5432/ksi_cpds"
@@ -89,9 +85,7 @@ def get_relation(df_genes):
         G = ig.Graph.from_networkx(H)
         partition = la.find_partition(G, la.ModularityVertexPartition)
         subg = partition.subgraphs()
-        list_gene = []
-        list_clust = []
-        cluster = 96
+       
         # thres_db = col_b.slider("cluster Thresholds", 2, 100,9,1)
         st.write(f"Total Number of clusters before Threshold: {len(subg)}")
 
@@ -104,7 +98,6 @@ def get_relation(df_genes):
         fig_bar = px.bar(df_go_ento, x="Description", y="log_p_val")
         st.plotly_chart(fig_bar)
 
-        import matplotlib.pyplot as plt
 
         # subax1 = plt.subplot(121)
         st.write("### Displaying the full network/graph clustered with Leiden approach")
@@ -135,7 +128,7 @@ def get_relation(df_genes):
 @st.cache_data
 def get_sample(df):
     st.write("onky 300 genes will be taken")
-    df_genes = df_genes.sample(300)
+    df_genes = df.sample(300)
     return df_genes
 
 
@@ -204,12 +197,14 @@ if not df_genes.empty:
             if bs != "":
                 bq.append("'" + bs + "'")
 
-        sql_kegg = "select cpdpath.pathid,keggcpdgene.geneid,gene.symbol, keggcpd.*, cpdbatchs.* from keggcpd\
+        sql_kegg = (
+            "select cpdpath.pathid,keggcpdgene.geneid,gene.symbol, keggcpd.*, cpdbatchs.* from keggcpd\
                     inner join keggcpdgene on keggcpd.keggid=keggcpdgene.keggid\
                     inner join cpd on cpd.keggid=keggcpd.keggid \
                     inner join cpdpath on cpdpath.pubchemid=cpd.pubchemid \
                     inner join cpdbatchs on cpd.pubchemid=cpdbatchs.pubchemid \
                     inner join gene on keggcpdgene.geneid=gene.geneid"
+        )
 
         df_drug_meta = sql_df(sql_kegg, conn_meta)
         df_drug_meta = df_drug_meta.loc[:, ~df_drug_meta.columns.duplicated()].copy()
@@ -235,7 +230,7 @@ if not df_genes.empty:
             bq.append("'" + bs + "'")
 
         sql_profile = (
-            f"select * from aggprofile where metabatchid  in (" + ",".join(bq) + ")"
+            "select * from aggprofile where metabatchid  in (" + ",".join(bq) + ")"
         )
 
         df_cpd_prof = sql_df(sql_profile, conn_prof)
