@@ -75,12 +75,12 @@ import igraph as ig
 # alpha = model.iloc[0]["px_fit_results"].params[0]
 # beta = model.iloc[0]["px_fit_results"].params[1]
 # st.write(f'alpha={alpha}, beta={beta}')
-from tdc.resource import PrimeKG
+# from tdc.resource import PrimeKG
 
-data = PrimeKG(path="../data")
-drug_feature = data.get_features(feature_type="drug")
-data.to_nx()
-st.write(data.get_node_list("disease"))
+# data = PrimeKG(path="../data")
+# drug_feature = data.get_features(feature_type="drug")
+# data.to_nx()
+# st.write(data.get_node_list("disease"))
 
 vert_size = st.sidebar.slider(
     "vertex size", min_value=0.2, max_value=20.0, step=0.1, value=1.0
