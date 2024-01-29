@@ -85,7 +85,7 @@ def get_relation(df_genes):
         G = ig.Graph.from_networkx(H)
         partition = la.find_partition(G, la.ModularityVertexPartition)
         subg = partition.subgraphs()
-       
+
         # thres_db = col_b.slider("cluster Thresholds", 2, 100,9,1)
         st.write(f"Total Number of clusters before Threshold: {len(subg)}")
 
@@ -97,7 +97,6 @@ def get_relation(df_genes):
         df_go_ento["log_p_val"] = np.log10(df_go_ento["p_val"].apply(str_to_float))
         fig_bar = px.bar(df_go_ento, x="Description", y="log_p_val")
         st.plotly_chart(fig_bar)
-
 
         # subax1 = plt.subplot(121)
         st.write("### Displaying the full network/graph clustered with Leiden approach")

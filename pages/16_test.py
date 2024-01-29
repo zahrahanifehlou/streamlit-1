@@ -9,7 +9,8 @@ import pandas as pd
 from sklearn.cluster import KMeans
 from sklearn.metrics.pairwise import cosine_similarity
 import streamlit.components.v1 as components
-
+import networkx as nx
+import igraph as ig
 # import webbrowser
 # webbrowser.open_new_tab("http://librenms.ksilink.int/overview?dashboard=1")
 
@@ -74,8 +75,41 @@ import streamlit.components.v1 as components
 # alpha = model.iloc[0]["px_fit_results"].params[0]
 # beta = model.iloc[0]["px_fit_results"].params[1]
 # st.write(f'alpha={alpha}, beta={beta}')
+from tdc.resource import PrimeKG
 
+data = PrimeKG(path="../data")
+drug_feature = data.get_features(feature_type="drug")
+data.to_nx()
+st.write(data.get_node_list("disease"))
 
+vert_size = st.sidebar.slider(
+    "vertex size", min_value=0.2, max_value=20.0, step=0.1, value=1.0
+)
+lab_size = st.sidebar.slider(
+    "label size", min_value=0.2, max_value=20.0, step=0.1, value=2.4
+)
+primekg = pd.read_csv("../kg.csv", low_memory=False)
+# b = primekg[primekg["relation"] == "protein_protein"]
+b = primekg.query('x_name == "HDAC6"|y_name=="HDAC6"')
+st.write(b.sample(20))
+# b = primekg.sample(200)
+
+G = nx.Graph()
+for i in b.relation.unique():
+    G.add_edges_from(b[b.relation == i][["x_name", "y_name"]].values, relation=i)
+H = ig.Graph.from_networkx(G)
+ig.config["plotting.backend"] = "matplotlib"
+subax1 = ig.plot(
+    H,
+    vertex_label=H.vs["_nx_name"],
+    vertex_label_size=lab_size,
+    vertex_size=vert_size,
+)
+# nx.draw(GG, with_labels=True,node_size=10,font_size=4)
+st.pyplot(subax1.figure, use_container_width=False)
+# st.plotly_chart(subax1)
+# a = primekg.query('y_name=="HDAC6"|x_name=="HDAC6"')
+# st.write(a)
 t = st.toggle("Compute")
 if t:
     import os
