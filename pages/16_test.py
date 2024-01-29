@@ -105,6 +105,12 @@ KG = load_data()
 # sel_relation = st.selectbox("Select Relation", KG.relation.unique())
 # b = KG[KG["relation"] == sel_relation]
 list_gene = ["HDAC6", "TTN", "CALM3"]
+
+
+var_text = st.text_area("Enter your genes list", help="Name or ID separated by enter")
+var_t = var_text.split("\n")
+list_gene = [t.strip().upper() for t in var_t]
+
 # KG = KG.query('x_name == "HDAC6"|y_name=="TTN"')
 KG = KG.query("x_name == @list_gene | y_name==@list_gene")
 # st.write(b.sample(20))
@@ -146,6 +152,7 @@ for i in KG.relation.unique():
     #     clear_figure=True,
     # )
     fig, ax = plt.subplots()
+    ax.set_title(i)
     nx.draw(G, with_labels=True, **options)
     st.pyplot(
         fig,
