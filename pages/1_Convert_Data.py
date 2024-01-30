@@ -29,7 +29,7 @@ if pub:
     if uploaded_fil:
         df_pub = pd.read_csv(uploaded_fil)
         cola, colb = st.columns(2)
-        sel_col = cola.selectbox("Choose your column", df_pub.columns)
+        sel_col2 = cola.selectbox("Choose your column", df_pub.columns)
 
         sel_col_pub = colb.selectbox(
             "Choose col to search",
@@ -37,7 +37,7 @@ if pub:
         )
         # st.write(sel_col_pub)
 
-        for item in df_pub[sel_col]:
+        for item in df_pub[sel_col2]:
             try:
                 list_pub.append(pcp.get_compounds(item, sel_col_pub, as_dataframe=True))
             except:
@@ -105,7 +105,7 @@ if jump_st:
         # test
         # test test
         col1, col2, col3 = st.columns(3)
-        sel_col = col1.selectbox("Choose your column", df.columns)
+        sel_col = col1.selectbox("Choose column", df.columns)
         sel_data = col2.selectbox(
             "Choose dataset",
             ["genes", "cpds in Jump with geneinfos", "cpds in Kegg", "cpds in Jump"],
