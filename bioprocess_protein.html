@@ -1,0 +1,155 @@
+<html>
+    <head>
+        <meta charset="utf-8">
+        
+            <script src="lib/bindings/utils.js"></script>
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/dist/dist/vis-network.min.css" integrity="sha512-WgxfT5LWjfszlPHXRmBWHkV2eceiWTOBvrKCNbdgDYTHrT2AeLCGbF4sZlZw3UMN3WtL0tGUoIAKsu8mllg/XA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/dist/vis-network.min.js" integrity="sha512-LnvoEWDFrqGHlHmDD2101OrLcbsfkrzoSpvtSQtxK3RMnRV0eOkhhBN2dXHKRrUU8p2DGRTk35n4O8nWSVe1mQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+            
+        
+<center>
+<h1></h1>
+</center>
+
+<!-- <link rel="stylesheet" href="../node_modules/vis/dist/vis.min.css" type="text/css" />
+<script type="text/javascript" src="../node_modules/vis/dist/vis.js"> </script>-->
+        <link
+          href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/css/bootstrap.min.css"
+          rel="stylesheet"
+          integrity="sha384-eOJMYsd53ii+scO/bJGFsiCZc+5NDVN2yr8+0RDqr0Ql0h+rP48ckxlpbzKgwra6"
+          crossorigin="anonymous"
+        />
+        <script
+          src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/js/bootstrap.bundle.min.js"
+          integrity="sha384-JEW9xMcG8R+pH31jmWH6WWP0WintQrMb4s7ZOdauHnUtxwoG2vI5DkLtS3qm9Ekf"
+          crossorigin="anonymous"
+        ></script>
+
+
+        <center>
+          <h1></h1>
+        </center>
+        <style type="text/css">
+
+             #mynetwork {
+                 width: 100%;
+                 height: 600px;
+                 background-color: #ffffff;
+                 border: 1px solid lightgray;
+                 position: relative;
+                 float: left;
+             }
+
+             
+
+             
+
+             
+        </style>
+    </head>
+
+
+    <body>
+        <div class="card" style="width: 100%">
+            
+            
+            <div id="mynetwork" class="card-body"></div>
+        </div>
+
+        
+        
+
+        <script type="text/javascript">
+
+              // initialize global variables.
+              var edges;
+              var nodes;
+              var allNodes;
+              var allEdges;
+              var nodeColors;
+              var originalNodes;
+              var network;
+              var container;
+              var options, data;
+              var filter = {
+                  item : '',
+                  property : '',
+                  value : []
+              };
+
+              
+
+              
+
+              // This method is responsible for drawing the graph, returns the drawn network
+              function drawGraph() {
+                  var container = document.getElementById('mynetwork');
+
+                  
+
+                  // parsing and collecting nodes and edges from the python
+                  nodes = new vis.DataSet([{"color": "#97c2fc", "id": "TTN", "label": "TTN", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "platelet degranulation", "label": "platelet degranulation", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "response to calcium ion", "label": "response to calcium ion", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "peptidyl-tyrosine phosphorylation", "label": "peptidyl-tyrosine phosphorylation", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "positive regulation of protein secretion", "label": "positive regulation of protein secretion", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "muscle filament sliding", "label": "muscle filament sliding", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "positive regulation of gene expression", "label": "positive regulation of gene expression", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "muscle contraction", "label": "muscle contraction", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "skeletal muscle thin filament assembly", "label": "skeletal muscle thin filament assembly", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "cardiac muscle tissue morphogenesis", "label": "cardiac muscle tissue morphogenesis", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "cardiac myofibril assembly", "label": "cardiac myofibril assembly", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "cardiac muscle contraction", "label": "cardiac muscle contraction", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "sarcomere organization", "label": "sarcomere organization", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "cardiac muscle cell development", "label": "cardiac muscle cell development", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "regulation of catalytic activity", "label": "regulation of catalytic activity", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "striated muscle contraction", "label": "striated muscle contraction", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "detection of muscle stretch", "label": "detection of muscle stretch", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "mitotic chromosome condensation", "label": "mitotic chromosome condensation", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "regulation of protein kinase activity", "label": "regulation of protein kinase activity", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "protein kinase A signaling", "label": "protein kinase A signaling", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "cardiac muscle hypertrophy", "label": "cardiac muscle hypertrophy", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "skeletal muscle myosin thick filament assembly", "label": "skeletal muscle myosin thick filament assembly", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "sarcomerogenesis", "label": "sarcomerogenesis", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "CALM3", "label": "CALM3", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "response to corticosterone", "label": "response to corticosterone", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "G protein-coupled receptor signaling pathway", "label": "G protein-coupled receptor signaling pathway", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "response to amphetamine", "label": "response to amphetamine", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "activation of adenylate cyclase activity", "label": "activation of adenylate cyclase activity", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "substantia nigra development", "label": "substantia nigra development", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "regulation of synaptic vesicle exocytosis", "label": "regulation of synaptic vesicle exocytosis", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "positive regulation of protein dephosphorylation", "label": "positive regulation of protein dephosphorylation", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "regulation of cardiac muscle contraction", "label": "regulation of cardiac muscle contraction", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "positive regulation of protein serine/threonine kinase activity", "label": "positive regulation of protein serine/threonine kinase activity", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "regulation of heart rate", "label": "regulation of heart rate", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "positive regulation of phosphoprotein phosphatase activity", "label": "positive regulation of phosphoprotein phosphatase activity", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "positive regulation of nitric-oxide synthase activity", "label": "positive regulation of nitric-oxide synthase activity", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "regulation of cardiac muscle contraction by regulation of the release of sequestered calcium ion", "label": "regulation of cardiac muscle contraction by regulation of the release of sequestered calcium ion", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "positive regulation of peptidyl-threonine phosphorylation", "label": "positive regulation of peptidyl-threonine phosphorylation", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "regulation of cytokinesis", "label": "regulation of cytokinesis", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "negative regulation of high voltage-gated calcium channel activity", "label": "negative regulation of high voltage-gated calcium channel activity", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "negative regulation of peptidyl-threonine phosphorylation", "label": "negative regulation of peptidyl-threonine phosphorylation", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "positive regulation of protein autophosphorylation", "label": "positive regulation of protein autophosphorylation", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "negative regulation of ryanodine-sensitive calcium-release channel activity", "label": "negative regulation of ryanodine-sensitive calcium-release channel activity", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "positive regulation of cyclic-nucleotide phosphodiesterase activity", "label": "positive regulation of cyclic-nucleotide phosphodiesterase activity", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "regulation of synaptic vesicle endocytosis", "label": "regulation of synaptic vesicle endocytosis", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "detection of calcium ion", "label": "detection of calcium ion", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "regulation of release of sequestered calcium ion into cytosol by sarcoplasmic reticulum", "label": "regulation of release of sequestered calcium ion into cytosol by sarcoplasmic reticulum", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "G2/M transition of mitotic cell cycle", "label": "G2/M transition of mitotic cell cycle", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "regulation of cardiac muscle cell action potential", "label": "regulation of cardiac muscle cell action potential", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "establishment of protein localization to mitochondrial membrane", "label": "establishment of protein localization to mitochondrial membrane", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "regulation of cell communication by electrical coupling involved in cardiac conduction", "label": "regulation of cell communication by electrical coupling involved in cardiac conduction", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "positive regulation of DNA binding", "label": "positive regulation of DNA binding", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "positive regulation of ryanodine-sensitive calcium-release channel activity", "label": "positive regulation of ryanodine-sensitive calcium-release channel activity", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "HDAC6", "label": "HDAC6", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "cellular response to hydrogen peroxide", "label": "cellular response to hydrogen peroxide", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "regulation of autophagy", "label": "regulation of autophagy", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "collateral sprouting", "label": "collateral sprouting", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "intracellular protein transport", "label": "intracellular protein transport", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "negative regulation of transcription, DNA-templated", "label": "negative regulation of transcription, DNA-templated", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "negative regulation of proteolysis", "label": "negative regulation of proteolysis", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "response to growth factor", "label": "response to growth factor", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "positive regulation of peptidyl-serine phosphorylation", "label": "positive regulation of peptidyl-serine phosphorylation", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "regulation of fat cell differentiation", "label": "regulation of fat cell differentiation", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "protein polyubiquitination", "label": "protein polyubiquitination", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "regulation of protein stability", "label": "regulation of protein stability", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "negative regulation of microtubule depolymerization", "label": "negative regulation of microtubule depolymerization", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "regulation of androgen receptor signaling pathway", "label": "regulation of androgen receptor signaling pathway", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "cilium assembly", "label": "cilium assembly", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "regulation of macroautophagy", "label": "regulation of macroautophagy", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "protein destabilization", "label": "protein destabilization", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "positive regulation of epithelial cell migration", "label": "positive regulation of epithelial cell migration", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "regulation of autophagy of mitochondrion", "label": "regulation of autophagy of mitochondrion", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "dendritic spine morphogenesis", "label": "dendritic spine morphogenesis", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "negative regulation of protein-containing complex assembly", "label": "negative regulation of protein-containing complex assembly", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "aggrephagy", "label": "aggrephagy", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "response to misfolded protein", "label": "response to misfolded protein", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "regulation of establishment of protein localization", "label": "regulation of establishment of protein localization", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "positive regulation of signaling receptor activity", "label": "positive regulation of signaling receptor activity", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "histone H3 deacetylation", "label": "histone H3 deacetylation", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "mitochondrion localization", "label": "mitochondrion localization", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "positive regulation of hydrogen peroxide-mediated programmed cell death", "label": "positive regulation of hydrogen peroxide-mediated programmed cell death", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "tubulin deacetylation", "label": "tubulin deacetylation", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "lysosome localization", "label": "lysosome localization", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "regulation of gene expression, epigenetic", "label": "regulation of gene expression, epigenetic", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "negative regulation of oxidoreductase activity", "label": "negative regulation of oxidoreductase activity", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "histone deacetylation", "label": "histone deacetylation", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "protein deacetylation", "label": "protein deacetylation", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "regulation of microtubule-based movement", "label": "regulation of microtubule-based movement", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "protein quality control for misfolded or incompletely synthesized proteins", "label": "protein quality control for misfolded or incompletely synthesized proteins", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "cellular response to misfolded protein", "label": "cellular response to misfolded protein", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "negative regulation of hydrogen peroxide metabolic process", "label": "negative regulation of hydrogen peroxide metabolic process", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "aggresome assembly", "label": "aggresome assembly", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "ubiquitin-dependent protein catabolic process via the multivesicular body sorting pathway", "label": "ubiquitin-dependent protein catabolic process via the multivesicular body sorting pathway", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "parkin-mediated stimulation of mitophagy in response to mitochondrial depolarization", "label": "parkin-mediated stimulation of mitophagy in response to mitochondrial depolarization", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "negative regulation of protein-containing complex disassembly", "label": "negative regulation of protein-containing complex disassembly", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "peptidyl-lysine deacetylation", "label": "peptidyl-lysine deacetylation", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "cellular response to topologically incorrect protein", "label": "cellular response to topologically incorrect protein", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "Hsp90 deacetylation", "label": "Hsp90 deacetylation", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "polyubiquitinated misfolded protein transport", "label": "polyubiquitinated misfolded protein transport", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "protein-containing complex disassembly", "label": "protein-containing complex disassembly", "shape": "dot", "size": 10}]);
+                  edges = new vis.DataSet([{"from": "TTN", "relation": "bioprocess_protein", "to": "platelet degranulation", "width": 1}, {"from": "TTN", "relation": "bioprocess_protein", "to": "response to calcium ion", "width": 1}, {"from": "TTN", "relation": "bioprocess_protein", "to": "peptidyl-tyrosine phosphorylation", "width": 1}, {"from": "TTN", "relation": "bioprocess_protein", "to": "positive regulation of protein secretion", "width": 1}, {"from": "TTN", "relation": "bioprocess_protein", "to": "muscle filament sliding", "width": 1}, {"from": "TTN", "relation": "bioprocess_protein", "to": "positive regulation of gene expression", "width": 1}, {"from": "TTN", "relation": "bioprocess_protein", "to": "muscle contraction", "width": 1}, {"from": "TTN", "relation": "bioprocess_protein", "to": "skeletal muscle thin filament assembly", "width": 1}, {"from": "TTN", "relation": "bioprocess_protein", "to": "cardiac muscle tissue morphogenesis", "width": 1}, {"from": "TTN", "relation": "bioprocess_protein", "to": "cardiac myofibril assembly", "width": 1}, {"from": "TTN", "relation": "bioprocess_protein", "to": "cardiac muscle contraction", "width": 1}, {"from": "TTN", "relation": "bioprocess_protein", "to": "sarcomere organization", "width": 1}, {"from": "TTN", "relation": "bioprocess_protein", "to": "cardiac muscle cell development", "width": 1}, {"from": "TTN", "relation": "bioprocess_protein", "to": "regulation of catalytic activity", "width": 1}, {"from": "TTN", "relation": "bioprocess_protein", "to": "striated muscle contraction", "width": 1}, {"from": "TTN", "relation": "bioprocess_protein", "to": "detection of muscle stretch", "width": 1}, {"from": "TTN", "relation": "bioprocess_protein", "to": "mitotic chromosome condensation", "width": 1}, {"from": "TTN", "relation": "bioprocess_protein", "to": "regulation of protein kinase activity", "width": 1}, {"from": "TTN", "relation": "bioprocess_protein", "to": "protein kinase A signaling", "width": 1}, {"from": "TTN", "relation": "bioprocess_protein", "to": "cardiac muscle hypertrophy", "width": 1}, {"from": "TTN", "relation": "bioprocess_protein", "to": "skeletal muscle myosin thick filament assembly", "width": 1}, {"from": "TTN", "relation": "bioprocess_protein", "to": "sarcomerogenesis", "width": 1}, {"from": "CALM3", "relation": "bioprocess_protein", "to": "response to corticosterone", "width": 1}, {"from": "CALM3", "relation": "bioprocess_protein", "to": "response to calcium ion", "width": 1}, {"from": "CALM3", "relation": "bioprocess_protein", "to": "G protein-coupled receptor signaling pathway", "width": 1}, {"from": "CALM3", "relation": "bioprocess_protein", "to": "response to amphetamine", "width": 1}, {"from": "CALM3", "relation": "bioprocess_protein", "to": "activation of adenylate cyclase activity", "width": 1}, {"from": "CALM3", "relation": "bioprocess_protein", "to": "substantia nigra development", "width": 1}, {"from": "CALM3", "relation": "bioprocess_protein", "to": "regulation of synaptic vesicle exocytosis", "width": 1}, {"from": "CALM3", "relation": "bioprocess_protein", "to": "positive regulation of protein dephosphorylation", "width": 1}, {"from": "CALM3", "relation": "bioprocess_protein", "to": "regulation of cardiac muscle contraction", "width": 1}, {"from": "CALM3", "relation": "bioprocess_protein", "to": "positive regulation of protein serine/threonine kinase activity", "width": 1}, {"from": "CALM3", "relation": "bioprocess_protein", "to": "regulation of heart rate", "width": 1}, {"from": "CALM3", "relation": "bioprocess_protein", "to": "positive regulation of phosphoprotein phosphatase activity", "width": 1}, {"from": "CALM3", "relation": "bioprocess_protein", "to": "positive regulation of nitric-oxide synthase activity", "width": 1}, {"from": "CALM3", "relation": "bioprocess_protein", "to": "regulation of cardiac muscle contraction by regulation of the release of sequestered calcium ion", "width": 1}, {"from": "CALM3", "relation": "bioprocess_protein", "to": "positive regulation of peptidyl-threonine phosphorylation", "width": 1}, {"from": "CALM3", "relation": "bioprocess_protein", "to": "regulation of cytokinesis", "width": 1}, {"from": "CALM3", "relation": "bioprocess_protein", "to": "negative regulation of high voltage-gated calcium channel activity", "width": 1}, {"from": "CALM3", "relation": "bioprocess_protein", "to": "negative regulation of peptidyl-threonine phosphorylation", "width": 1}, {"from": "CALM3", "relation": "bioprocess_protein", "to": "positive regulation of protein autophosphorylation", "width": 1}, {"from": "CALM3", "relation": "bioprocess_protein", "to": "negative regulation of ryanodine-sensitive calcium-release channel activity", "width": 1}, {"from": "CALM3", "relation": "bioprocess_protein", "to": "positive regulation of cyclic-nucleotide phosphodiesterase activity", "width": 1}, {"from": "CALM3", "relation": "bioprocess_protein", "to": "regulation of synaptic vesicle endocytosis", "width": 1}, {"from": "CALM3", "relation": "bioprocess_protein", "to": "detection of calcium ion", "width": 1}, {"from": "CALM3", "relation": "bioprocess_protein", "to": "regulation of release of sequestered calcium ion into cytosol by sarcoplasmic reticulum", "width": 1}, {"from": "CALM3", "relation": "bioprocess_protein", "to": "G2/M transition of mitotic cell cycle", "width": 1}, {"from": "CALM3", "relation": "bioprocess_protein", "to": "regulation of cardiac muscle cell action potential", "width": 1}, {"from": "CALM3", "relation": "bioprocess_protein", "to": "establishment of protein localization to mitochondrial membrane", "width": 1}, {"from": "CALM3", "relation": "bioprocess_protein", "to": "regulation of cell communication by electrical coupling involved in cardiac conduction", "width": 1}, {"from": "CALM3", "relation": "bioprocess_protein", "to": "positive regulation of DNA binding", "width": 1}, {"from": "CALM3", "relation": "bioprocess_protein", "to": "positive regulation of ryanodine-sensitive calcium-release channel activity", "width": 1}, {"from": "HDAC6", "relation": "bioprocess_protein", "to": "cellular response to hydrogen peroxide", "width": 1}, {"from": "HDAC6", "relation": "bioprocess_protein", "to": "regulation of autophagy", "width": 1}, {"from": "HDAC6", "relation": "bioprocess_protein", "to": "collateral sprouting", "width": 1}, {"from": "HDAC6", "relation": "bioprocess_protein", "to": "intracellular protein transport", "width": 1}, {"from": "HDAC6", "relation": "bioprocess_protein", "to": "negative regulation of transcription, DNA-templated", "width": 1}, {"from": "HDAC6", "relation": "bioprocess_protein", "to": "negative regulation of proteolysis", "width": 1}, {"from": "HDAC6", "relation": "bioprocess_protein", "to": "response to growth factor", "width": 1}, {"from": "HDAC6", "relation": "bioprocess_protein", "to": "positive regulation of peptidyl-serine phosphorylation", "width": 1}, {"from": "HDAC6", "relation": "bioprocess_protein", "to": "regulation of fat cell differentiation", "width": 1}, {"from": "HDAC6", "relation": "bioprocess_protein", "to": "protein polyubiquitination", "width": 1}, {"from": "HDAC6", "relation": "bioprocess_protein", "to": "regulation of protein stability", "width": 1}, {"from": "HDAC6", "relation": "bioprocess_protein", "to": "negative regulation of microtubule depolymerization", "width": 1}, {"from": "HDAC6", "relation": "bioprocess_protein", "to": "regulation of androgen receptor signaling pathway", "width": 1}, {"from": "HDAC6", "relation": "bioprocess_protein", "to": "cilium assembly", "width": 1}, {"from": "HDAC6", "relation": "bioprocess_protein", "to": "regulation of macroautophagy", "width": 1}, {"from": "HDAC6", "relation": "bioprocess_protein", "to": "protein destabilization", "width": 1}, {"from": "HDAC6", "relation": "bioprocess_protein", "to": "positive regulation of epithelial cell migration", "width": 1}, {"from": "HDAC6", "relation": "bioprocess_protein", "to": "regulation of autophagy of mitochondrion", "width": 1}, {"from": "HDAC6", "relation": "bioprocess_protein", "to": "dendritic spine morphogenesis", "width": 1}, {"from": "HDAC6", "relation": "bioprocess_protein", "to": "negative regulation of protein-containing complex assembly", "width": 1}, {"from": "HDAC6", "relation": "bioprocess_protein", "to": "aggrephagy", "width": 1}, {"from": "HDAC6", "relation": "bioprocess_protein", "to": "response to misfolded protein", "width": 1}, {"from": "HDAC6", "relation": "bioprocess_protein", "to": "regulation of establishment of protein localization", "width": 1}, {"from": "HDAC6", "relation": "bioprocess_protein", "to": "positive regulation of signaling receptor activity", "width": 1}, {"from": "HDAC6", "relation": "bioprocess_protein", "to": "histone H3 deacetylation", "width": 1}, {"from": "HDAC6", "relation": "bioprocess_protein", "to": "mitochondrion localization", "width": 1}, {"from": "HDAC6", "relation": "bioprocess_protein", "to": "positive regulation of hydrogen peroxide-mediated programmed cell death", "width": 1}, {"from": "HDAC6", "relation": "bioprocess_protein", "to": "tubulin deacetylation", "width": 1}, {"from": "HDAC6", "relation": "bioprocess_protein", "to": "lysosome localization", "width": 1}, {"from": "HDAC6", "relation": "bioprocess_protein", "to": "regulation of gene expression, epigenetic", "width": 1}, {"from": "HDAC6", "relation": "bioprocess_protein", "to": "negative regulation of oxidoreductase activity", "width": 1}, {"from": "HDAC6", "relation": "bioprocess_protein", "to": "histone deacetylation", "width": 1}, {"from": "HDAC6", "relation": "bioprocess_protein", "to": "protein deacetylation", "width": 1}, {"from": "HDAC6", "relation": "bioprocess_protein", "to": "regulation of microtubule-based movement", "width": 1}, {"from": "HDAC6", "relation": "bioprocess_protein", "to": "protein quality control for misfolded or incompletely synthesized proteins", "width": 1}, {"from": "HDAC6", "relation": "bioprocess_protein", "to": "cellular response to misfolded protein", "width": 1}, {"from": "HDAC6", "relation": "bioprocess_protein", "to": "negative regulation of hydrogen peroxide metabolic process", "width": 1}, {"from": "HDAC6", "relation": "bioprocess_protein", "to": "aggresome assembly", "width": 1}, {"from": "HDAC6", "relation": "bioprocess_protein", "to": "ubiquitin-dependent protein catabolic process via the multivesicular body sorting pathway", "width": 1}, {"from": "HDAC6", "relation": "bioprocess_protein", "to": "parkin-mediated stimulation of mitophagy in response to mitochondrial depolarization", "width": 1}, {"from": "HDAC6", "relation": "bioprocess_protein", "to": "negative regulation of protein-containing complex disassembly", "width": 1}, {"from": "HDAC6", "relation": "bioprocess_protein", "to": "peptidyl-lysine deacetylation", "width": 1}, {"from": "HDAC6", "relation": "bioprocess_protein", "to": "cellular response to topologically incorrect protein", "width": 1}, {"from": "HDAC6", "relation": "bioprocess_protein", "to": "Hsp90 deacetylation", "width": 1}, {"from": "HDAC6", "relation": "bioprocess_protein", "to": "polyubiquitinated misfolded protein transport", "width": 1}, {"from": "HDAC6", "relation": "bioprocess_protein", "to": "protein-containing complex disassembly", "width": 1}]);
+
+                  nodeColors = {};
+                  allNodes = nodes.get({ returnType: "Object" });
+                  for (nodeId in allNodes) {
+                    nodeColors[nodeId] = allNodes[nodeId].color;
+                  }
+                  allEdges = edges.get({ returnType: "Object" });
+                  // adding nodes and edges to the graph
+                  data = {nodes: nodes, edges: edges};
+
+                  var options = {
+    "configure": {
+        "enabled": false
+    },
+    "edges": {
+        "color": {
+            "inherit": true
+        },
+        "smooth": {
+            "enabled": true,
+            "type": "dynamic"
+        }
+    },
+    "interaction": {
+        "dragNodes": true,
+        "hideEdgesOnDrag": false,
+        "hideNodesOnDrag": false
+    },
+    "physics": {
+        "enabled": true,
+        "stabilization": {
+            "enabled": true,
+            "fit": true,
+            "iterations": 1000,
+            "onlyDynamicEdges": false,
+            "updateInterval": 50
+        }
+    }
+};
+
+                  
+
+
+                  
+
+                  network = new vis.Network(container, data, options);
+
+                  
+
+                  
+
+                  
+
+
+                  
+
+                  return network;
+
+              }
+              drawGraph();
+        </script>
+    </body>
+</html>

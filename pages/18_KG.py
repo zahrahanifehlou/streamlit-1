@@ -2,7 +2,8 @@ import streamlit as st
 import pandas as pd
 import networkx as nx
 import matplotlib.pyplot as plt
-
+import streamlit.components.v1 as components
+from pyvis.network import Network
 
 st.set_page_config(
     layout="wide",
@@ -45,14 +46,13 @@ options = {
 }
 for i in KG.relation.unique():
     G = nx.Graph()
+    net = Network(notebook=False)
     G.add_edges_from(KG[KG.relation == i][["x_name", "y_name"]].values, relation=i)
 
-    fig, ax = plt.subplots()
-    ax.set_title(i)
-    nx.draw(G, with_labels=True, **options)
-    st.pyplot(
-        fig,
-        use_container_width=True,
-        clear_figure=True,
-    )
+    net.from_nx(G)
+    net.show(f"{i}.html", notebook=False)
+    HtmlFile = open(f"{i}.html", "r", encoding="utf-8")
+    source_code = HtmlFile.read()
+    components.html(source_code, height=900, width=900)
+
     G.clear()
