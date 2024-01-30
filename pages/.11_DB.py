@@ -11,13 +11,15 @@ import streamlit as st
 sys.path.append("/mnt/shares/L/PROJECTS/JUMP-CRISPR/Code/streamlit-1/lib/")
 from streamlib import sql_df
 
-conn_meta = psycopg2.connect(
-    host="192.168.2.131",
-    port="5432",
-    user="arno",
-    database="ksi_cpds",
-    password="12345",
-)
+# conn_meta = psycopg2.connect(
+#     host="192.168.2.131",
+#     port="5432",r
+#     user="arno",
+#     database="ksi_cpds",
+#     password="12345",
+# )
+
+conn_meta = "postgres://arno:123456@192.168.2.131:5432/ksi_cpds"
 
 
 def to_str(pubchemid):
@@ -127,8 +129,9 @@ if rad == "yes":
             # dr_inhib = st.multiselect('select target(s):', df_cpds_inhib['symbol'].unique())
             # dr_inhib = [t.strip().upper() for t in dr_inhib]
             df_inhib_sel = df_cpds_inhib[df_cpds_inhib["symbol"].isin(var_t)]
+            st.write(df_inhib_sel)
             df_inhib_sel["ext_name"] = (
-                df_inhib_sel["name"] + "_" + df_inhib_sel["symbol"]
+                df_inhib_sel["keggcpdname"] + "_" + df_inhib_sel["symbol"]
             )
             cpd_inhib = st.multiselect(
                 f"select cpds targeting :{var_t}:", df_inhib_sel["ext_name"].unique()
@@ -143,7 +146,7 @@ if rad == "yes":
             # st.write(dr_inhib)
         else:
             df_cpds_inhib["ext_name"] = (
-                df_cpds_inhib["name"] + "_" + df_cpds_inhib["symbol"]
+                df_cpds_inhib["keggcpdname"] + "_" + df_cpds_inhib["symbol"]
             )
             cpd_inhib = st.multiselect(
                 "Select Cpds_Target:", df_cpds_inhib["ext_name"].unique()

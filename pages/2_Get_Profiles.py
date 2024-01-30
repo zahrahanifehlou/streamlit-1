@@ -80,7 +80,7 @@ if len(var_t) > 0 and var_t[0] != "":
 # -------------------------------------------------------------------------------------------------------------------
 db_name = st.radio(
     "Find compounds in which DataSet",
-    ("SelectChem and Jump DataSet", "KEGG"),
+    ("SelectChem and Jump DataSet", "KEGG", "PubChem"),
     horizontal=True,
 )
 
@@ -102,7 +102,9 @@ if len(df_res) > 0:
         if db_name == "KEGG":
             # sql_query = get_sql_kegg(table_name=table_name, col_name=col_name)
             df_cpds = df_cpds.dropna(subset=["keggid"]).reset_index(drop=True)
-
+if db_name == "PubChem":
+    st.session_state["PubChem"] = var_t
+    st.switch_page("pages/19_PubChem.py")
 
 # get genes are in crispr but not in cpd
 df_prof_crisper = pd.DataFrame()
