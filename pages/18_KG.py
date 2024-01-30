@@ -53,6 +53,6 @@ for i in KG.relation.unique():
     net.show(f"{i}.html", notebook=False)
     HtmlFile = open(f"{i}.html", "r", encoding="utf-8")
     source_code = HtmlFile.read()
-    components.html(source_code, height=900, width=900)
+    components.html(source_code, height=900, width=1200)
 
     G.clear()
