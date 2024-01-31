@@ -68,8 +68,10 @@ with col3:
 
 var_t = var_text.split("\n")
 var_t = [t.strip().upper() for t in var_t]
+var_t = list(set(var_t))
+# st.write(var_t)
 df_res = pd.DataFrame()
-if len(var_t) > 0 and var_t[0] != "":
+if len(var_t) > 0:
     if rad_match == "Yes":
         mask = np.column_stack(
             [
