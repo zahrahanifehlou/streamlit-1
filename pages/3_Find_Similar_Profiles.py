@@ -205,7 +205,7 @@ else:
                 st.write(df_keep_cpd)
 
             with fig_cols1[1]:  # Profile
-                st.write(f"  Profile")
+                st.write("Profile")
                 st.write(df_keep_prof_cpd.head(10))
 
             st.write("\n")

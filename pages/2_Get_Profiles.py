@@ -5,6 +5,7 @@ import pandas as pd
 import psycopg2
 import streamlit as st
 import plotly.express as px
+# import umap
 
 warnings.filterwarnings("ignore")
 sys.path.append("/mnt/shares/L/PROJECTS/JUMP-CRISPR/Code/streamlit-1/lib/")
@@ -58,19 +59,36 @@ st.write(f"\n")
 # -------------------------------------------------------------------------------------------------------------------
 col3, col4 = st.columns(2)
 with col3:
+    rad_match = st.radio(
+        "Exact Match?",
+        ["Yes", "No"],
+        horizontal=True,
+    )
     var_text = st.text_area("Enter your search", help="Name or ID separated by enter")
+
 var_t = var_text.split("\n")
 var_t = [t.strip().upper() for t in var_t]
 df_res = pd.DataFrame()
 if len(var_t) > 0 and var_t[0] != "":
-    mask = np.column_stack(
-        [
-            data[col].str.match(v.upper(), na=False)
-            for col in data.columns
-            for v in var_t
-            if v != ""
-        ]
-    )
+    if rad_match == "Yes":
+        mask = np.column_stack(
+            [
+                data[col].str.fullmatch(v.upper(), na=False)
+                for col in data.columns
+                for v in var_t
+                if v != ""
+            ]
+        )
+    else:
+        mask = np.column_stack(
+            [
+                data[col].str.match(v.upper(), na=False)
+                for col in data.columns
+                for v in var_t
+                if v != ""
+            ]
+        )
+
     df_res = data.loc[mask.any(axis=1)]
     df_res.reset_index(inplace=True, drop=True)
     with col4:
@@ -256,7 +274,7 @@ if len(df_cpds) > 0:
     st.session_state["df_cpds"] = df_cpdGene
 
     # get profile------------------------------------------------------------------------------------------------------------------
-    st.write(f"Profiles in JUMP CP DATA SET")
+    st.write("Profiles in JUMP CP DATA SET")
 
     # get CPD profiles
 
@@ -304,14 +322,15 @@ if len(df_prof) > 0:
     tab2.write(df_prof.describe().T)
 
     list_sources = df_prof.metasource.unique().tolist()
-    options = st.text_area("Enter sources")
-    var_t = options.split("\n")
-    var_t = [t.strip() for t in var_t]
+    options2 = st.text_area("Enter sources")
+    if options2:
+        var_t2 = options2.split("\n")
+        var_t2 = [t.strip() for t in var_t2]
 
-    if not options:
+    if not options2:
         tmp = df_prof.copy()
     else:
-        tmp = df_prof.loc[df_prof["metasource"].isin(var_t)]
+        tmp = df_prof.loc[df_prof["metasource"].isin(var_t2)]
     tmp.reset_index(inplace=True, drop=True)
     meta_cols = [col for col in tmp.columns if col.startswith("meta")]
     st.write(tmp[meta_cols])
@@ -363,6 +382,35 @@ if len(df_prof) > 0:
         st.pyplot(fig_clusmap)
 
     st.session_state["df_profiles"] = tmp
+    profile_conn = "postgres://arno:12345@192.168.2.131:5432/ksilink_cpds"
+
+    @st.cache_data
+    def get_umap(choix_source):
+        sql_umqpemd = f"select * from umapemd where metasource='{choix_source}'"
+        df_src_emd = sql_df(sql_umqpemd, profile_conn)
+        return df_src_emd
+
+    # st.write(var_t2)
+    if options2:
+        df_src_emd = get_umap(choix_source=var_t2[0])
+        # st.write(df_src_emd)
+        df_src_emd["color"] = "others"
+        df_src_emd.loc[
+            df_src_emd["metaname"].isin(tmp["metaname"].to_list()), "color"
+        ] = "selected compounds"
+
+        fig = px.scatter(
+            df_src_emd,
+            x="umap1",
+            y="umap2",
+            color="color",
+            opacity=0.5,
+            color_discrete_sequence=["blue", "red", "green"],
+            title="UMAP ",
+            hover_data=["metaname"],
+        )
+
+        st.plotly_chart(fig, theme="streamlit", use_container_width=True)
     # st.session_state["df_cpds"] = df_cpds
 
     # st.session_state["df_efficacy"] = df_efficacy
