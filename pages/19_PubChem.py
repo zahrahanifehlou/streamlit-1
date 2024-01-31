@@ -5,7 +5,7 @@ import streamlit as st
 import time
 from tqdm import tqdm
 import requests
-
+import pubchempy as pcp
 
 sys.path.append("/mnt/shares/L/PROJECTS/JUMP-CRISPR/Code/streamlit-1/lib/")
 # from streamlib import sql_df
@@ -65,14 +65,20 @@ list_cpd = st.session_state["PubChem"]
 #     "41018128",
 #     "4996",
 # ]
-compounds["pubchem_cid"] = list_cpd
+# compounds["pubchem_cid"] = list_cpd
+list_pub = []
+for item in list_cpd:
+    list_pub.append(pcp.get_compounds(item, "cid", as_dataframe=True))
 
-compounds["pubchem_moa"] = pubchem.moa_annotation(compounds.pubchem_cid)
-st.write(compounds)
-bioassay_df = pubchem.bioassay(compounds.pubchem_cid)
+compounds = pd.concat(list_pub).reset_index()
+compounds = compounds.astype({"cid": str})
+# st.write(compounds)
+compounds["pubchem_moa"] = pubchem.moa_annotation(compounds["cid"])
+
+bioassay_df = pubchem.bioassay(compounds.cid)
 with_target = bioassay_df.dropna(subset=["Target GeneID"]).reset_index(drop=True)
 with_target["GeneName"] = pubchem.target(with_target.AID)
-st.write(with_target)
+# st.write(with_target)
 median_activity_value = (
     with_target[["InChIKey", "CID", "Activity Name", "Activity Value [uM]", "GeneName"]]
     .groupby(["CID", "InChIKey", "GeneName", "Activity Name"])
@@ -81,22 +87,22 @@ median_activity_value = (
 )
 
 
-target_merge = (
-    median_activity_value[
-        ["InChIKey", "CID", "Activity Name", "Activity Value [uM]", "GeneName"]
-    ]
-    .groupby(["CID", "InChIKey", "Activity Name"])
-    .agg(
-        {
-            "GeneName": lambda x: ",".join(list(set([i.upper() for i in x]))),
-            "Activity Value [uM]": lambda y: ",".join(
-                [str(np.around(j, 3)) for j in y]
-            ),
-        }
-    )
-    .reset_index()
-)
-target_merge.rename(
+# target_merge = (
+#     median_activity_value[
+#         ["InChIKey", "CID", "Activity Name", "Activity Value [uM]", "GeneName"]
+#     ].groupby(["CID", "InChIKey", "Activity Name"])
+#     # .agg(
+#     #     {
+#     #         "GeneName": lambda x: ",".join(list(set([i.upper() for i in x]))),
+#     #         "Activity Value [uM]": lambda y: ",".join(
+#     #             [str(np.around(j, 3)) for j in y]
+#     #         ),
+#     #     }
+#     # )
+#     # .reset_index()
+# )
+# target_merge = target_merge.reset_index()
+median_activity_value.rename(
     columns={
         "CID": "pubchem_cid",
         "Activity Name": "Activity Type",
@@ -106,12 +112,13 @@ target_merge.rename(
     inplace=True,
 )
 
-target_merge = target_merge.astype({"pubchem_cid": str})
+target_merge = median_activity_value.astype({"pubchem_cid": str})
 
-# target_merge = target_merge.merge(
-#     compounds[["Name", "CAS", "pubchem_cid", "Canonical_Smiles", "Target"]],
-#     on="pubchem_cid",
-# )
+target_merge = target_merge.merge(
+    compounds[["iupac_name", "cid", "canonical_smiles", "pubchem_moa"]],
+    left_on="pubchem_cid",
+    right_on="cid",
+)
 
 # final_table = target_merge[
 #     [
@@ -126,5 +133,5 @@ target_merge = target_merge.astype({"pubchem_cid": str})
 #         "Median Activity Value [uM]",
 #     ]
 # ]
-#
+
 st.write(target_merge)
