@@ -77,7 +77,7 @@ if len(var_t) > 0:
             [
                 data[col].str.fullmatch(v.upper(), na=False)
                 for col in data.columns
-                for v in var_t£
+                for v in var_t
                 if v != ""
             ]
         )

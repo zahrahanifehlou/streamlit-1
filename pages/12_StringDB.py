@@ -210,23 +210,24 @@ if not df_genes.empty:
 
         df_drug_meta = sql_df(sql_kegg, conn_meta)
         df_drug_meta = df_drug_meta.loc[:, ~df_drug_meta.columns.duplicated()].copy()
-        df_drug_meta = df_drug_meta.drop_duplicates(
-            subset=["keggid", "source"]
-        ).reset_index(drop=True)
+        df_drug_meta = df_drug_meta.drop_duplicates(subset=["keggid"]).reset_index(
+            drop=True
+        )
 
         # df_drug_meta.dropna(subset="geneid", axis=0, inplace=True)
         # disp2= st.toggle('Display Data')
         if disp:
             st.write(df_drug_meta.sample(5))
         # # st.write(df_drug_meta.describe())
-
-        list_sources = df_drug_meta["source"].unique().tolist()
+        sql_src = "select metasource,metabatchid from aggprofile"
+        df_src = sql_df(sql_src, conn_prof)
+        list_sources = df_src["metasource"].unique().tolist()
         choix_source = st.selectbox("Select the Source", list_sources)
 
-        df_cpd_src = df_drug_meta[df_drug_meta["source"] == choix_source].reset_index(
-            drop=True
-        )
-        b_list2 = df_cpd_src["batchid"].to_list()
+        # df_cpd_src = df_drug_meta[df_drug_meta["source"] == choix_source].reset_index(
+        #     drop=True
+        # )
+        b_list2 = df_drug_meta["batchid"].to_list()
         bq = []
         for bs in b_list2:
             bq.append("'" + bs + "'")
