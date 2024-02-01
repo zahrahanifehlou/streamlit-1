@@ -129,9 +129,7 @@ if jump_st:
         if sel_data == "cpds in Jump with geneinfos":
             sel_match = col3.selectbox("Choose matching col", df_cpd_meta.columns)
             df_cpds = (
-                df_cpd_meta[
-                    df_cpd_meta[sel_match].astype(str).str.contains("|".join(b_list2))
-                ]
+                df_cpd_meta[df_cpd_meta[sel_match].isin(b_list2)]
                 .drop_duplicates(subset="pubchemid")
                 .reset_index(drop=True)
             )
@@ -142,7 +140,7 @@ if jump_st:
         if sel_data == "cpds in Kegg":
             sel_match = col3.selectbox("Choose matching col", df_kegg.columns)
             df_kegg = (
-                df_kegg[df_kegg[sel_match].astype(str).str.contains("|".join(b_list2))]
+                df_kegg[df_kegg[sel_match].isin(b_list2)]
                 .drop_duplicates(subset=["keggid"])
                 .reset_index(drop=True)
             )
@@ -154,7 +152,7 @@ if jump_st:
             df_jump = sql_df(sql_jump, conn_meta)
             sel_match = col3.selectbox("Choose matching col", df_jump.columns)
             df_jump = (
-                df_jump[df_jump[sel_match].astype(str).str.contains("|".join(b_list2))]
+                df_jump[df_jump[sel_match].isin(b_list2)]
                 .drop_duplicates(subset=["pubchemid"])
                 .reset_index(drop=True)
             )
