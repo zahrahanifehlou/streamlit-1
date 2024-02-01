@@ -1,5 +1,7 @@
 import sys
 import plotly.graph_objs as go
+
+sys.path.append("/mnt/shares/L/PROJECTS/JUMP-CRISPR/Code/streamlit-1/lib/")
 from streamlib import (
     get_list_category,
     get_stringDB_enr,
@@ -17,10 +19,11 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st
 import requests
+from pyvis.network import Network
+import streamlit.components.v1 as components
+import matplotlib.pyplot as plt
 
 st.set_page_config(layout="wide")
-
-sys.path.append("/mnt/shares/L/PROJECTS/JUMP-CRISPR/Code/streamlit-1/lib/")
 
 
 conn_meta = "postgres://arno:123456@192.168.2.131:5432/ksi_cpds"
@@ -292,9 +295,7 @@ if not df_genes.empty:
     thres = st.sidebar.slider("Interaction Thresholds", 0.0, 1.0, 0.4, 0.02)
     if not df_inter.empty:
         list_edges, list_inters = get_stringDB(df_inter, thres, "symbol")
-        st.write(
-            f"retrieved : {len(list_edges)} Interaction with {len(list_inters)} threshold"
-        )
+        st.write(f"retrieved : {len(list_edges)} Interaction with {thres} threshold")
 
         st.write("## Computing Network")
         H = nx.Graph(list_edges)
@@ -368,6 +369,32 @@ if not df_genes.empty:
         box_size = st.sidebar.slider(
             "box size", min_value=400, max_value=1600, step=50, value=600
         )
+        # net = Network(notebook=False)
+
+        # net.from_nx(H)
+
+        # net.show("PPI.html", notebook=False)
+
+        # HtmlFile = open("PPI.html", "r", encoding="utf-8")
+        # source_code = HtmlFile.read()
+
+        # components.html(source_code, height=1200, width=1200)
+        options = {
+            # "node_color": "blue",
+            "node_size": vert_size,
+            "width": 1,
+            "font_size": lab_size,
+            # "edge_color": "green",
+            "alpha": 0.6,
+        }
+        fig, ax = plt.subplots()
+        # ax.set_title(i)
+        # nx.draw(H, with_labels=True, **options)
+        # st.pyplot(
+        #     fig,
+        #     use_container_width=True,
+        #     clear_figure=True,
+        # )
         ig.config["plotting.backend"] = "matplotlib"
         subax1 = ig.plot(
             partition,
@@ -376,9 +403,11 @@ if not df_genes.empty:
             vertex_size=vert_size,
             margin=10,
             bbox=(0, 0, box_size, box_size),
+            **options,
         )
         # nx.draw(GG, with_labels=True,node_size=10,font_size=4)
         st.pyplot(subax1.figure, use_container_width=False)
+
         nbr_of_cluster = ord(df_clust["cluster"].max()) - 96
 
         # comment for nothing
