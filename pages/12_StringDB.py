@@ -191,7 +191,8 @@ if not df_genes.empty:
     )
     df_inter = pd.DataFrame()
     if choice == "Cpds":
-        st.write("## Loading CPDS")
+        st.warning("## Loading CPDS Not Fully implemented yet")
+        exit(0)
 
         b_list2 = unique_gene
         bq = []
@@ -293,7 +294,7 @@ if not df_genes.empty:
     ################################### NETWORK ##############################################
     st.write("## Loading StringDB PPI")
     # col_a,col_b=st.columns(2)
-    thres = st.sidebar.slider("Interaction Thresholds", 0.0, 1.0, 0.4, 0.02)
+    thres = st.sidebar.slider("Interaction Thresholds", 0.0, 1.0, 0.8, 0.02)
     if not df_inter.empty:
         list_edges, list_inters = get_stringDB(df_inter, thres, "symbol")
         st.write(f"retrieved : {len(list_edges)} Interaction with {thres} threshold")
@@ -301,22 +302,29 @@ if not df_genes.empty:
         st.write("## Computing Network")
         H = nx.Graph(list_edges)
         G = ig.Graph.from_networkx(H)
-        partition = la.find_partition(
-            G, la.ModularityVertexPartition, n_iterations=-1, weights=list_inters
-        )
+        # partition = la.find_partition(
+        #     G, la.ModularityVertexPartition, n_iterations=-1, weights=list_inters
+        # )
 
-        subg = partition.subgraphs()
+        # subg = partition.subgraphs()
+        communities = G.community_edge_betweenness()
+        communities = communities.as_clustering()
+        num_communities = len(communities)
+        palette = ig.RainbowPalette(n=num_communities)
         list_gene = []
         list_clust = []
         cluster = 96
         # thres_db = col_b.slider("cluster Thresholds", 2, 100,9,1)
-        st.write(f"Total Number of clusters: {len(subg)}")
-        for g in subg:
+        st.write(f"Total Number of clusters: {num_communities}")
+        for i, g in enumerate(communities):
             cluster = cluster + 1
+            G.vs[g]["color"] = i
+            community_edges = G.es.select(_within=g)
+            community_edges["color"] = i
             # st.write(g)
             # print(g.vs['_nx_name'])
             # if len(g.vs['_nx_name'])>thres_db:
-            for name in g.vs["_nx_name"]:
+            for name in G.vs["_nx_name"]:
                 list_clust.append(chr(cluster))
                 list_gene.append(name)
         df_clust = pd.DataFrame()
@@ -380,14 +388,14 @@ if not df_genes.empty:
         # source_code = HtmlFile.read()
 
         # components.html(source_code, height=1200, width=1200)
-        options = {
-            # "node_color": "blue",
-            "node_size": vert_size,
-            "width": 1,
-            "font_size": lab_size,
-            # "edge_color": "green",
-            "alpha": 0.6,
-        }
+        # options = {
+        #     # "node_color": "blue",
+        #     "node_size": vert_size,
+        #     "width": 1,
+        #     "font_size": lab_size,
+        #     # "edge_color": "green",
+        #     "alpha": 0.6,
+        # }
         fig, ax = plt.subplots()
         # ax.set_title(i)
         # nx.draw(H, with_labels=True, **options)
@@ -397,18 +405,35 @@ if not df_genes.empty:
         #     clear_figure=True,
         # )
         ig.config["plotting.backend"] = "matplotlib"
-        subax1 = ig.plot(
-            partition,
-            vertex_label=partition.graph.vs["_nx_name"],
+        ig.plot(
+            communities,
+            palette=palette,
+            vertex_label=G.vs["_nx_name"],
+            edge_width=1,
+            target=ax,
+            vertex_size=20,
             vertex_label_size=lab_size,
-            vertex_size=vert_size,
-            margin=10,
-            bbox=(0, 0, box_size, box_size),
-            **options,
+        )
+        legend_handles = []
+        for i in range(num_communities):
+            handle = ax.scatter(
+                [],
+                [],
+                s=100,
+                facecolor=palette.get(i),
+                edgecolor="k",
+                label=i,
+            )
+            legend_handles.append(handle)
+        ax.legend(
+            handles=legend_handles,
+            title="Community:",
+            bbox_to_anchor=(0, 1.0),
+            bbox_transform=ax.transAxes,
         )
         # nx.draw(GG, with_labels=True,node_size=10,font_size=4)
-        st.pyplot(subax1.figure, use_container_width=False)
-
+        st.pyplot(ax.figure, use_container_width=False)
+        exit(0)
         nbr_of_cluster = ord(df_clust["cluster"].max()) - 96
 
         # comment for nothing
