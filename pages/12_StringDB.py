@@ -1,6 +1,7 @@
 import sys
 import plotly.graph_objs as go
 
+# from lib import streamlib
 sys.path.append("/mnt/shares/L/PROJECTS/JUMP-CRISPR/Code/streamlit-1/lib/")
 from streamlib import (
     get_list_category,
@@ -193,8 +194,8 @@ if not df_genes.empty:
     )
     df_inter = pd.DataFrame()
     if choice == "Cpds":
-        st.warning("## Loading CPDS Not Fully implemented yet")
-        exit(0)
+        st.warning("## Loading CPDS in development! ")
+        # exit(0)
 
         b_list2 = unique_gene
         bq = []
@@ -213,19 +214,15 @@ if not df_genes.empty:
 
         df_drug_meta = sql_df(sql_kegg, conn_meta)
         df_drug_meta = df_drug_meta.loc[:, ~df_drug_meta.columns.duplicated()].copy()
-        df_drug_meta = df_drug_meta.drop_duplicates(subset=["keggid"]).reset_index(
-            drop=True
-        )
+        # df_drug_meta = df_drug_meta.drop_duplicates(subset=["keggid"]).reset_index(
+        # drop=True
+        # )
 
         # df_drug_meta.dropna(subset="geneid", axis=0, inplace=True)
         # disp2= st.toggle('Display Data')
         if disp:
             st.write(df_drug_meta.sample(5))
         # # st.write(df_drug_meta.describe())
-        sql_src = "select metasource,metabatchid from aggprofile"
-        df_src = sql_df(sql_src, conn_prof)
-        list_sources = df_src["metasource"].unique().tolist()
-        choix_source = st.selectbox("Select the Source", list_sources)
 
         # df_cpd_src = df_drug_meta[df_drug_meta["source"] == choix_source].reset_index(
         #     drop=True
@@ -240,6 +237,8 @@ if not df_genes.empty:
         )
 
         df_cpd_prof = sql_df(sql_profile, conn_prof)
+        list_sources = df_cpd_prof["metasource"].unique().tolist()
+        choix_source = st.selectbox("Select the Source", list_sources)
         df_cpd_prof = df_cpd_prof[
             df_cpd_prof["metasource"] == choix_source
         ].reset_index(drop=True)
@@ -249,11 +248,15 @@ if not df_genes.empty:
         # # st.write(df_cpd_src.sample(5))
 
         df_cpds_merge = df_cpd_prof.merge(
-            df_cpd_src, left_on="metabatchid", right_on="batchid"
+            df_drug_meta, left_on="metabatchid", right_on="batchid"
         ).reset_index(drop=True)
 
         # st.write("TOTOT: ",unique_gene)
-        df_inter = df_cpds_merge[df_cpds_merge[gene_col].isin(unique_gene)].reset_index(
+        # df_inter = df_cpds_merge[df_cpds_merge[gene_col].isin(unique_gene)].reset_index(
+        #     drop=True
+        # )
+        # df_inter = df_inter.drop_duplicates(subset=["keggid"]).reset_index(drop=True)
+        df_inter = df_cpds_merge.drop_duplicates(subset=["keggid"]).reset_index(
             drop=True
         )
         if disp:
@@ -400,6 +403,7 @@ if not df_genes.empty:
             highlightColor="#F7A7A6",
             collapsible=True,
             node={"labelProperty": "label"},
+            physics=True,
             # link={"labelProperty": "label", "renderLabel": True},
         )
         st.write("### Displaying the full network/graph clustered with Leiden approach")
@@ -469,6 +473,7 @@ if not df_genes.empty:
         # sql_dot="select * from umapemd"
         # df_temp=sql_df(sql_dot,conn_prof)
         # st.write(df_temp)
+        # choix_source = "Ksilink_25"
         if choice == "Cpds":
             umap_sql = f"select * from umapemd where metasource='{choix_source}'"
         else:
@@ -476,18 +481,22 @@ if not df_genes.empty:
         df_umap = sql_df(umap_sql, conn_prof)
 
         if choice == "Cpds":
-            df_umap = df_umap.dropna(subset="keggid", axis=0)
-            df_umap = df_umap.set_index("keggid")
-            df_umap_cluster = df_umap_cluster.set_index("keggid")
-            df_umap["cluster"] = df_umap_cluster["description"]
-            df_umap["target"] = df_umap_cluster["symbol"]
+            # df_umap = df_umap.dropna(subset="keggid", axis=0)
+            # df_umap = df_umap.set_index("keggid")
+            dict1 = df_umap_cluster.set_index("batchid").to_dict()["description"]
+            dict2 = df_umap_cluster.set_index("batchid").to_dict()["symbol"]
+            # st.write("Dict", dict1)
+            df_umap["description"] = df_umap["metabatchid"].map(dict1)
+            # df_umap["description"] = df_umap_cluster["description"]
+            df_umap["target"] = df_umap["metabatchid"].map(dict2)
             df_umap["target"] = df_umap["target"].fillna("")
             df_umap_cluster = df_umap_cluster.reset_index()
             df_umap = df_umap.reset_index()
             df_umap["size"] = 5
-            df_umap["size"] = df_umap["keggid"].apply(
-                lambda x: 0.5 if x not in df_umap_cluster["keggid"].to_list() else 5
+            df_umap["size"] = df_umap["metabatchid"].apply(
+                lambda x: 0.5 if x not in df_umap_cluster["batchid"].to_list() else 5
             )
+
             # dict1 = df_umap_cluster.set_index('keggid').to_dict()['cluster']
             # df_umap["cluster"] = df_umap['metakeggid'].map(dict1)
         else:
@@ -504,7 +513,7 @@ if not df_genes.empty:
 
         # df_umap["cluster"] = df_umap["cluster"].replace(list_enr)
         df_umap["description"] = df_umap["description"].fillna("others")
-
+        # st.write(df_umap)
         ################################### SIMILARITY ##############################################
         # st.write("## Cosine Similarity")
 
@@ -681,12 +690,12 @@ if not df_genes.empty:
                 df_umap,
                 x="umap1",
                 y="umap2",
-                color="cluster",
+                color="description",
                 text="target",
                 size="size",
                 width=800,
                 height=800,
-                hover_data=["target", "metakeggid"],
+                hover_data=["target", "metaname"],
             )
         else:
             fig1 = px.scatter(
