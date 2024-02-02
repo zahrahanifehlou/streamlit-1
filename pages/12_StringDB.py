@@ -21,7 +21,9 @@ import streamlit as st
 import requests
 from pyvis.network import Network
 import streamlit.components.v1 as components
+import matplotlib
 import matplotlib.pyplot as plt
+from streamlit_agraph import agraph, Node, Edge, Config
 
 st.set_page_config(layout="wide")
 
@@ -298,7 +300,14 @@ if not df_genes.empty:
     if not df_inter.empty:
         list_edges, list_inters = get_stringDB(df_inter, thres, "symbol")
         st.write(f"retrieved : {len(list_edges)} Interaction with {thres} threshold")
+        list_cat = get_list_category(df_inter, "symbol")
+        categ = st.selectbox("Select Category", list_cat)
+        df_go_ento = get_stringDB_enr(df_inter, "symbol", categ)
 
+        st.write(f"{categ} Enrichment", df_go_ento)
+        df_go_ento["log_p_val"] = -np.log10(df_go_ento["p_val"].apply(str_to_float))
+        fig_bar = px.bar(df_go_ento, x="Description", y="log_p_val")
+        st.plotly_chart(fig_bar)
         st.write("## Computing Network")
         H = nx.Graph(list_edges)
         G = ig.Graph.from_networkx(H)
@@ -314,132 +323,143 @@ if not df_genes.empty:
         list_gene = []
         list_clust = []
         cluster = 96
+        list_df = []
+        list_desc = []
+        nodes = []
         # thres_db = col_b.slider("cluster Thresholds", 2, 100,9,1)
+        net = Network(notebook=False)
         st.write(f"Total Number of clusters: {num_communities}")
         for i, g in enumerate(communities):
             cluster = cluster + 1
             G.vs[g]["color"] = i
+            # st.write(G.vs[g].attributes())
             community_edges = G.es.select(_within=g)
             community_edges["color"] = i
-            # st.write(g)
+            df_temp = get_stringDB_enr(G.vs[g]["_nx_name"], cat=categ)
+            if not df_temp.empty:
+                list_desc.append(str(df_temp["Description"].iloc[0]))
+            else:
+                list_desc.append("None")
+            couleur = matplotlib.colors.to_hex(palette.get(i), keep_alpha=True)
+            for u in G.vs[g]:
+                # st.write(couleur)
+                nodes.append(
+                    Node(
+                        id=u.index,
+                        label=u["_nx_name"],
+                        color=couleur,
+                        title=list_desc[i],
+                        shape="circle",
+                        size=200,
+                    )
+                )
+                # net.add_node(
+                #     u.index,
+                #     label=u["_nx_name"],
+                #     color=couleur,
+                #     shape="circle",
+                #     title=u["_nx_name"],
+                #     value=20,
+                # )
+                if not df_temp.empty:
+                    list_df.append(str(df_temp["Description"].iloc[0]))
+                    list_gene.append(u["_nx_name"])
+
+                else:
+                    list_df.append("Null")
+                    list_gene.append(u["_nx_name"])
             # print(g.vs['_nx_name'])
             # if len(g.vs['_nx_name'])>thres_db:
-            for name in G.vs["_nx_name"]:
-                list_clust.append(chr(cluster))
-                list_gene.append(name)
+        #     for name in G.vs[g]["_nx_name"]:
+        #         list_clust.append(chr(cluster))
+        #         list_gene.append(name)
+
         df_clust = pd.DataFrame()
         df_clust["symbol"] = list_gene
-        df_clust["cluster"] = list_clust
-        if df_clust.empty:
-            st.warning("Please reduce the threshold to get more interaction")
-            exit()
-        if disp:
-            st.write("DF_CLUST", df_clust)
+        df_clust["description"] = list_df
+        # if df_clust.empty:
+        #     st.warning("Please reduce the threshold to get more interaction")
+        #     exit()
+        # if disp:
+        #     st.write("DF_CLUST", df_clust)
         df_umap_cluster = df_inter.merge(
             df_clust, left_on="symbol", right_on="symbol"
         ).reset_index(drop=True)
-        # df_umap_cluster['chromosome']=df_umap_cluster['chromosome'].apply(int_to_str)
-        if disp:
-            st.write(df_umap_cluster)
+        # # df_umap_cluster['chromosome']=df_umap_cluster['chromosome'].apply(int_to_str)
+        # if disp:
+        #     st.write(df_umap_cluster)
 
         ################################### ENRICHMENT ##############################################
-        list_cat = get_list_category(df_umap_cluster, "symbol")
-        categ = st.selectbox("Select Category", list_cat)
-        df_go_ento = get_stringDB_enr(df_umap_cluster, "symbol", categ)
-        # df_umap_cluster['chromosome']=df_umap_cluster['chromosome'].apply(int_to_str)
-
-        list_enr = {}
-        for grpName, rows in df_clust.groupby("cluster"):
-            df_temp = get_stringDB_enr(rows["symbol"].unique(), cat=categ)
-            # st.write(df_temp['Description'], grpName)
-
-            # list_enr['cluster'].append(grpName)
-            if len(df_temp["Description"]) > 0:
-                list_enr.update({grpName: df_temp["Description"][0]})
-
-            else:
-                list_enr.update({grpName: "Null"})
-
-        st.write(f"{categ} Enrichment", df_go_ento)
-        df_go_ento["log_p_val"] = -np.log10(df_go_ento["p_val"].apply(str_to_float))
-        fig_bar = px.bar(df_go_ento, x="Description", y="log_p_val")
-        st.plotly_chart(fig_bar)
-
-        # subax1 = plt.subplot(121)
+        A = G.get_edgelist()
+        edges = [Edge(source=i, target=j, type="CURVE_SMOOTH") for (i, j) in A]
+        config = Config(
+            width=1200,
+            height=1200,
+            directed=False,
+            nodeHighlightBehavior=True,
+            highlightColor="#F7A7A6",
+            collapsible=True,
+            node={"labelProperty": "label"},
+            # link={"labelProperty": "label", "renderLabel": True},
+        )
         st.write("### Displaying the full network/graph clustered with Leiden approach")
-        # col1, col2,col3 = st.columns(3)
+        return_value = agraph(nodes=nodes, edges=edges, config=config)
+        # net.add_edges(A)
+        # net.show("/mnt/shares/L/Temp/titi.html", notebook=False)
 
-        vert_size = st.sidebar.slider(
-            "vertex size", min_value=0.2, max_value=20.0, step=0.1, value=1.0
-        )
-        lab_size = st.sidebar.slider(
-            "label size", min_value=0.2, max_value=20.0, step=0.1, value=2.4
-        )
-        box_size = st.sidebar.slider(
-            "box size", min_value=400, max_value=1600, step=50, value=600
-        )
-        # net = Network(notebook=False)
-
-        # net.from_nx(H)
-
-        # net.show("PPI.html", notebook=False)
-
-        # HtmlFile = open("PPI.html", "r", encoding="utf-8")
+        # HtmlFile = open("/mnt/shares/L/Temp/titi.html", "r", encoding="utf-8")
         # source_code = HtmlFile.read()
 
         # components.html(source_code, height=1200, width=1200)
-        # options = {
-        #     # "node_color": "blue",
-        #     "node_size": vert_size,
-        #     "width": 1,
-        #     "font_size": lab_size,
-        #     # "edge_color": "green",
-        #     "alpha": 0.6,
-        # }
-        fig, ax = plt.subplots()
-        # ax.set_title(i)
-        # nx.draw(H, with_labels=True, **options)
-        # st.pyplot(
-        #     fig,
-        #     use_container_width=True,
-        #     clear_figure=True,
+
+        # vert_size = st.sidebar.slider(
+        #     "vertex size", min_value=0.2, max_value=20.0, step=0.1, value=1.0
         # )
-        ig.config["plotting.backend"] = "matplotlib"
-        ig.plot(
-            communities,
-            palette=palette,
-            vertex_label=G.vs["_nx_name"],
-            edge_width=1,
-            target=ax,
-            vertex_size=20,
-            vertex_label_size=lab_size,
-        )
-        legend_handles = []
-        for i in range(num_communities):
-            handle = ax.scatter(
-                [],
-                [],
-                s=100,
-                facecolor=palette.get(i),
-                edgecolor="k",
-                label=i,
-            )
-            legend_handles.append(handle)
-        ax.legend(
-            handles=legend_handles,
-            title="Community:",
-            bbox_to_anchor=(0, 1.0),
-            bbox_transform=ax.transAxes,
-        )
-        # nx.draw(GG, with_labels=True,node_size=10,font_size=4)
-        st.pyplot(ax.figure, use_container_width=False)
-        exit(0)
-        nbr_of_cluster = ord(df_clust["cluster"].max()) - 96
+        # lab_size = st.sidebar.slider(
+        #     "label size", min_value=0.2, max_value=20.0, step=0.1, value=2.4
+        # )
+        # box_size = st.sidebar.slider(
+        #     "box size", min_value=400, max_value=1600, step=50, value=600
+        # )
+
+        # fig, ax = plt.subplots()
+
+        # ig.config["plotting.backend"] = "matplotlib"
+        # ig.plot(
+        #     communities,
+        #     palette=palette,
+        #     vertex_label=G.vs["_nx_name"],
+        #     edge_width=1,
+        #     target=ax,
+        #     vertex_size=20,
+        #     vertex_label_size=lab_size,
+        # )
+        # legend_handles = []
+        # for i in range(num_communities):
+        #     handle = ax.scatter(
+        #         [],
+        #         [],
+        #         s=100,
+        #         facecolor=palette.get(i),
+        #         edgecolor="k",
+        #         label=list_desc[i],
+        #     )
+        #     legend_handles.append(handle)
+        # ax.legend(
+        #     handles=legend_handles,
+        #     title="Community:",
+        #     bbox_to_anchor=(0, 1.0),
+        #     bbox_transform=ax.transAxes,
+        # )
+
+        # st.pyplot(ax.figure, use_container_width=False)
+
+        # nbr_of_cluster = ord(df_clust["cluster"].max()) - 96
 
         # comment for nothing
 
         st.write(
-            f'## Computing UMAP with the main {nbr_of_cluster} clusters and {len(df_umap_cluster["symbol"].unique())} genes'
+            f'## Computing UMAP with the main {num_communities} clusters and {len(df_umap_cluster["symbol"].unique())} genes'
         )
         st.write(
             "To increase or decrease number of clusters please change cluster threshold above"
@@ -459,7 +479,7 @@ if not df_genes.empty:
             df_umap = df_umap.dropna(subset="keggid", axis=0)
             df_umap = df_umap.set_index("keggid")
             df_umap_cluster = df_umap_cluster.set_index("keggid")
-            df_umap["cluster"] = df_umap_cluster["cluster"]
+            df_umap["cluster"] = df_umap_cluster["description"]
             df_umap["target"] = df_umap_cluster["symbol"]
             df_umap["target"] = df_umap["target"].fillna("")
             df_umap_cluster = df_umap_cluster.reset_index()
@@ -471,8 +491,8 @@ if not df_genes.empty:
             # dict1 = df_umap_cluster.set_index('keggid').to_dict()['cluster']
             # df_umap["cluster"] = df_umap['metakeggid'].map(dict1)
         else:
-            dict1 = df_umap_cluster.set_index("symbol").to_dict()["cluster"]
-            df_umap["cluster"] = df_umap["metaname"].map(dict1)
+            dict1 = df_umap_cluster.set_index("symbol").to_dict()["description"]
+            df_umap["description"] = df_umap["metaname"].map(dict1)
             df_umap["size"] = 5
             df_umap["size"] = df_umap["metaname"].apply(
                 lambda x: 0.5 if x not in df_umap_cluster["symbol"].to_list() else 5
@@ -482,177 +502,177 @@ if not df_genes.empty:
                 lambda x: x if x in df_umap_cluster["symbol"].to_list() else ""
             )
 
-        df_umap["cluster"] = df_umap["cluster"].replace(list_enr)
-        df_umap["cluster"] = df_umap["cluster"].fillna("others")
+        # df_umap["cluster"] = df_umap["cluster"].replace(list_enr)
+        df_umap["description"] = df_umap["description"].fillna("others")
 
         ################################### SIMILARITY ##############################################
-        st.write("## Cosine Similarity")
+        # st.write("## Cosine Similarity")
 
-        cluster = df_umap
-        cluster = cluster[~cluster["cluster"].isin(["others", "Null"])]
-        cluster.reset_index(inplace=True, drop=True)
-        cluster["cluster"] = cluster["cluster"].str.split(" ").str[0]
-        col_dict = dict(
-            zip(
-                list(cluster.cluster.unique()),
-                [
-                    tuple(int(c * 255) for c in cs)
-                    for cs in sns.color_palette("husl", len(cluster.cluster.unique()))
-                ],
-            )
-        )
-        cluster["color"] = cluster["cluster"].map(col_dict)
-        cluster["color"] = cluster["color"].fillna("yellow")
-        gene_color = cluster.set_index("metaname").to_dict()["color"]
-        sql_sim = "select * from crisprcos"
-        df_sim = sql_df(sql_sim, conn_prof)
+        # cluster = df_umap
+        # cluster = cluster[~cluster["cluster"].isin(["others", "Null"])]
+        # cluster.reset_index(inplace=True, drop=True)
+        # cluster["cluster"] = cluster["cluster"].str.split(" ").str[0]
+        # col_dict = dict(
+        #     zip(
+        #         list(cluster.cluster.unique()),
+        #         [
+        #             tuple(int(c * 255) for c in cs)
+        #             for cs in sns.color_palette("husl", len(cluster.cluster.unique()))
+        #         ],
+        #     )
+        # )
+        # cluster["color"] = cluster["cluster"].map(col_dict)
+        # cluster["color"] = cluster["color"].fillna("yellow")
+        # gene_color = cluster.set_index("metaname").to_dict()["color"]
+        # sql_sim = "select * from crisprcos"
+        # df_sim = sql_df(sql_sim, conn_prof)
 
-        df_sim.drop_duplicates(inplace=True)
-        df_sim.rename(
-            columns={
-                "symbol1": "Gene_1",
-                "symbol2": "Gene_2",
-                "sim": "Cosine_similarity",
-            },
-            inplace=True,
-        )
-        df_sim = df_sim[df_sim["Gene_1"].isin(cluster.metaname)]
-        df_sim = df_sim[df_sim["Gene_2"].isin(cluster.metaname)]
-        # df_sim=df_sim[df_sim['Cosine_similarity']>0.70]
-        df_sim.reset_index(inplace=True, drop=True)
-        final_df = (
-            df_sim.merge(cluster, left_on="Gene_1", right_on="metaname", how="inner")
-            .merge(cluster, left_on="Gene_2", right_on="metaname", how="inner")
-            .drop(columns=["metaname_y", "metaname_x"])
-            .rename(columns={"gene_group_name": "Gene_2_gene_group_name"})
-        )
-        # st.write(final_df)
-        interactions = final_df[["Gene_1", "Gene_2", "Cosine_similarity"]]
-        inter = np.array(final_df[["Gene_1", "Gene_2"]])
-        tup_inter = list(map(tuple, inter))
-        # st.write(tup_inter)
-        list_sim = final_df["Cosine_similarity"].to_list()
-        # G2 = nx.Graph()
-        G2 = nx.Graph(tup_inter)
-        IG = ig.Graph.from_networkx(G2)
-        partition2 = la.find_partition(
-            IG, la.ModularityVertexPartition, n_iterations=-1
-        )
-        subax2 = ig.plot(
-            partition2,
-            vertex_label=partition2.graph.vs["_nx_name"],
-            vertex_label_size=lab_size,
-            vertex_size=vert_size,
-            margin=10,
-            bbox=(0, 0, box_size, box_size),
-        )
-        # nx.draw(GG, with_labels=True,node_size=10,font_size=4)
-        st.pyplot(subax2.figure, use_container_width=False)
+        # df_sim.drop_duplicates(inplace=True)
+        # df_sim.rename(
+        #     columns={
+        #         "symbol1": "Gene_1",
+        #         "symbol2": "Gene_2",
+        #         "sim": "Cosine_similarity",
+        #     },
+        #     inplace=True,
+        # )
+        # df_sim = df_sim[df_sim["Gene_1"].isin(cluster.metaname)]
+        # df_sim = df_sim[df_sim["Gene_2"].isin(cluster.metaname)]
+        # # df_sim=df_sim[df_sim['Cosine_similarity']>0.70]
+        # df_sim.reset_index(inplace=True, drop=True)
+        # final_df = (
+        #     df_sim.merge(cluster, left_on="Gene_1", right_on="metaname", how="inner")
+        #     .merge(cluster, left_on="Gene_2", right_on="metaname", how="inner")
+        #     .drop(columns=["metaname_y", "metaname_x"])
+        #     .rename(columns={"gene_group_name": "Gene_2_gene_group_name"})
+        # )
+        # # st.write(final_df)
+        # interactions = final_df[["Gene_1", "Gene_2", "Cosine_similarity"]]
+        # inter = np.array(final_df[["Gene_1", "Gene_2"]])
+        # tup_inter = list(map(tuple, inter))
+        # # st.write(tup_inter)
+        # list_sim = final_df["Cosine_similarity"].to_list()
+        # # G2 = nx.Graph()
+        # G2 = nx.Graph(tup_inter)
+        # IG = ig.Graph.from_networkx(G2)
+        # partition2 = la.find_partition(
+        #     IG, la.ModularityVertexPartition, n_iterations=-1
+        # )
+        # subax2 = ig.plot(
+        #     partition2,
+        #     vertex_label=partition2.graph.vs["_nx_name"],
+        #     vertex_label_size=lab_size,
+        #     vertex_size=vert_size,
+        #     margin=10,
+        #     bbox=(0, 0, box_size, box_size),
+        # )
+        # # nx.draw(GG, with_labels=True,node_size=10,font_size=4)
+        # st.pyplot(subax2.figure, use_container_width=False)
 
-        G = nx.Graph(name="Protein Interaction Graph")
-        interactions = np.array(interactions)
-        # st.write(interactions)
-        for i in range(len(interactions)):
-            interaction = interactions[i]
-            a = interaction[0]  # protein a node
-            b = interaction[1]  # protein b node
-            w = float(
-                interaction[2]
-            )  # score as weighted edge where high scores = low weight
-            G.add_weighted_edges_from([(a, b, w)])  # add weighted edge to graph
+        # G = nx.Graph(name="Protein Interaction Graph")
+        # interactions = np.array(interactions)
+        # # st.write(interactions)
+        # for i in range(len(interactions)):
+        #     interaction = interactions[i]
+        #     a = interaction[0]  # protein a node
+        #     b = interaction[1]  # protein b node
+        #     w = float(
+        #         interaction[2]
+        #     )  # score as weighted edge where high scores = low weight
+        #     G.add_weighted_edges_from([(a, b, w)])  # add weighted edge to graph
 
-        pos = nx.spring_layout(G)
+        # pos = nx.spring_layout(G)
 
-        # edges trace
-        edge_x = []
-        edge_y = []
-        xtext = []
-        ytext = []
-        str_sim = []
+        # # edges trace
+        # edge_x = []
+        # edge_y = []
+        # xtext = []
+        # ytext = []
+        # str_sim = []
 
-        for edge in G.edges():
-            x0, y0 = pos[edge[0]]
-            x1, y1 = pos[edge[1]]
-            edge_x.append(x0)
-            edge_x.append(x1)
-            edge_x.append(None)
-            edge_y.append(y0)
-            edge_y.append(y1)
-            edge_y.append(None)
-            tmp = final_df[
-                (final_df["Gene_1"] == edge[0]) & (final_df["Gene_2"] == edge[1])
-            ]
-            if len(tmp) > 0:
-                sim2 = tmp.Cosine_similarity.values[0]
-                sim2 = float("{:.2f}".format(sim2))
-                xtext.append((x0 + x1) / 2)
-                ytext.append((y0 + y1) / 2)
-                str_sim.append(sim2)
+        # for edge in G.edges():
+        #     x0, y0 = pos[edge[0]]
+        #     x1, y1 = pos[edge[1]]
+        #     edge_x.append(x0)
+        #     edge_x.append(x1)
+        #     edge_x.append(None)
+        #     edge_y.append(y0)
+        #     edge_y.append(y1)
+        #     edge_y.append(None)
+        #     tmp = final_df[
+        #         (final_df["Gene_1"] == edge[0]) & (final_df["Gene_2"] == edge[1])
+        #     ]
+        #     if len(tmp) > 0:
+        #         sim2 = tmp.Cosine_similarity.values[0]
+        #         sim2 = float("{:.2f}".format(sim2))
+        #         xtext.append((x0 + x1) / 2)
+        #         ytext.append((y0 + y1) / 2)
+        #         str_sim.append(sim2)
 
-        edge_trace = go.Scatter(
-            x=edge_x,
-            y=edge_y,
-            line=dict(color="black", width=2),
-            hoverinfo="none",
-            showlegend=False,
-            mode="lines",
-        )
+        # edge_trace = go.Scatter(
+        #     x=edge_x,
+        #     y=edge_y,
+        #     line=dict(color="black", width=2),
+        #     hoverinfo="none",
+        #     showlegend=False,
+        #     mode="lines",
+        # )
 
-        # nodes trace
-        node_x = []
-        node_y = []
-        text = []
-        colors = []
-        for node in G.nodes():
-            x, y = pos[node]
-            node_x.append(x)
-            node_y.append(y)
+        # # nodes trace
+        # node_x = []
+        # node_y = []
+        # text = []
+        # colors = []
+        # for node in G.nodes():
+        #     x, y = pos[node]
+        #     node_x.append(x)
+        #     node_y.append(y)
 
-            text.append(node)
-            colors.append(gene_color[node])
+        #     text.append(node)
+        #     colors.append(gene_color[node])
 
-        node_trace = go.Scatter(
-            x=node_x,
-            y=node_y,
-            text=text,
-            mode="markers+text",
-            showlegend=False,
-            hoverinfo="none",
-            marker=dict(
-                color=["rgb({}, {}, {})".format(r, g, b) for r, g, b in colors],
-                size=50,
-                line=dict(color="black", width=1),
-            ),
-        )
-        # layout
+        # node_trace = go.Scatter(
+        #     x=node_x,
+        #     y=node_y,
+        #     text=text,
+        #     mode="markers+text",
+        #     showlegend=False,
+        #     hoverinfo="none",
+        #     marker=dict(
+        #         color=["rgb({}, {}, {})".format(r, g, b) for r, g, b in colors],
+        #         size=50,
+        #         line=dict(color="black", width=1),
+        #     ),
+        # )
+        # # layout
 
-        # figure
-        structer_trace = go.Scatter(
-            x=xtext,
-            y=ytext,
-            mode="text",
-            hoverinfo="none",
-            text=str_sim,
-            textposition="top right",
-            textfont=dict(color="blue", size=10),
-        )
-        layout = dict(
-            autosize=True,
-            template="plotly_white",
-            width=1200,
-            height=800,
-            hovermode="closest",
-            xaxis=dict(
-                linecolor="white", showgrid=False, showticklabels=False, mirror=True
-            ),
-            yaxis=dict(
-                linecolor="black", showgrid=False, showticklabels=False, mirror=True
-            ),
-        )
+        # # figure
+        # structer_trace = go.Scatter(
+        #     x=xtext,
+        #     y=ytext,
+        #     mode="text",
+        #     hoverinfo="none",
+        #     text=str_sim,
+        #     textposition="top right",
+        #     textfont=dict(color="blue", size=10),
+        # )
+        # layout = dict(
+        #     autosize=True,
+        #     template="plotly_white",
+        #     width=1200,
+        #     height=800,
+        #     hovermode="closest",
+        #     xaxis=dict(
+        #         linecolor="white", showgrid=False, showticklabels=False, mirror=True
+        #     ),
+        #     yaxis=dict(
+        #         linecolor="black", showgrid=False, showticklabels=False, mirror=True
+        #     ),
+        # )
 
-        fig = go.Figure(data=[edge_trace, node_trace, structer_trace], layout=layout)
+        # fig = go.Figure(data=[edge_trace, node_trace, structer_trace], layout=layout)
 
-        st.plotly_chart(fig)
+        # st.plotly_chart(fig)
 
         if choice == "Cpds":
             # df_umap["keggid"] = df_umap_cluster['keggid']
@@ -673,7 +693,7 @@ if not df_genes.empty:
                 df_umap,
                 x="umap1",
                 y="umap2",
-                color="cluster",
+                color="description",
                 text="target",
                 size="size",
                 width=800,
