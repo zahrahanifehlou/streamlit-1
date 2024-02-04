@@ -1,5 +1,7 @@
 import streamlit as st
+import sys
 
+sys.path.append("lib/")
 st.set_page_config(
     page_title="Welcome to Ksilink Databases",
     page_icon="🧊",

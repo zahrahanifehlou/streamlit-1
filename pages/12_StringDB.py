@@ -1,8 +1,15 @@
-import sys
-import plotly.graph_objs as go
-
+import networkx as nx
+import igraph as ig
+import numpy as np
+import pandas as pd
+import plotly.express as px
+import streamlit as st
+import requests
+from pyvis.network import Network
+import matplotlib
+from streamlit_agraph import agraph, Node, Edge, Config
 # from lib import streamlib
-sys.path.append("lib/")
+
 from streamlib import (
     get_list_category,
     get_stringDB_enr,
@@ -11,20 +18,6 @@ from streamlib import (
     str_to_float,
 )
 
-import seaborn as sns
-import networkx as nx
-import igraph as ig
-import leidenalg as la
-import numpy as np
-import pandas as pd
-import plotly.express as px
-import streamlit as st
-import requests
-from pyvis.network import Network
-import streamlit.components.v1 as components
-import matplotlib
-import matplotlib.pyplot as plt
-from streamlit_agraph import agraph, Node, Edge, Config
 
 st.set_page_config(layout="wide")
 

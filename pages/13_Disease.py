@@ -1,14 +1,9 @@
-import sys
-
 import pandas as pd
-import psycopg2
 import streamlit as st
 
 from Bio.KEGG.REST import kegg_get
-
-sys.path.append("lib/")
 from streamlib import sql_df
-import urllib
+
 
 conn_meta = "postgres://arno:12345@192.168.2.131:5432/ksi_cpds"
 conn_profileDB = "postgres://arno:12345@192.168.2.131:5432/ksilink_cpds"

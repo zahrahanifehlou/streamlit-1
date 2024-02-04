@@ -11,7 +11,6 @@ from rdkit import Chem, DataStructs
 from rdkit.Chem import AllChem, Draw
 from sklearn.metrics.pairwise import cosine_similarity
 
-sys.path.append("lib/")
 
 st.set_page_config(
     layout="wide",

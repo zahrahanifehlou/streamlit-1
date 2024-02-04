@@ -1,20 +1,14 @@
 # NMDA GSK2879552 Bay K
-from streamlib import sql_df, find_sim_cpds, convert_df, find_umap, get_col_colors
-import sys
+from streamlib import sql_df, find_sim_cpds, get_col_colors
 import matplotlib.pyplot as plt
 import pandas as pd
 import plotly.express as px
 import psycopg2
 import seaborn as sns
 import streamlit as st
-import umap
-import matplotlib.pyplot as plt
-import seaborn as sns
-from sklearn.metrics.pairwise import cosine_similarity
+
 from streamlit_plotly_events import plotly_events
 from PIL import Image
-
-sys.path.append("lib/")
 import os
 
 

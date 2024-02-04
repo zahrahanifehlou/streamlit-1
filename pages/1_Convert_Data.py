@@ -3,11 +3,10 @@ import streamlit as st
 import psycopg2
 import pubchempy as pcp
 
-st.set_page_config(layout="wide")
-import sys
-
-sys.path.append("lib/")
 from streamlib import sql_df
+
+st.set_page_config(layout="wide")
+
 
 st.header(
     "Convert or find compounds information in PubChem or Jump Dataset",

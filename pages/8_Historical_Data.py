@@ -21,7 +21,7 @@ import plotly.express as px
 st.set_page_config(
     layout="wide",
 )
-sys.path.append("lib/")
+
 init_streamlit_comm()
 
 

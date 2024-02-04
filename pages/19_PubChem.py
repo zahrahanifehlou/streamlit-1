@@ -1,13 +1,9 @@
-import sys
 import numpy as np
 import pandas as pd
 import streamlit as st
-import time
-from tqdm import tqdm
-import requests
+
 import pubchempy as pcp
 
-sys.path.append("lib/")
 # from streamlib import sql_df
 from query_pubchem import QueryPubChem
 

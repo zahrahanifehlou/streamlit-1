@@ -13,6 +13,8 @@ uploaded_files = st.file_uploader("Choose files", accept_multiple_files=True)
 numerics = ["int16", "int32", "int64", "float16", "float32", "float64"]
 # data=pd.DataFrame()
 
+init_streamlit_comm()
+
 
 # test
 #

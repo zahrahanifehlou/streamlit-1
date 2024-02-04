@@ -1,15 +1,14 @@
-import sys
 import warnings
 import numpy as np
 import pandas as pd
 import psycopg2
 import streamlit as st
 import plotly.express as px
+
 # import umap
+from streamlib import sql_df, get_sql_jump, get_col_colors
 
 warnings.filterwarnings("ignore")
-sys.path.append("lib/")
-from streamlib import sql_df, get_sql_jump, convert_df, get_col_colors
 
 
 def init_connection():

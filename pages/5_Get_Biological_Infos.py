@@ -1,13 +1,8 @@
-import sys
-
 import gseapy as gp
 import numpy as np
 import pandas as pd
 import plotly.express as px
 import streamlit as st
-
-sys.path.append("lib/")
-from streamlib import sql_df
 
 st.header("Get biological infos from multiple databases", divider="rainbow")
 

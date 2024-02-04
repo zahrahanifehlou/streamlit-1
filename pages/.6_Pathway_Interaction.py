@@ -11,15 +11,10 @@ import psycopg2
 
 # import requests
 import streamlit as st
+from Bio.KEGG.REST import kegg_get
 
 sys.path.append("lib/")
 
-
-from Bio import SeqIO
-from Bio.Graphics.ColorSpiral import ColorSpiral
-from Bio.Graphics.KGML_vis import KGMLCanvas
-from Bio.KEGG.KGML import KGML_parser
-from Bio.KEGG.REST import *
 from streamlib import sql_df
 
 
