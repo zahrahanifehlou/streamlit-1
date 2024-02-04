@@ -16,7 +16,7 @@ st.set_page_config(
 st.image("Postgresql.png")
 st.write("# Welcome to Ksilink Databases")
 st.write(
-    "Can be access locally on : http://192.168.2.131:8501; http://192.168.2.130:8501"
+    "Can be access locally on : http://192.168.2.131:8501; http://192.168.2.131:8502 (Dev); http://192.168.2.130:8501; http://192.168.2.128:8501 (Backup);"
 )
 # st.sidebar.success("Select a demo above.")
 # - [CRISPR & CPDS](http://192.168.2.131:8501/CRISPR_&_CPDS) compute the similarities between crispr and cpds.
@@ -33,6 +33,7 @@ st.markdown(
     ### Want to learn more?
 
     - [Load Data](http://192.168.2.131:8501/Load_Data) : just load fth/csv files, filter them and makes some basic displays
+    - [Convert Data](http://192.168.2.131:8501/Convert_Data) Retrieve Identifiers from different databases (pubchem,Kegg)
     - [Get Profiles](http://192.168.2.131:8501/Get_Profiles) connect to DB and Get Profiles
     - [Find Profiles](http://192.168.2.131:8501/Find_Similar_Profiles) find profiles close to the ones selected in connect DB from a selected source
     - [Find structures](http://192.168.2.131:8501/Find_Similar_Structures) find the structures and names of the closest profiles
@@ -40,7 +41,7 @@ st.markdown(
     - [Historical Data](http://192.168.2.131:8501/Historical_Data) Retrieve Ksilink Data
     - [Protein-Protein Interactions](http://192.168.2.131:8501/StringDB) Found Protein-Protein Interactions and profile vizualisation
     - [Disease](http://192.168.2.131:8501/Disease) Retrieve Drugs/Genes disease specifics
-    - [Convert Data](http://192.168.2.131:8501/Convert_Data) Retrieve Identifiers from different databases (pubchem,Kegg)
+   
     - [Monitoring](http://192.168.2.131:8501/Monitoring) Storage Monitoring
     ### Normal Process:
     - Load Data, Historical data and CRISPR & CPDS are independent
