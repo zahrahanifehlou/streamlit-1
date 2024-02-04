@@ -144,6 +144,8 @@ if on and not df_known_drug.empty:
     df_sel = df_ksi_f[df_ksi_f["assay"] == sel_source]
     st.write(f"Data from source: {sel_source}", df_sel)
 
+    # TO DO : Get profiles and get from project profiles
+
     # on_save = st.sidebar.toggle('Save Data from source')
 
 
