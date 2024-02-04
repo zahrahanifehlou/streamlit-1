@@ -4,13 +4,14 @@ import pandas as pd
 import psycopg2
 import streamlit as st
 
-from Bio.KEGG.REST import *
+from Bio.KEGG.REST import kegg_get
 
 sys.path.append("/mnt/shares/L/PROJECTS/JUMP-CRISPR/Code/streamlit-1/lib/")
 from streamlib import sql_df
 import urllib
 
 conn_meta = "postgres://arno:12345@192.168.2.131:5432/ksi_cpds"
+conn_profileDB = "postgres://arno:12345@192.168.2.131:5432/ksilink_cpds"
 
 
 # A bit of helper code to shorten long text
@@ -97,7 +98,7 @@ if on and not df_known_drug.empty:
         # IMPORTANT: Cache the conversion to prevent computation on every rerun
         return df.to_csv().encode("utf-8")
 
-    @st.cache_data
+    # @st.cache_data
     def get_cpds(list_drug):
         sql_ksi = (
             f"select * from platemap where platemap.batchid in ({','.join(list_drug)})"
@@ -122,11 +123,25 @@ if on and not df_known_drug.empty:
     st.write("Drug Infos", df_drug)
     # on_save1 = st.sidebar.toggle('Save Drug Infos')
 
-    list_drug_ksi = [f"'{t}'" for t in df_drug["batchid"]]
-    df_ksi = get_cpds(list_drug_ksi)
-    list_source = df_ksi.assay.unique()
+    list_drug_ksi = [f"'{t}'" for t in df_drug["keggid"]]
+    sql_prof = f"select * from cpd where keggid IN ({','.join(list_drug_ksi)})"
+    df_ksi = sql_df(sql_prof, conn_meta)
+    # st.write("df_ksi", df_ksi)
+
+    list_pub = [f"'{t}'" for t in df_ksi["pubchemid"]]
+    sql_pub = f"select * from cpdbatchs where pubchemid IN ({','.join(list_pub)})"
+    df_ksi2 = sql_df(sql_pub, conn_meta)
+
+    df_ksi2 = df_ksi2.drop_duplicates()
+    # st.write("df_ksi", df_ksi2)
+    list_pub2 = [f"'{t}'" for t in df_ksi2["batchid"]]
+    sql_pub3 = f"select * from platemap where batchid IN ({','.join(list_pub2)})"
+    df_ksi_f = sql_df(sql_pub3, conn_meta)
+    # st.write("df_ksi", df_ksi_f)
+
+    list_source = df_ksi_f.assay.unique()
     sel_source = st.selectbox("Chose the source", list_source)
-    df_sel = df_ksi[df_ksi["assay"] == sel_source]
+    df_sel = df_ksi_f[df_ksi_f["assay"] == sel_source]
     st.write(f"Data from source: {sel_source}", df_sel)
 
     # on_save = st.sidebar.toggle('Save Data from source')
