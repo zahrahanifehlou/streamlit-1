@@ -9,6 +9,11 @@ import sys
 sys.path.append("/mnt/shares/L/PROJECTS/JUMP-CRISPR/Code/streamlit-1/lib/")
 from streamlib import sql_df
 
+st.header(
+    "Convert or find compounds information in PubChem or Jump Dataset",
+    divider="rainbow",
+)
+
 
 def init_connection():
     return psycopg2.connect(**st.secrets["postgres"])
@@ -18,7 +23,7 @@ conn_meta = "postgres://arno:123456@192.168.2.131:5432/ksi_cpds"
 # conn_meta.close()
 
 
-pub = st.toggle("Search in Pubchem")
+pub = st.toggle("Search in Pubchem", help="Find compounds infos from name/smiles/inchi")
 if pub:
     list_pub = []
     uploaded_fil = st.file_uploader(
@@ -53,7 +58,9 @@ if pub:
 # def init_connection():
 #     return psycopg2.connect(**st.secrets["postgres"])
 # conn = init_connection()
-jump_st = st.toggle("Search in Jump")
+jump_st = st.toggle(
+    "Search in Jump", help="Retrieve any data present in your file and in Jump"
+)
 if jump_st:
     sql_query = "select * from gene"
     df_meta = sql_df(sql_query, conn_meta)

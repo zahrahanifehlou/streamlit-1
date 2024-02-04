@@ -142,13 +142,14 @@ def process_compound_data(df_cpds):
 
 
 df_tmap = load_data()
-color_col = st.radio(
-    "select color",
-    ("source", "genetarget", "efficacy", "disname"),
-    horizontal=True,
-)
+
 tmap1 = st.toggle("TMAP plt of all compounds")
 if tmap1:
+    color_col = st.radio(
+        "select color",
+        ("source", "genetarget", "efficacy", "disname"),
+        horizontal=True,
+    )
     plot_tmap(df_tmap, color_col, px.colors.qualitative.D3)
 
 
