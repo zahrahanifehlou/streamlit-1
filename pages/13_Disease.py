@@ -120,7 +120,8 @@ if on and not df_known_drug.empty:
     df_drug = df_drug.drop_duplicates(subset=["keggid", "batchid"]).reset_index(
         drop=True
     )
-    st.write("Drug Infos", df_drug)
+    st.subheader("Drug Infos from Kegg", divider="rainbow")
+    st.write(df_drug)
     # on_save1 = st.sidebar.toggle('Save Drug Infos')
 
     list_drug_ksi = [f"'{t}'" for t in df_drug["keggid"]]
@@ -140,12 +141,22 @@ if on and not df_known_drug.empty:
     # st.write("df_ksi", df_ksi_f)
 
     list_source = df_ksi_f.assay.unique()
+    st.subheader("Data from Jump", divider="rainbow")
     sel_source = st.selectbox("Chose the source", list_source)
     df_sel = df_ksi_f[df_ksi_f["assay"] == sel_source]
     st.write(f"Data from source: {sel_source}", df_sel)
 
     # TO DO : Get profiles and get from project profiles
+    sql_pro_prof = (
+        f"select * from projectsprofile where batchid IN ({','.join(list_pub2)})"
+    )
+    df_ksi_proj = sql_df(sql_pro_prof, conn_profileDB)
+    list_proj = df_ksi_proj.project.unique()
+    st.subheader("In House Projects", divider="rainbow")
+    sel_project = st.selectbox("Chose the project", list_proj)
+    df_ksi_proj = df_ksi_proj[df_ksi_proj["project"] == sel_project]
 
+    st.write(df_ksi_proj)
     # on_save = st.sidebar.toggle('Save Data from source')
 
 
