@@ -7,7 +7,7 @@ from tqdm import tqdm
 import requests
 import pubchempy as pcp
 
-sys.path.append("/mnt/shares/L/PROJECTS/JUMP-CRISPR/Code/streamlit-1/lib/")
+sys.path.append("lib/")
 # from streamlib import sql_df
 from query_pubchem import QueryPubChem
 

@@ -2,7 +2,7 @@ import sys
 import plotly.graph_objs as go
 
 # from lib import streamlib
-sys.path.append("/mnt/shares/L/PROJECTS/JUMP-CRISPR/Code/streamlit-1/lib/")
+sys.path.append("lib/")
 from streamlib import (
     get_list_category,
     get_stringDB_enr,

@@ -6,7 +6,7 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st
 
-sys.path.append("/mnt/shares/L/PROJECTS/JUMP-CRISPR/Code/streamlit-1/lib/")
+sys.path.append("lib/")
 from streamlib import sql_df
 
 st.header("Get biological infos from multiple databases", divider="rainbow")

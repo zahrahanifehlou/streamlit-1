@@ -8,7 +8,7 @@ import scanpy as sc
 import streamlit as st
 import umap
 
-sys.path.append("/mnt/shares/L/PROJECTS/JUMP-CRISPR/Code/streamlit-1/lib/")
+sys.path.append("lib/")
 from streamlib import sql_df
 
 conn_profileDB = psycopg2.connect(

@@ -8,7 +8,7 @@ import psycopg2
 import requests
 import streamlit as st
 
-sys.path.append("/mnt/shares/L/PROJECTS/JUMP-CRISPR/Code/streamlit-1/lib/")
+sys.path.append("lib/")
 from streamlib import sql_df
 
 # conn_meta = psycopg2.connect(

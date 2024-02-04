@@ -6,7 +6,7 @@ import streamlit as st
 
 from Bio.KEGG.REST import kegg_get
 
-sys.path.append("/mnt/shares/L/PROJECTS/JUMP-CRISPR/Code/streamlit-1/lib/")
+sys.path.append("lib/")
 from streamlib import sql_df
 import urllib
 

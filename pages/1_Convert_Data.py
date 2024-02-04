@@ -6,7 +6,7 @@ import pubchempy as pcp
 st.set_page_config(layout="wide")
 import sys
 
-sys.path.append("/mnt/shares/L/PROJECTS/JUMP-CRISPR/Code/streamlit-1/lib/")
+sys.path.append("lib/")
 from streamlib import sql_df
 
 st.header(

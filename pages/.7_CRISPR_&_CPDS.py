@@ -11,7 +11,7 @@ import plotly.express as px
 from sklearn.cluster import KMeans
 
 warnings.filterwarnings("ignore")
-sys.path.append("/mnt/shares/L/PROJECTS/JUMP-CRISPR/Code/streamlit-1/lib/")
+sys.path.append("lib/")
 
 
 def init_connection():

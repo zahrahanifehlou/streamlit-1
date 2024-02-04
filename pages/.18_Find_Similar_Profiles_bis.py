@@ -14,7 +14,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 from streamlit_plotly_events import plotly_events
 from PIL import Image
 
-sys.path.append("/mnt/shares/L/PROJECTS/JUMP-CRISPR/Code/streamlit-1/lib/")
+sys.path.append("lib/")
 import os
 
 

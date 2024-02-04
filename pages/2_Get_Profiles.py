@@ -8,7 +8,7 @@ import plotly.express as px
 # import umap
 
 warnings.filterwarnings("ignore")
-sys.path.append("/mnt/shares/L/PROJECTS/JUMP-CRISPR/Code/streamlit-1/lib/")
+sys.path.append("lib/")
 from streamlib import sql_df, get_sql_jump, convert_df, get_col_colors
 
 
