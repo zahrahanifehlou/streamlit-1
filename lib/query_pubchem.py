@@ -98,6 +98,7 @@ class QueryPubChem(object):
                         [
                             "Target GeneID",
                             "AID",
+                            "Assay Name",
                             "SID",
                             "CID",
                             "Activity Name",

@@ -23,7 +23,7 @@ for item in list_cpd:
 
 compounds = pd.concat(list_pub).reset_index()
 compounds = compounds.astype({"cid": str})
-# st.write(compounds)
+st.write("Pubchem Info:", compounds)
 st.warning("Getting MOA")
 compounds["pubchem_moa"] = pubchem.moa_annotation(compounds["cid"])
 
@@ -32,10 +32,19 @@ bioassay_df = pubchem.bioassay(compounds.cid)
 with_target = bioassay_df.dropna(subset=["Target GeneID"]).reset_index(drop=True)
 st.warning("Getting target, can be long...")
 with_target["GeneName"] = pubchem.target(with_target.AID)
-# st.write(with_target)
+st.write(with_target)
 median_activity_value = (
-    with_target[["InChIKey", "CID", "Activity Name", "Activity Value [uM]", "GeneName"]]
-    .groupby(["CID", "InChIKey", "GeneName", "Activity Name"])
+    with_target[
+        [
+            "InChIKey",
+            "CID",
+            "Activity Name",
+            "Activity Value [uM]",
+            "GeneName",
+            "Assay Name",
+        ]
+    ]
+    .groupby(["CID", "InChIKey", "GeneName", "Activity Name", "Assay Name"])
     .agg({"Activity Value [uM]": lambda x: np.median(x)})
     .reset_index()
 )

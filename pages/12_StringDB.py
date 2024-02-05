@@ -308,6 +308,7 @@ if not df_genes.empty:
         st.write("## Computing Network")
         H = nx.Graph(list_edges)
         G = ig.Graph.from_networkx(H)
+        G = G.simplify()
         # partition = la.find_partition(
         #     G, la.ModularityVertexPartition, n_iterations=-1, weights=list_inters
         # )
