@@ -198,11 +198,11 @@ if not df_genes.empty:
 
         sql_kegg = (
             "select cpdpath.pathid,keggcpdgene.geneid,gene.symbol, keggcpd.*, cpdbatchs.* from keggcpd\
-                    inner join keggcpdgene on keggcpd.keggid=keggcpdgene.keggid\
-                    inner join cpd on cpd.keggid=keggcpd.keggid \
-                    inner join cpdpath on cpdpath.pubchemid=cpd.pubchemid \
-                    inner join cpdbatchs on cpd.pubchemid=cpdbatchs.pubchemid \
-                    inner join gene on keggcpdgene.geneid=gene.geneid"
+                    left join keggcpdgene on keggcpd.keggid=keggcpdgene.keggid\
+                    left join cpd on cpd.keggid=keggcpd.keggid \
+                    left join cpdpath on cpdpath.pubchemid=cpd.pubchemid \
+                    left join cpdbatchs on cpd.pubchemid=cpdbatchs.pubchemid \
+                    left join gene on keggcpdgene.geneid=gene.geneid"
         )
 
         df_drug_meta = sql_df(sql_kegg, conn_meta)
@@ -210,12 +210,12 @@ if not df_genes.empty:
         # df_drug_meta = df_drug_meta.drop_duplicates(subset=["keggid"]).reset_index(
         # drop=True
         # )
-
-        # df_drug_meta.dropna(subset="geneid", axis=0, inplace=True)
+        df_drug_meta = df_drug_meta[df_drug_meta["symbol"].isin(b_list2)]
+        df_drug_meta.dropna(subset="symbol", axis=0, inplace=True)
         # disp2= st.toggle('Display Data')
         if disp:
-            st.write(df_drug_meta.sample(5))
-        # # st.write(df_drug_meta.describe())
+            st.write("df_drug_meta", df_drug_meta)
+            st.write(df_drug_meta.symbol.unique())
 
         # df_cpd_src = df_drug_meta[df_drug_meta["source"] == choix_source].reset_index(
         #     drop=True
@@ -223,7 +223,8 @@ if not df_genes.empty:
         b_list2 = df_drug_meta["batchid"].to_list()
         bq = []
         for bs in b_list2:
-            bq.append("'" + bs + "'")
+            if bs is not None:
+                bq.append("'" + bs + "'")
 
         sql_profile = (
             "select * from aggprofile where metabatchid  in (" + ",".join(bq) + ")"
@@ -236,7 +237,7 @@ if not df_genes.empty:
             df_cpd_prof["metasource"] == choix_source
         ].reset_index(drop=True)
         if disp:
-            st.write(df_cpd_prof.sample(5))
+            st.write("df_cpd_prof", df_cpd_prof)
 
         # # st.write(df_cpd_src.sample(5))
 

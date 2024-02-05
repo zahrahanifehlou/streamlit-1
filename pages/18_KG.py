@@ -7,7 +7,8 @@ from pyvis.network import Network
 st.set_page_config(
     layout="wide",
 )
-st.title("Knowledge Graph")
+st.title("Knowledge Graph (PrimeKG)")
+st.header("17080 diseases, 4M relationship,100K Nodes,20 Sources")
 st.subheader(
     "Building a knowledge graph to enable precision medicine (Harvard MS)",
     divider="rainbow",
