@@ -146,9 +146,7 @@ for table in tables:
         )
 
 
-st.subheader(
-    "Checking keggcpd.pubcheid is nan replaced by pubchemsid", divider="rainbow"
-)
+st.subheader("Removed pubchemid column", divider="rainbow")
 sql_kegg_cpd = "select * from keggcpd"
 df_keggcpd = sql_df(sql_kegg_cpd, conn_meta)
 st.write("df_Kegg_cpd", df_keggcpd.sample(10))
