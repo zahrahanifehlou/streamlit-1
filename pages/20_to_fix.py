@@ -46,33 +46,43 @@ st.write(
 
 
 st.header(
-    "Confusion when creating DB between Metadata_JCP2022 and Metadata_broad_sample",
+    "Confusion when creating DB in 8_create_DB... between Metadata_JCP2022 and Metadata_broad_sample",
     divider="rainbow",
 )
+
+col1, col2, col3 = st.columns(3)
 source = "source_7_25"
 df = pd.read_feather(
     f"/mnt/shares/L/PROJECTS/JUMP-CP/jumpAWS/concatSources/profiles/combat_{source}.fth"
 )
-st.write(df["Metadata_JCP2022"])
+
+# st.header(
+#     "Inconsistency batchid between Umap.batchid and addprofile.batchid",
+#     divider="rainbow",
+# )
+col1.write("from the feather file")
+col1.write(df["Metadata_JCP2022"])
 
 
-st.header(
-    "Inconsistency batchid between Umap.batchid and addprofile.batchid",
-    divider="rainbow",
-)
 # # sql_umqpemd =  f"SELECT * FROM aggprofile where metasource='CRISPER' and metabatchid  in (" + ",".join(bq) + ") "
 sql_umqpemd = "SELECT * FROM aggprofile where metasource='Ksilink_25'"
 df_src_agg = sql_df(sql_umqpemd, conn_prof)
-st.write("Agg", df_src_agg.metabatchid)
+col2.write("Aggregation profiles")
+col2.write(df_src_agg.metabatchid)
 
 sql_umqpemd = "SELECT * FROM umapemd where metasource='Ksilink_25'"
 df_src_emd = sql_df(sql_umqpemd, conn_prof)
-st.write("UMAP", df_src_emd.metabatchid)
+col3.write("Umap")
+col3.write(df_src_emd.metabatchid)
 
 # df_keep = pd.read_csv("df_keep_prof.csv")
 # st.write(df_keep)
 
 df_inter = df_src_emd[~df_src_emd["metabatchid"].isin(df_src_agg["metabatchid"])]
+st.header(
+    "In total more than 5000 ids are not common between agg and umap for Ksilink",
+    divider="rainbow",
+)
 st.write("Not in agg", df_inter.metabatchid)
 
 exit(0)
