@@ -13,6 +13,7 @@ import networkx as nx
 import igraph as ig
 import leidenalg as la
 import matplotlib.pyplot as plt
+import psycopg2
 # import webbrowser
 # webbrowser.open_new_tab("http://librenms.ksilink.int/overview?dashboard=1")
 
@@ -33,7 +34,7 @@ conn_prof = "postgres://arno:12345@192.168.2.131:5432/ksilink_cpds"
 # # bq = []
 # # for bs in df_rep['symbol1']:
 # #     bq.append("'" + bs.upper() + "'")
-st.header(
+st.subheader(
     "Problem with many times the same batchID in cpd_batchs table", divider="rainbow"
 )
 
@@ -45,7 +46,7 @@ st.write(
 )
 
 
-st.header(
+st.subheader(
     "Confusion when creating DB in 8_create_DB... between Metadata_JCP2022 and Metadata_broad_sample",
     divider="rainbow",
 )
@@ -79,11 +80,78 @@ col3.write(df_src_emd.metabatchid)
 # st.write(df_keep)
 
 df_inter = df_src_emd[~df_src_emd["metabatchid"].isin(df_src_agg["metabatchid"])]
-st.header(
+st.subheader(
     "In total more than 5000 ids are not common between agg and umap for Ksilink",
     divider="rainbow",
 )
 st.write("Not in agg", df_inter.metabatchid)
+
+st.subheader(
+    "Test tables in meta, print unique batchid and total batchids", divider="rainbow"
+)
+conn = psycopg2.connect(conn_meta)
+cursor = conn.cursor()
+cursor.execute(
+    "select table_name from information_schema.tables where table_schema='public'"
+)
+tables = [i[0] for i in cursor.fetchall()]
+# st.write(tables)
+for table in tables:
+    sql_req = f"select * from {table}"
+    # st.write(table)
+    df_tab = sql_df(sql_req, conn_meta)
+    if "batchid" in df_tab.columns:
+        st.write(
+            f"{table} -> batchid:", (len(df_tab.batchid.unique()), len(df_tab.batchid))
+        )
+    if "pubchemid" in df_tab.columns:
+        st.write(
+            f"{table} -> pubchemid:",
+            (len(df_tab.pubchemid.unique()), len(df_tab.pubchemid)),
+        )
+    if "pubchemsid" in df_tab.columns:
+        st.write(
+            f"{table} -> pubchemsid:",
+            (len(df_tab.pubchemsid.unique()), len(df_tab.pubchemsid)),
+        )
+
+
+st.subheader(
+    "Test tables in prof, print unique batchid and total batchids", divider="rainbow"
+)
+conn = psycopg2.connect(conn_prof)
+cursor = conn.cursor()
+cursor.execute(
+    "select table_name from information_schema.tables where table_schema='public'"
+)
+tables = [i[0] for i in cursor.fetchall()]
+# st.write(tables)
+for table in tables:
+    sql_req = f"select * from {table}"
+    # st.write(table)
+    df_tab = sql_df(sql_req, conn_prof)
+    if "batchid" in df_tab.columns:
+        st.write(
+            f"{table} -> batchid:", (len(df_tab.batchid.unique()), len(df_tab.batchid))
+        )
+    if "metabatchid" in df_tab.columns:
+        st.write(
+            f"{table} -> metabatchid:",
+            (len(df_tab.metabatchid.unique()), len(df_tab.metabatchid)),
+        )
+    if "pubchemid" in df_tab.columns:
+        st.write(
+            f"{table} -> pubchemid:",
+            (len(df_tab.pubchemid.unique()), len(df_tab.pubchemid)),
+        )
+
+
+st.subheader(
+    "Checking keggcpd.pubcheid is nan replaced by pubchemsid", divider="rainbow"
+)
+sql_kegg_cpd = "select * from keggcpd"
+df_keggcpd = sql_df(sql_kegg_cpd, conn_meta)
+st.write("df_Kegg_cpd", df_keggcpd.sample(10))
 
 exit(0)
 # df_sel = df_src_emd[df_src_emd["metabatchid"]=='DMSO']
