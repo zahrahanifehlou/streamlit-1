@@ -34,16 +34,16 @@ conn_prof = "postgres://arno:12345@192.168.2.131:5432/ksilink_cpds"
 # # bq = []
 # # for bs in df_rep['symbol1']:
 # #     bq.append("'" + bs.upper() + "'")
-st.subheader(
-    "Problem with many times the same batchID in cpd_batchs table", divider="rainbow"
-)
+st.subheader("added metasource to cpdbatch", divider="rainbow")
 
 sql_meta = "select * from cpdbatchs"
 df_meta = sql_df(sql_meta, conn_meta)
 list_cpd = [f for f in df_meta.batchid.unique() if "JCP" not in f]
 st.write(
-    "CPD_BATCHS", df_meta[df_meta["batchid"].isin(list_cpd)].reset_index(drop=True)
+    "CPD_BATCHS",
+    df_meta[df_meta["batchid"].isin(list_cpd)].reset_index(drop=True),
 )
+st.write("df_CPD_BATCHS", df_meta)
 
 
 st.subheader(
