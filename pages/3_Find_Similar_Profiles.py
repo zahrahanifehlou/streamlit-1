@@ -100,7 +100,7 @@ else:
                 .head(thresq_cpd)
                 .reset_index(drop=True)
             )
-
+        # df_keep_cpd = df_keep_cpd[df_keep_cpd["sim"] < 1]
         st.write("df_keep", df_keep_cpd)
 
         batch_list_cpd = df_keep_cpd["metabatchid"].tolist()
@@ -200,7 +200,7 @@ else:
 
             with fig_cols1[1]:  # Profile
                 st.write("Profile")
-                st.write(df_keep_prof_cpd.head(10))
+                st.write(df_keep_prof_cpd)
 
             st.write("\n")
             fig_cols2 = st.columns(2)
@@ -226,12 +226,15 @@ else:
 
             df_src_emd["color"] = "others"
             df_src_emd.loc[
-                df_src_emd["metabatchid"].isin(batch_list_cpd), "color"
+                df_src_emd["metabatchid"].isin(df_keep_prof_cpd["metabatchid"]), "color"
             ] = "similar compounds"
             df_src_emd.loc[
                 df_src_emd["metabatchid"] == choix_batchid, "color"
             ] = "selected compounds"
-
+            st.write(
+                "df_src_emd",
+                df_src_emd[df_src_emd["metabatchid"].isin(df_keep_cpd["batchid"])],
+            )
             fig = px.scatter(
                 df_src_emd,
                 x="umap1",

@@ -4,7 +4,7 @@ import streamlit as st
 import numpy as np
 import plotly.express as px
 
-# from streamlib import sql_df,find_sim_cpds
+from streamlib import sql_df
 import pandas as pd
 from sklearn.cluster import KMeans
 from sklearn.metrics.pairwise import cosine_similarity
@@ -19,8 +19,8 @@ import matplotlib.pyplot as plt
 # components.iframe("http://librenms.ksilink.int/",height=1600)
 # https://www.google.com/
 
-# conn_meta = "postgres://arno:123456@192.168.2.131:5432/ksi_cpds"
-# conn_prof = "postgres://arno:12345@192.168.2.131:5432/ksilink_cpds"
+conn_meta = "postgres://arno:123456@192.168.2.131:5432/ksi_cpds"
+conn_prof = "postgres://arno:12345@192.168.2.131:5432/ksilink_cpds"
 
 # st.title('Experimental: works only on 131')
 # sql_rep='select symbol1 from crisprcos'
@@ -33,11 +33,49 @@ import matplotlib.pyplot as plt
 # # bq = []
 # # for bs in df_rep['symbol1']:
 # #     bq.append("'" + bs.upper() + "'")
+st.header(
+    "Problem with many times the same batchID in cpd_batchs table", divider="rainbow"
+)
 
+sql_meta = "select * from cpdbatchs"
+df_meta = sql_df(sql_meta, conn_meta)
+list_cpd = [f for f in df_meta.batchid.unique() if "JCP" not in f]
+st.write(
+    "CPD_BATCHS", df_meta[df_meta["batchid"].isin(list_cpd)].reset_index(drop=True)
+)
+
+
+st.header(
+    "Confusion when creating DB between Metadata_JCP2022 and Metadata_broad_sample",
+    divider="rainbow",
+)
+source = "source_7_25"
+df = pd.read_feather(
+    f"/mnt/shares/L/PROJECTS/JUMP-CP/jumpAWS/concatSources/profiles/combat_{source}.fth"
+)
+st.write(df["Metadata_JCP2022"])
+
+
+st.header(
+    "Inconsistency batchid between Umap.batchid and addprofile.batchid",
+    divider="rainbow",
+)
 # # sql_umqpemd =  f"SELECT * FROM aggprofile where metasource='CRISPER' and metabatchid  in (" + ",".join(bq) + ") "
-# sql_umqpemd =  f"SELECT * FROM aggprofile where metasource='CRISPER'"
-# df_src_emd = sql_df(sql_umqpemd, conn_prof)
-# # st.write(df_src_emd)
+sql_umqpemd = "SELECT * FROM aggprofile where metasource='Ksilink_25'"
+df_src_agg = sql_df(sql_umqpemd, conn_prof)
+st.write("Agg", df_src_agg.metabatchid)
+
+sql_umqpemd = "SELECT * FROM umapemd where metasource='Ksilink_25'"
+df_src_emd = sql_df(sql_umqpemd, conn_prof)
+st.write("UMAP", df_src_emd.metabatchid)
+
+# df_keep = pd.read_csv("df_keep_prof.csv")
+# st.write(df_keep)
+
+df_inter = df_src_emd[~df_src_emd["metabatchid"].isin(df_src_agg["metabatchid"])]
+st.write("Not in agg", df_inter.metabatchid)
+
+exit(0)
 # df_sel = df_src_emd[df_src_emd["metabatchid"]=='DMSO']
 # sim_crispr = find_sim_cpds(df_src_emd, df_sel)
 # df_hist_cpd = pd.DataFrame(
