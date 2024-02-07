@@ -29,6 +29,7 @@ conn_prof = "postgres://arno:12345@192.168.2.131:5432/ksilink_cpds"
 
 def get_stringDB(df_all_umap, thresh=0.7, genecol="target"):
     string_api_url = "https://version-11-5.string-db.org/api"
+    string_api_url = "https://string-db.org/api"
     output_format = "tsv-no-header"
     method = "network"
     params = {
@@ -38,11 +39,13 @@ def get_stringDB(df_all_umap, thresh=0.7, genecol="target"):
         "limit": 1,  # only one (best) identifier per input protein
         "echo_query": 1,  # see your input identifiers in the output
         "caller_identity": "www.awesome_app.org",  # your app name
+        # "User-Agent": "Mozilla/5.0",
     }
 
     request_url = "/".join([string_api_url, output_format, method])
-    # st.write(request_url)
+
     results = requests.post(request_url, data=params)
+    # st.write(results)
     if results.status_code != requests.codes.ok:
         return None, results.status_code
     list_id0 = []
@@ -51,6 +54,7 @@ def get_stringDB(df_all_umap, thresh=0.7, genecol="target"):
     list_edges = []
     for line in results.text.strip().split("\n"):
         l = line.strip().split("\t")
+        # st.write(l)
         if len(l) > 4:
             p1, p2 = l[2], l[3]
             # filter the interaction according to experimental score
@@ -195,12 +199,14 @@ if not df_genes.empty:
             if bs != "":
                 bq.append("'" + bs + "'")
 
-        sql_kegg = "select cpdpath.pathid,keggcpdgene.geneid,gene.symbol, keggcpd.*, cpdbatchs.* from keggcpd\
+        sql_kegg = (
+            "select cpdpath.pathid,keggcpdgene.geneid,gene.symbol, keggcpd.*, cpdbatchs.* from keggcpd\
                     left join keggcpdgene on keggcpd.keggid=keggcpdgene.keggid\
                     left join cpd on cpd.keggid=keggcpd.keggid \
                     left join cpdpath on cpdpath.pubchemid=cpd.pubchemid \
                     left join cpdbatchs on cpd.pubchemid=cpdbatchs.pubchemid \
                     left join gene on keggcpdgene.geneid=gene.geneid"
+        )
 
         df_drug_meta = sql_df(sql_kegg, conn_meta)
         df_drug_meta = df_drug_meta.loc[:, ~df_drug_meta.columns.duplicated()].copy()
@@ -297,6 +303,7 @@ if not df_genes.empty:
             st.warning(f"Error in requests stringDB: {list_inters}")
             exit(0)
         st.write(f"retrieved : {len(list_edges)} Interaction with {thres} threshold")
+        # st.write(list_edges)
         list_cat = get_list_category(df_inter, "symbol")
         categ = st.selectbox("Select Category", list_cat)
         df_go_ento = get_stringDB_enr(df_inter, "symbol", categ)

@@ -1,4 +1,3 @@
-
 import pandas as pd
 import json
 import requests
@@ -12,7 +11,6 @@ import polars as pl
 ################################### CONNECTION DBs ##############################################
 
 
-
 def int_to_str(ints):
     return str(ints)
 
@@ -22,22 +20,21 @@ def str_to_float(strs):
 
 
 def sql_df(sql_str, conn):
-
     # cur = conn.cursor()
     # cur.execute(sql_str)
     # rows = cur.fetchall()
     # df_d = pd.DataFrame(rows, columns=[desc[0] for desc in cur.description])
-    df_d =pl.read_database_uri(query=sql_str, uri=conn)
-   
+    df_d = pl.read_database_uri(query=sql_str, uri=conn)
+
     return df_d.to_pandas()
 
     # return df_d
 
+
 ################################### STRINGDB PPI ##############################################
 
 
-def get_stringDB(df_all_umap, thresh=0.7, genecol='target'):
-
+def get_stringDB(df_all_umap, thresh=0.7, genecol="target"):
     string_api_url = "https://version-11-5.string-db.org/api"
     output_format = "tsv-no-header"
     method = "network"
@@ -48,22 +45,21 @@ def get_stringDB(df_all_umap, thresh=0.7, genecol='target'):
         "species": 9606,  # species NCBI identifier
         "limit": 1,  # only one (best) identifier per input protein
         "echo_query": 1,  # see your input identifiers in the output
-        "caller_identity": "www.awesome_app.org"  # your app name
-
+        "caller_identity": "www.awesome_app.org",  # your app name
     }
 
     request_url = "/".join([string_api_url, output_format, method])
     st.write(request_url)
     results = requests.post(request_url, data=params)
-    
+
     list_id0 = []
     list_id1 = []
     list_inter = []
     list_edges = []
     for line in results.text.strip().split("\n"):
         l = line.strip().split("\t")
-       
-        if len(l)>4:
+
+        if len(l) > 4:
             p1, p2 = l[2], l[3]
 
             # filter the interaction according to experimental score
@@ -77,10 +73,11 @@ def get_stringDB(df_all_umap, thresh=0.7, genecol='target'):
                 list_inter.append(experimental_score)
     return list(set(list_edges))
 
+
 ################################### STRING DB ENRICHMENT ##############################################
 
 
-def get_stringDB_enr(df_all_umap, genecol='target', cat='KEGG', fdra=0.01):
+def get_stringDB_enr(df_all_umap, genecol="target", cat="KEGG", fdra=0.01):
     if not isinstance(df_all_umap, pd.DataFrame):
         list_genes = df_all_umap
         df_all_umap = pd.DataFrame()
@@ -95,7 +92,7 @@ def get_stringDB_enr(df_all_umap, genecol='target', cat='KEGG', fdra=0.01):
         "species": 9606,  # species NCBI identifier
         "limit": 1,  # only one (best) identifier per input protein
         "echo_query": 1,  # see your input identifiers in the output
-        "caller_identity": "www.awesome_app.org"  # your app name
+        "caller_identity": "www.awesome_app.org",  # your app name
     }
     request_url = "/".join([string_api_url, output_format, method])
 
@@ -113,7 +110,7 @@ def get_stringDB_enr(df_all_umap, genecol='target', cat='KEGG', fdra=0.01):
         fdr = float(row["fdr"])
         description = row["description"]
         category = row["category"]
-        p_value = row['p_value']
+        p_value = row["p_value"]
 
         if category == cat and fdr < fdra:
             list_go.append(term)
@@ -124,17 +121,17 @@ def get_stringDB_enr(df_all_umap, genecol='target', cat='KEGG', fdra=0.01):
             list_category.append(category)
             # st.write("\t".join([term,preferred_names, str(fdr), description]))
     df_go = pd.DataFrame()
-    df_go['GO Term'] = list_go
-    df_go['Preferred Names'] = list_names
-    df_go['Description'] = list_dec
-    df_go['fdr'] = list_fdr
-    df_go['p_val'] = list_p_value
-    df_go['category'] = list_category
+    df_go["GO Term"] = list_go
+    df_go["Preferred Names"] = list_names
+    df_go["Description"] = list_dec
+    df_go["fdr"] = list_fdr
+    df_go["p_val"] = list_p_value
+    df_go["category"] = list_category
     return df_go
 
 
-def get_list_category(df_all_umap, genecol='target'):
-    string_api_url = "https://version-11-5.string-db.org/api"
+def get_list_category(df_all_umap, genecol="target"):
+    string_api_url = "https://string-db.org/api"
     output_format = "json"
     method = "enrichment"
     params = {
@@ -143,7 +140,7 @@ def get_list_category(df_all_umap, genecol='target'):
         "species": 9606,  # species NCBI identifier
         "limit": 1,  # only one (best) identifier per input protein
         "echo_query": 1,  # see your input identifiers in the output
-        "caller_identity": "www.awesome_app.org"  # your app name
+        "caller_identity": "www.awesome_app.org",  # your app name
     }
     request_url = "/".join([string_api_url, output_format, method])
 
@@ -159,7 +156,6 @@ def get_list_category(df_all_umap, genecol='target'):
 
 
 def get_cpds(conn_meta):
-
     sql_query = """
     SELECT cpd.*, gene.*, keggcpdgene.*, cpdgene.pubchemid
     FROM cpd
@@ -169,12 +165,13 @@ def get_cpds(conn_meta):
     WHERE cpd.keggid IS NOT NULL
     """
     df_drug_meta = sql_df(sql_query, conn_meta)
-    df_drug_meta = df_drug_meta.loc[:, ~
-                                    df_drug_meta.columns.duplicated()].copy()
-    df_drug_meta = df_drug_meta.drop_duplicates(
-        subset=["pubchemid"]).reset_index(drop=True)
+    df_drug_meta = df_drug_meta.loc[:, ~df_drug_meta.columns.duplicated()].copy()
+    df_drug_meta = df_drug_meta.drop_duplicates(subset=["pubchemid"]).reset_index(
+        drop=True
+    )
 
     return df_drug_meta
+
 
 ###########################################################################
 
@@ -192,7 +189,7 @@ def get_col_colors(df):
         "RNA": "green",
         "AGP": "orange",
         "Mito": "pink",
-        "mito": "pink"
+        "mito": "pink",
     }
     col_colors = [
         prefix_colors.get(col.split("_")[0], "white") for col in df_out.columns
@@ -232,6 +229,7 @@ def get_sql_jump(table_name="cpdgene", col_name="geneid", list_geneid=["hdac6"])
                 GROUP BY cpd.pubchemid, cpdbatchs.batchid, cpd.synonyms, cpd.keggid, cpd.cpdname, cpd.smile, {table_name}.{col_name}"
 
     return sql
+
 
 ########################################################################################
 
@@ -281,7 +279,7 @@ def get_col_colors(df, inex_col_name="name"):
     list_fin.extend(mito)
 
     list_fin = list(dict.fromkeys(list_fin))
-    
+
     list_fin.append(inex_col_name)
 
     df_plt = df[list_fin]
@@ -336,7 +334,6 @@ def get_sql_jump(table_name="cpdgene", col_name="geneid", list_geneid=["hdac6"])
 
 
 def find_sim_cpds(df1, df2):
-
     filter_col1 = [col for col in df1.columns if not col.startswith("meta")]
     filter_col2 = [col for col in df2.columns if not col.startswith("meta")]
     filter_col = list(set(filter_col1) & set(filter_col2))
@@ -345,13 +342,13 @@ def find_sim_cpds(df1, df2):
 
 
 def find_umap(df, title):
-
     filter_cols = [col for col in df.columns if not col.startswith("meta")]
     meta_cols = [col for col in df.columns if col.startswith("meta")]
     reducer = umap.UMAP(densmap=True, random_state=42, verbose=True)
     embedding = reducer.fit_transform(df[filter_cols])
     df_emb = pd.DataFrame({"x": embedding[:, 0], "y": embedding[:, 1]})
     df_emb[meta_cols] = df[meta_cols]
-    fig = px.scatter(df_emb, x="x", y="y", hover_data=meta_cols,
-                     color="metasource", title=title)
+    fig = px.scatter(
+        df_emb, x="x", y="y", hover_data=meta_cols, color="metasource", title=title
+    )
     st.plotly_chart(fig, theme="streamlit", use_container_width=True)
