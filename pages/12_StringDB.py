@@ -8,6 +8,7 @@ import requests
 from pyvis.network import Network
 import matplotlib
 from streamlit_agraph import agraph, Node, Edge, Config
+
 # from lib import streamlib
 
 from streamlib import (
@@ -30,7 +31,6 @@ def get_stringDB(df_all_umap, thresh=0.7, genecol="target"):
     string_api_url = "https://version-11-5.string-db.org/api"
     output_format = "tsv-no-header"
     method = "network"
-
     params = {
         "identifiers": "\r".join(df_all_umap[genecol].to_list()),
         # "identifiers" : "\r".join(["p53", "BRCA1", "cdk2", "Q99835"]), # your protein list
@@ -43,17 +43,16 @@ def get_stringDB(df_all_umap, thresh=0.7, genecol="target"):
     request_url = "/".join([string_api_url, output_format, method])
     # st.write(request_url)
     results = requests.post(request_url, data=params)
-
+    if results.status_code != requests.codes.ok:
+        return None, results.status_code
     list_id0 = []
     list_id1 = []
     list_inter = []
     list_edges = []
     for line in results.text.strip().split("\n"):
         l = line.strip().split("\t")
-        # st.write(l)
         if len(l) > 4:
             p1, p2 = l[2], l[3]
-
             # filter the interaction according to experimental score
             experimental_score = float(l[10])
             if experimental_score >= thresh:
@@ -196,14 +195,12 @@ if not df_genes.empty:
             if bs != "":
                 bq.append("'" + bs + "'")
 
-        sql_kegg = (
-            "select cpdpath.pathid,keggcpdgene.geneid,gene.symbol, keggcpd.*, cpdbatchs.* from keggcpd\
+        sql_kegg = "select cpdpath.pathid,keggcpdgene.geneid,gene.symbol, keggcpd.*, cpdbatchs.* from keggcpd\
                     left join keggcpdgene on keggcpd.keggid=keggcpdgene.keggid\
                     left join cpd on cpd.keggid=keggcpd.keggid \
                     left join cpdpath on cpdpath.pubchemid=cpd.pubchemid \
                     left join cpdbatchs on cpd.pubchemid=cpdbatchs.pubchemid \
                     left join gene on keggcpdgene.geneid=gene.geneid"
-        )
 
         df_drug_meta = sql_df(sql_kegg, conn_meta)
         df_drug_meta = df_drug_meta.loc[:, ~df_drug_meta.columns.duplicated()].copy()
@@ -293,9 +290,13 @@ if not df_genes.empty:
     ################################### NETWORK ##############################################
     st.write("## Loading StringDB PPI")
     # col_a,col_b=st.columns(2)
+    st.write("toto", df_inter)
     thres = st.sidebar.slider("Interaction Thresholds", 0.0, 1.0, 0.8, 0.02)
     if not df_inter.empty:
         list_edges, list_inters = get_stringDB(df_inter, thres, "symbol")
+        if list_edges is None:
+            st.warning(f"Error in requests stringDB: {list_inters}")
+            exit(0)
         st.write(f"retrieved : {len(list_edges)} Interaction with {thres} threshold")
         list_cat = get_list_category(df_inter, "symbol")
         categ = st.selectbox("Select Category", list_cat)
