@@ -35,7 +35,7 @@ def sql_df(sql_str, conn):
 
 
 def get_stringDB(df_all_umap, thresh=0.7, genecol="target"):
-    string_api_url = "https://version-11-5.string-db.org/api"
+    string_api_url = "https://string-db.org/api"
     output_format = "tsv-no-header"
     method = "network"
 
@@ -83,7 +83,7 @@ def get_stringDB_enr(df_all_umap, genecol="target", cat="KEGG", fdra=0.01):
         df_all_umap = pd.DataFrame()
         df_all_umap[genecol] = list_genes
 
-    string_api_url = "https://version-11-5.string-db.org/api"
+    string_api_url = "https://string-db.org/api"
     output_format = "json"
     method = "enrichment"
     params = {
