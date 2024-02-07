@@ -34,16 +34,18 @@ conn_prof = "postgres://arno:12345@192.168.2.131:5432/ksilink_cpds"
 # # bq = []
 # # for bs in df_rep['symbol1']:
 # #     bq.append("'" + bs.upper() + "'")
-st.subheader("added metasource to cpdbatch", divider="rainbow")
 
-sql_meta = "select * from cpdbatchs"
-df_meta = sql_df(sql_meta, conn_meta)
-list_cpd = [f for f in df_meta.batchid.unique() if "JCP" not in f]
-st.write(
-    "CPD_BATCHS",
-    df_meta[df_meta["batchid"].isin(list_cpd)].reset_index(drop=True),
-)
-st.write("df_CPD_BATCHS", df_meta)
+
+# st.subheader("added metasource to cpdbatch", divider="rainbow")
+
+# sql_meta = "select * from cpdbatchs"
+# df_meta = sql_df(sql_meta, conn_meta)
+# list_cpd = [f for f in df_meta.batchid.unique() if "JCP" not in f]
+# st.write(
+#     "CPD_BATCHS",
+#     df_meta[df_meta["batchid"].isin(list_cpd)].reset_index(drop=True),
+# )
+# st.write("df_CPD_BATCHS", df_meta)
 
 
 st.subheader(
@@ -52,20 +54,22 @@ st.subheader(
 )
 
 col1, col2, col3 = st.columns(3)
-source = "source_7_25"
+source = "source_7_625"
 df = pd.read_feather(
     f"/mnt/shares/L/PROJECTS/JUMP-CP/jumpAWS/concatSources/profiles/combat_{source}.fth"
 )
+# st.write(df.columns)
+st.write(df[df["Metadata_broad_sample"] == "S8808-01"])
 
-# st.header(
-#     "Inconsistency batchid between Umap.batchid and addprofile.batchid",
-#     divider="rainbow",
-# )
-col1.write("from the feather file")
-col1.write(df["Metadata_JCP2022"])
+# # st.header(
+# #     "Inconsistency batchid between Umap.batchid and addprofile.batchid",
+# #     divider="rainbow",
+# # )
+# col1.write("from the feather file")
+# col1.write(df)
 
 
-# # sql_umqpemd =  f"SELECT * FROM aggprofile where metasource='CRISPER' and metabatchid  in (" + ",".join(bq) + ") "
+# # # sql_umqpemd =  f"SELECT * FROM aggprofile where metasource='CRISPER' and metabatchid  in (" + ",".join(bq) + ") "
 sql_umqpemd = "SELECT * FROM aggprofile where metasource='Ksilink_25'"
 df_src_agg = sql_df(sql_umqpemd, conn_prof)
 col2.write("Aggregation profiles")
@@ -76,81 +80,93 @@ df_src_emd = sql_df(sql_umqpemd, conn_prof)
 col3.write("Umap")
 col3.write(df_src_emd.metabatchid)
 
-# df_keep = pd.read_csv("df_keep_prof.csv")
-# st.write(df_keep)
+# # df_keep = pd.read_csv("df_keep_prof.csv")
+# # st.write(df_keep)
 
-df_inter = df_src_emd[~df_src_emd["metabatchid"].isin(df_src_agg["metabatchid"])]
-st.subheader(
-    "In total more than 5000 ids are not common between agg and umap for Ksilink",
-    divider="rainbow",
-)
-st.write("Not in agg", df_inter.metabatchid)
+# df_inter = df_src_emd[~df_src_emd["metabatchid"].isin(df_src_agg["metabatchid"])]
+# st.subheader(
+#     "In total more than 5000 ids are not common between agg and umap for Ksilink",
+#     divider="rainbow",
+# )
+# st.write("Not in agg", df_inter.metabatchid)
 
-st.subheader(
-    "Test tables in meta, print unique batchid and total batchids", divider="rainbow"
-)
-conn = psycopg2.connect(conn_meta)
-cursor = conn.cursor()
-cursor.execute(
-    "select table_name from information_schema.tables where table_schema='public'"
-)
-tables = [i[0] for i in cursor.fetchall()]
-# st.write(tables)
-for table in tables:
-    sql_req = f"select * from {table}"
-    # st.write(table)
-    df_tab = sql_df(sql_req, conn_meta)
-    if "batchid" in df_tab.columns:
-        st.write(
-            f"{table} -> batchid:", (len(df_tab.batchid.unique()), len(df_tab.batchid))
-        )
-    if "pubchemid" in df_tab.columns:
-        st.write(
-            f"{table} -> pubchemid:",
-            (len(df_tab.pubchemid.unique()), len(df_tab.pubchemid)),
-        )
-    if "pubchemsid" in df_tab.columns:
-        st.write(
-            f"{table} -> pubchemsid:",
-            (len(df_tab.pubchemsid.unique()), len(df_tab.pubchemsid)),
-        )
+# st.subheader(
+#     "Test tables in meta, print unique batchid and total batchids", divider="rainbow"
+# )
+# conn = psycopg2.connect(conn_meta)
+# cursor = conn.cursor()
+# cursor.execute(
+#     "select table_name from information_schema.tables where table_schema='public'"
+# )
+# tables = [i[0] for i in cursor.fetchall()]
+# # st.write(tables)
+# for table in tables:
+#     sql_req = f"select * from {table}"
+#     # st.write(table)
+#     df_tab = sql_df(sql_req, conn_meta)
+#     if "batchid" in df_tab.columns:
+#         list_cpd = [f for f in df_tab.batchid.unique() if "JCP" not in f]
+#         st.write(
+#             f"{table} -> batchid:",
+#             (len(df_tab.batchid.unique()), len(df_tab.batchid), len(list_cpd)),
+#         )
+#     if "pubchemid" in df_tab.columns:
+#         st.write(
+#             f"{table} -> pubchemid:",
+#             (len(df_tab.pubchemid.unique()), len(df_tab.pubchemid)),
+#         )
+#     if "pubchemsid" in df_tab.columns:
+#         st.write(
+#             f"{table} -> pubchemsid:",
+#             (len(df_tab.pubchemsid.unique()), len(df_tab.pubchemsid)),
+#         )
 
 
-st.subheader(
-    "Test tables in prof, print unique batchid and total batchids", divider="rainbow"
-)
-conn = psycopg2.connect(conn_prof)
-cursor = conn.cursor()
-cursor.execute(
-    "select table_name from information_schema.tables where table_schema='public'"
-)
-tables = [i[0] for i in cursor.fetchall()]
-# st.write(tables)
-for table in tables:
-    sql_req = f"select * from {table}"
-    # st.write(table)
-    df_tab = sql_df(sql_req, conn_prof)
-    if "batchid" in df_tab.columns:
-        st.write(
-            f"{table} -> batchid:", (len(df_tab.batchid.unique()), len(df_tab.batchid))
-        )
-    if "metabatchid" in df_tab.columns:
-        st.write(
-            f"{table} -> metabatchid:",
-            (len(df_tab.metabatchid.unique()), len(df_tab.metabatchid)),
-        )
-    if "pubchemid" in df_tab.columns:
-        st.write(
-            f"{table} -> pubchemid:",
-            (len(df_tab.pubchemid.unique()), len(df_tab.pubchemid)),
-        )
+# st.subheader(
+#     "Test tables in prof, print unique batchid and total batchids", divider="rainbow"
+# )
+# conn = psycopg2.connect(conn_prof)
+# cursor = conn.cursor()
+# cursor.execute(
+#     "select table_name from information_schema.tables where table_schema='public'"
+# )
+# tables = [i[0] for i in cursor.fetchall()]
+# # st.write(tables)
+# for table in tables:
+#     sql_req = f"select * from {table}"
+#     # st.write(table)
+#     df_tab = sql_df(sql_req, conn_prof)
+#     # if "batchid" in df_tab.columns:
+#     #     list_cpd = [f for f in df_tab.batchid.unique() if "JCP" not in f]
+#     #     st.write(
+#     #         f"{table} -> batchid:",
+#     #         (len(df_tab.batchid.unique()), len(df_tab.batchid), len(list_cpd)),
+#     #     )
+#     if "metabatchid" in df_tab.columns:
+#         list_cpd = [f for f in df_tab.metabatchid.unique() if "JCP" not in f]
+#         st.write(
+#             f"{table} -> metabatchid:",
+#             (len(df_tab.metabatchid.unique()), len(df_tab.metabatchid), len(list_cpd)),
+#         )
+#     if "pubchemid" in df_tab.columns:
+#         st.write(
+#             f"{table} -> pubchemid:",
+#             (len(df_tab.pubchemid.unique()), len(df_tab.pubchemid)),
+#         )
 
 
 st.subheader("Removed pubchemid column", divider="rainbow")
-sql_kegg_cpd = "select * from keggcpd"
-df_keggcpd = sql_df(sql_kegg_cpd, conn_meta)
-st.write("df_Kegg_cpd", df_keggcpd.sample(10))
+sql_kegg_cpd = "select metabatchid from aggprofile where metasource='Ksilink_625'"
+df_agg = sql_df(sql_kegg_cpd, conn_prof)
+# st.write("agg_batchid", df_keggcpd)
+sql_kegg_cpd = "select batchid from cpdbatchs where metasource='Ksilink_625'"
+df_batch = sql_df(sql_kegg_cpd, conn_meta)
 
+cola, colb = st.columns(2)
+df = df_agg[~df_agg["metabatchid"].isin(df_batch.batchid)]
+cola.write(df.reset_index(drop=True))
+df2 = df_batch[~df_batch["batchid"].isin(df_agg.metabatchid)]
+colb.write(df2.reset_index(drop=True))
 exit(0)
 # df_sel = df_src_emd[df_src_emd["metabatchid"]=='DMSO']
 # sim_crispr = find_sim_cpds(df_src_emd, df_sel)

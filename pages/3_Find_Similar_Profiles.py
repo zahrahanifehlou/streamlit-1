@@ -231,10 +231,10 @@ else:
             df_src_emd.loc[
                 df_src_emd["metabatchid"] == choix_batchid, "color"
             ] = "selected compounds"
-            st.write(
-                "df_src_emd",
-                df_src_emd[df_src_emd["metabatchid"].isin(df_keep_cpd["batchid"])],
-            )
+            # st.write(
+            #     "df_src_emd",
+            #     df_src_emd[df_src_emd["metabatchid"].isin(df_keep_cpd["batchid"])],
+            # )
             fig = px.scatter(
                 df_src_emd,
                 x="umap1",
