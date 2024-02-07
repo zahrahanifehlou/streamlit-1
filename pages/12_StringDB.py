@@ -290,7 +290,6 @@ if not df_genes.empty:
     ################################### NETWORK ##############################################
     st.write("## Loading StringDB PPI")
     # col_a,col_b=st.columns(2)
-    st.write("toto", df_inter)
     thres = st.sidebar.slider("Interaction Thresholds", 0.0, 1.0, 0.8, 0.02)
     if not df_inter.empty:
         list_edges, list_inters = get_stringDB(df_inter, thres, "symbol")
