@@ -64,22 +64,22 @@ var_t = var_text.split("\n")
 list_gene = [t.strip().upper() for t in var_t if t != ""]
 # list_gene = var_t
 # st.write(list_gene)
-
+# exit(0)
 pattern = "|".join(list_gene)
 st.write(pattern)
 # KG = KG.query("x_name == @list_gene | y_name==@list_gene")
 # KG = KG.query("x_name in @list_gene")
 KG = KG[KG["x_name"].str.contains(pattern, case=False, regex=True)]
-
-KG2 = KG[KG["y_name"].str.contains(pattern, case=False, regex=True)]
-KG3 = pd.concat([KG, KG2])
+# for i in range()
+# KG2 = KG[KG["y_name"].str.contains(pattern, case=False, regex=True)]
+# KG3 = pd.concat([KG, KG2])
 # KG = KG[KG["x_name"].isin(list_gene)]
 # st.write(KG)
 # list_y = KG["y_name"].to_list()
 # KG = KG3.query("relation!='anatomy_protein_present'")
 
 # KG = KG.query("relation!='anatomy_protein_present'")
-# st.write(KG)
+st.write(KG)
 # exit(0)
 graph_list = []
 # st.write(KG3.reset_index(drop=True))
@@ -137,10 +137,11 @@ if var_text:
             list_node2 = list(df["target"].unique())
             list_nodes = list_node + list_node2
             # st.write(list_nodes)
+            # st.write(list_gene)
             for i, name in enumerate(list_nodes):
                 # st.write(i)
-                # st.write(name)
-                if list_nodes[i].upper() in list_gene:
+                # st.write(name.upper())
+                if name.upper() in list_gene:
                     # st.write(name)
                     net.add_node(name, label=name, color="green")
                 else:
@@ -173,7 +174,7 @@ if var_text:
             #         )
             #     )
             # net.from_nx(GG)
-            net.show_buttons(filter_=["physics"])
+            net.show_buttons(filter_="physics")
             net.show("/mnt/shares/L/Temp/total.html", notebook=False)
 
             HtmlFile = open("/mnt/shares/L/Temp/total.html", "r", encoding="utf-8")
