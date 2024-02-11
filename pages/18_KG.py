@@ -175,9 +175,11 @@ if var_text:
             #     )
             # net.from_nx(GG)
             net.show_buttons(filter_="physics")
-            net.show("/mnt/shares/L/Temp/total.html", notebook=False)
+            net.show(f"/mnt/shares/L/Temp/{list_gene}.html", notebook=False)
 
-            HtmlFile = open("/mnt/shares/L/Temp/total.html", "r", encoding="utf-8")
+            HtmlFile = open(
+                f"/mnt/shares/L/Temp/{list_gene}.html", "r", encoding="utf-8"
+            )
             source_code = HtmlFile.read()
             components.html(source_code, height=1200, width=1200)
 
