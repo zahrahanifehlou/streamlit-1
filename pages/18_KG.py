@@ -33,7 +33,7 @@ lab_size = st.sidebar.slider(
 )
 
 KG = load_data()
-# st.write("Test", KG[(KG.x_name.str.contains("Tyrphostins"))])
+st.write("Test", KG.sample(20))
 
 
 # list_test = ["Risperidone", "autism spectrum disorder"]
@@ -69,17 +69,20 @@ pattern = "|".join(list_gene)
 st.write(pattern)
 # KG = KG.query("x_name == @list_gene | y_name==@list_gene")
 # KG = KG.query("x_name in @list_gene")
-KG = KG[KG["x_name"].str.contains(pattern, case=False, regex=True)]
-# for i in range()
-# KG2 = KG[KG["y_name"].str.contains(pattern, case=False, regex=True)]
-# KG3 = pd.concat([KG, KG2])
-# KG = KG[KG["x_name"].isin(list_gene)]
-# st.write(KG)
-# list_y = KG["y_name"].to_list()
-# KG = KG3.query("relation!='anatomy_protein_present'")
+if var_text:
+    KG = KG[KG["x_name"].str.contains(pattern, case=False, regex=True)]
+    # for i in range()
+    # KG2 = KG[KG["y_name"].str.contains(pattern, case=False, regex=True)]
+    # KG3 = pd.concat([KG, KG2])
+    # KG = KG[KG["x_name"].isin(list_gene)]
+    # st.write(KG)
+    # list_y = KG["y_name"].to_list()
+    # KG = KG3.query("relation!='anatomy_protein_present'")
 
-# KG = KG.query("relation!='anatomy_protein_present'")
-st.write(KG)
+    # KG = KG.query("relation!='anatomy_protein_present'")
+    st.write(KG)
+else:
+    exit(0)
 # exit(0)
 graph_list = []
 # st.write(KG3.reset_index(drop=True))
