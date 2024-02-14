@@ -33,7 +33,7 @@ lab_size = st.sidebar.slider(
 )
 
 KG = load_data()
-st.write("Test", KG.sample(20))
+st.write("Test", KG.sample(22).reset_index())
 
 
 # list_test = ["Risperidone", "autism spectrum disorder"]
@@ -73,7 +73,7 @@ if var_text:
     KG = KG[KG["x_name"].str.contains(pattern, case=False, regex=True)]
     # for i in range()
     # KG2 = KG[KG["y_name"].str.contains(pattern, case=False, regex=True)]
-    # KG3 = pd.concat([KG, KG2])
+    # KG = pd.concat([KG1, KG2])
     # KG = KG[KG["x_name"].isin(list_gene)]
     # st.write(KG)
     # list_y = KG["y_name"].to_list()
@@ -99,7 +99,7 @@ options = {
 
 nodes = []
 if var_text:
-    GG = nx.Graph()
+    GG = nx.DiGraph()
 
     # st.write(KG)
     for s, t, r in KG[["x_name", "y_name", "relation"]].values:

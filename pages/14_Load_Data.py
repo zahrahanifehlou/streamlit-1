@@ -174,7 +174,7 @@ if len(list_df) > 0:
         g = col3.radio("MinMax", ["yes", "no"])
         col_sel = data.select_dtypes(include=numerics).columns.to_list()
         if g == "no" and t == "no":
-            components.html(get_pyg_html(data), height=600, scrolling=False)
+            components.html(get_pyg_html(data), height=1600, scrolling=True)
         if g == "yes" and t == "no":
             scaler = MinMaxScaler()
             col_sel = data.select_dtypes(include=numerics).columns.to_list()
@@ -184,7 +184,7 @@ if len(list_df) > 0:
                 columns=col_sel,
             )
             data_scaled["tags"] = data["tags"]
-            components.html(get_pyg_html(data_scaled), height=1000, scrolling=False)
+            components.html(get_pyg_html(data_scaled), height=1000, scrolling=True)
             df_agg = data_scaled.groupby("tags").median().reset_index()
             # t= st.radio("Time Series", ["yes","no"],1)
             title = "MinMax profiles"
