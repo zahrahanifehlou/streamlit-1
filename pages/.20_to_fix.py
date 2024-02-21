@@ -80,79 +80,79 @@ df_src_emd = sql_df(sql_umqpemd, conn_prof)
 col3.write("Umap")
 col3.write(df_src_emd.metabatchid)
 
-# # df_keep = pd.read_csv("df_keep_prof.csv")
-# # st.write(df_keep)
+# df_keep = pd.read_csv("df_keep_prof.csv")
+# st.write(df_keep)
 
-# df_inter = df_src_emd[~df_src_emd["metabatchid"].isin(df_src_agg["metabatchid"])]
-# st.subheader(
-#     "In total more than 5000 ids are not common between agg and umap for Ksilink",
-#     divider="rainbow",
-# )
-# st.write("Not in agg", df_inter.metabatchid)
+df_inter = df_src_emd[~df_src_emd["metabatchid"].isin(df_src_agg["metabatchid"])]
+st.subheader(
+    "In total more than 5000 ids are not common between agg and umap for Ksilink",
+    divider="rainbow",
+)
+st.write("Not in agg", df_inter.metabatchid)
 
-# st.subheader(
-#     "Test tables in meta, print unique batchid and total batchids", divider="rainbow"
-# )
-# conn = psycopg2.connect(conn_meta)
-# cursor = conn.cursor()
-# cursor.execute(
-#     "select table_name from information_schema.tables where table_schema='public'"
-# )
-# tables = [i[0] for i in cursor.fetchall()]
-# # st.write(tables)
-# for table in tables:
-#     sql_req = f"select * from {table}"
-#     # st.write(table)
-#     df_tab = sql_df(sql_req, conn_meta)
-#     if "batchid" in df_tab.columns:
-#         list_cpd = [f for f in df_tab.batchid.unique() if "JCP" not in f]
-#         st.write(
-#             f"{table} -> batchid:",
-#             (len(df_tab.batchid.unique()), len(df_tab.batchid), len(list_cpd)),
-#         )
-#     if "pubchemid" in df_tab.columns:
-#         st.write(
-#             f"{table} -> pubchemid:",
-#             (len(df_tab.pubchemid.unique()), len(df_tab.pubchemid)),
-#         )
-#     if "pubchemsid" in df_tab.columns:
-#         st.write(
-#             f"{table} -> pubchemsid:",
-#             (len(df_tab.pubchemsid.unique()), len(df_tab.pubchemsid)),
-#         )
+st.subheader(
+    "Test tables in meta, print unique batchid and total batchids", divider="rainbow"
+)
+conn = psycopg2.connect(conn_meta)
+cursor = conn.cursor()
+cursor.execute(
+    "select table_name from information_schema.tables where table_schema='public'"
+)
+tables = [i[0] for i in cursor.fetchall()]
+# st.write(tables)
+for table in tables:
+    sql_req = f"select * from {table}"
+    # st.write(table)
+    df_tab = sql_df(sql_req, conn_meta)
+    if "batchid" in df_tab.columns:
+        list_cpd = [f for f in df_tab.batchid.unique() if "JCP" not in f]
+        st.write(
+            f"{table} -> batchid:",
+            (len(df_tab.batchid.unique()), len(df_tab.batchid), len(list_cpd)),
+        )
+    if "pubchemid" in df_tab.columns:
+        st.write(
+            f"{table} -> pubchemid:",
+            (len(df_tab.pubchemid.unique()), len(df_tab.pubchemid)),
+        )
+    if "pubchemsid" in df_tab.columns:
+        st.write(
+            f"{table} -> pubchemsid:",
+            (len(df_tab.pubchemsid.unique()), len(df_tab.pubchemsid)),
+        )
 
 
-# st.subheader(
-#     "Test tables in prof, print unique batchid and total batchids", divider="rainbow"
-# )
-# conn = psycopg2.connect(conn_prof)
-# cursor = conn.cursor()
-# cursor.execute(
-#     "select table_name from information_schema.tables where table_schema='public'"
-# )
-# tables = [i[0] for i in cursor.fetchall()]
-# # st.write(tables)
-# for table in tables:
-#     sql_req = f"select * from {table}"
-#     # st.write(table)
-#     df_tab = sql_df(sql_req, conn_prof)
-#     # if "batchid" in df_tab.columns:
-#     #     list_cpd = [f for f in df_tab.batchid.unique() if "JCP" not in f]
-#     #     st.write(
-#     #         f"{table} -> batchid:",
-#     #         (len(df_tab.batchid.unique()), len(df_tab.batchid), len(list_cpd)),
-#     #     )
-#     if "metabatchid" in df_tab.columns:
-#         list_cpd = [f for f in df_tab.metabatchid.unique() if "JCP" not in f]
-#         st.write(
-#             f"{table} -> metabatchid:",
-#             (len(df_tab.metabatchid.unique()), len(df_tab.metabatchid), len(list_cpd)),
-#         )
-#     if "pubchemid" in df_tab.columns:
-#         st.write(
-#             f"{table} -> pubchemid:",
-#             (len(df_tab.pubchemid.unique()), len(df_tab.pubchemid)),
-#         )
+st.subheader(
+    "Test tables in prof, print unique batchid and total batchids", divider="rainbow"
+)
+conn = psycopg2.connect(conn_prof)
+cursor = conn.cursor()
+cursor.execute(
+    "select table_name from information_schema.tables where table_schema='public'"
+)
+tables = [i[0] for i in cursor.fetchall()]
+# st.write(tables)
+for table in tables:
+    sql_req = f"select * from {table}"
+    # st.write(table)
+    df_tab = sql_df(sql_req, conn_prof)
+    # if "batchid" in df_tab.columns:
+    #     list_cpd = [f for f in df_tab.batchid.unique() if "JCP" not in f]
+    #     st.write(
+    #         f"{table} -> batchid:",
+    #         (len(df_tab.batchid.unique()), len(df_tab.batchid), len(list_cpd)),
+    #     )
+    if "metabatchid" in df_tab.columns:
+        list_cpd = [f for f in df_tab.metabatchid.unique() if "JCP" not in f]
+        st.write(
+            f"{table} -> metabatchid:",
+            (len(df_tab.metabatchid.unique()), len(df_tab.metabatchid), len(list_cpd)),
+        )
+    if "pubchemid" in df_tab.columns:
+        st.write(
+            f"{table} -> pubchemid:",
+            (len(df_tab.pubchemid.unique()), len(df_tab.pubchemid)),
+        )
 
 
 st.subheader("Removed pubchemid column", divider="rainbow")
