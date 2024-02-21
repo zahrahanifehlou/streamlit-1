@@ -1,6 +1,6 @@
 from torch.optim import Adam
 from torch import cuda
-from torchkge.models import TransEModel
+from torchkge.models import TransEModel, ConvKBModel
 from torchkge.sampling import BernoulliNegativeSampler
 from torchkge.utils import MarginLoss, DataLoader
 from torchkge.utils.datasets import load_fb15k
