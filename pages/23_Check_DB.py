@@ -14,6 +14,120 @@ import igraph as ig
 import leidenalg as la
 import matplotlib.pyplot as plt
 import psycopg2
+from llama_cpp import Llama
+from huggingface_hub import snapshot_download
+from transformers import AutoModelForCausalLM, AutoTokenizer
+
+
+# model_id = "mistralai/Mixtral-8x7B-Instruct-v0.1"
+# tokenizer = AutoTokenizer.from_pretrained(model_id)
+# snapshot_download(repo_id="mistralai/Mixtral-8x7B-Instruct-v0.1")
+
+
+@st.cache_data
+def load_data():
+    primekg = pd.read_csv("../kg.csv", low_memory=False)
+    return primekg
+
+
+KG = load_data()
+st.write("Test", KG.sample(22).reset_index())
+# llm = Llama.from_pretrained(
+#     repo_id="Qwen/Qwen1.5-0.5B-Chat-GGUF", filename="*q8_0.gguf", verbose=False
+# )
+
+llm = Llama(
+    # model_path="../mistral-ins-7b-q4/mistral-7b-instruct-v0.2.Q4_K_M.gguf",
+    # "L:\PROJECTS\JUMP-CRISPR\Code\streamlit_arno\mixtral\mixtral-8x7b-v0.1.Q4_K_M.gguf"
+    model_path="../mixtral/mixtral-8x7b-v0.1.Q4_K_M.gguf",
+    chat_format="chatml",
+    # n_gpu_layers=-1, # Uncomment to use GPU acceleration
+    # seed=1337, # Uncomment to set a specific seed
+    n_ctx=2048,  # Uncomment to increase the context window
+)
+
+
+output = llm.create_chat_completion(
+    messages=[
+        {
+            "role": "user",
+            "content": "The variable KG is a pandas DataFrame obtained with @load_data()",
+        },
+        {"role": "assistant", "content": ""},
+        {"role": "user", "content": "What are the columns of KG"},
+        {"role": "assistant", "content": ""},
+    ],
+    response_format={
+        "type": "json_object",
+        "schema": {
+            "type": "object",
+            "properties": {"response": {"type": "string"}},
+            "required": ["response"],
+            # "properties": {"team_name": {"type": "string"}},
+            # "required": ["team_name"],
+        },
+    },
+    temperature=0.7,
+)
+
+
+# # Define a function to handle the conversation flow
+# def handle_conversation(messages):
+#     responses = []
+#     for i, message in enumerate(messages):
+#         # Ensure alternating roles between user and assistant
+#         if i % 2 == 0:
+#             role = "user"
+#         else:
+#             role = "assistant"
+#         # Check if the role matches the message role
+#         if message["role"] != role:
+#             raise ValueError(
+#                 f"Message at position {i} has incorrect role: expected {role}, got {message['role']}"
+#             )
+#         # Generate response for user messages
+#         if message["role"] == "user":
+#             response = llm.create_chat_completion(
+#                 messages=[message],
+#                 response_format={
+#                     "type": "json_object",
+#                     "schema": {
+#                         "type": "object",
+#                         "properties": {"response": {"type": "string"}},
+#                         "required": ["response"],
+#                     },
+#                 },
+#                 temperature=0.7,
+#             )
+#             responses.append(response)
+#     return responses
+
+
+# # Example conversation
+# conversation = [
+#     {"role": "user", "content": "Can you name the planets in the solar system?"},
+#     {"role": "assistant", "content": ""},
+#     {"role": "user", "content": "What are the weights?"},
+#     {"role": "assistant", "content": ""},
+# ]
+
+# responses = handle_conversation(conversation)
+# for response in responses:
+#     st.write(response)
+
+
+# output = llm(
+#     "Q: Name the planets in the solar system? A: ",  # Prompt
+#     max_tokens=32,  # Generate up to 32 tokens, set to None to generate up to the end of the context window
+#     stop=[
+#         "Q:",
+#         "\n",
+#     ],  # Stop generating just before the model would generate a new question
+#     echo=True,  # Echo the prompt back in the output
+# )  # Generate a completion, can also call create_completion
+st.write(output)
+
+exit(0)
 # import webbrowser
 # webbrowser.open_new_tab("http://librenms.ksilink.int/overview?dashboard=1")
 
@@ -55,11 +169,11 @@ st.subheader(
 
 col1, col2, col3 = st.columns(3)
 source = "source_7_625"
-df = pd.read_feather(
-    f"/mnt/shares/L/PROJECTS/JUMP-CP/jumpAWS/concatSources/profiles/combat_{source}.fth"
-)
-# st.write(df.columns)
-st.write(df[df["Metadata_broad_sample"] == "S8808-01"])
+# df = pd.read_feather(
+#     f"/mnt/shares/L/PROJECTS/JUMP-CP/jumpAWS/concatSources/profiles/combat_{source}.fth"
+# )
+# # st.write(df.columns)
+# st.write(df[df["Metadata_broad_sample"] == "S8808-01"])
 
 # # st.header(
 # #     "Inconsistency batchid between Umap.batchid and addprofile.batchid",
