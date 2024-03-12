@@ -17,7 +17,7 @@ def init_connection():
 
 
 conn = "postgres://arno:123456@192.168.2.131:5432/ksi_cpds"
-profile_conn = "postgres://arno:12345@192.168.2.131:5432/ksilink_cpds"
+
 
 
 # -------------------------------------------------------------------------------------------------
@@ -29,36 +29,36 @@ if "df_profiles" not in st.session_state:
     st.write("Connect DB First")
 else:
     cpd_pro = st.session_state["df_profiles"]
-    list_sources = cpd_pro["metasource"].unique().tolist()
+    list_sources = cpd_pro["source"].unique().tolist()
     mainCols = st.columns(2)
     with mainCols[0]:
         choix_source = st.selectbox("Select the Source", list_sources)
-        cpdnames = cpd_pro[cpd_pro["metasource"] == choix_source]["metaname"].values
+        cpdnames = cpd_pro[cpd_pro["source"] == choix_source]["name"].values
         choix = st.selectbox("Select the Profile", cpdnames)
 
     df_sel = cpd_pro[
-        (cpd_pro["metasource"] == choix_source) & (cpd_pro["metaname"] == choix)
+        (cpd_pro["source"] == choix_source) & (cpd_pro["name"] == choix)
     ].head(1)
     title = f" compounds to {choix} in  {choix_source}"
     with mainCols[1]:
         st.write("Selected Profile", df_sel)
-        choix_batchid = df_sel["metabatchid"].values[0]
+        choix_batchid = df_sel["batchid"].values[0]
 
     # ---- source and crisper profile ----------------------------------------------------------------------------
-    sql_profile = f"select * from aggprofile where metasource='{choix_source}'"
-    df_source = sql_df(sql_profile, profile_conn)
+    sql_profile = f"select * from aggprofile where source='{choix_source}'"
+    df_source = sql_df(sql_profile, conn)
 
     sql_crisper_profile = (
-        f"SELECT * FROM aggprofile WHERE metasource='CRISPER' or metasource='ORF-Broad'"
+        f"SELECT * FROM aggprofile WHERE source='CRISPER' or source='ORF-Broad'"
     )
-    df_prof_crisper = sql_df(sql_crisper_profile, profile_conn)
+    df_prof_crisper = sql_df(sql_crisper_profile, conn)
 
     # umap--------------------------------------------------------
     @st.cache_data
     def get_umap(choix_source):
-        sql_umqpemd = f"select * from umapemd where metasource='{choix_source}'"
+        sql_umqpemd = f"select * from umap where source='{choix_source}'"
 
-        df_src_emd = sql_df(sql_umqpemd, profile_conn)
+        df_src_emd = sql_df(sql_umqpemd, conn)
 
         return df_src_emd
 
@@ -83,7 +83,7 @@ else:
         df_hist_cpd = pd.DataFrame(
             {
                 "sim": sim_cpds.flatten().tolist(),
-                "metabatchid": df_source["metabatchid"],
+                "batchid": df_source["batchid"],
             }
         )
         if rad == "Correl":
@@ -101,9 +101,15 @@ else:
                 .reset_index(drop=True)
             )
         # df_keep_cpd = df_keep_cpd[df_keep_cpd["sim"] < 1]
+        fig_clusmap_cpd = px.histogram(df_hist_cpd, x="sim")
+        fig_clusmap_cpd.add_vline(x=thres_cpd)
+
+        st.plotly_chart(
+                fig_clusmap_cpd, theme="streamlit", use_container_width=True
+            )
         st.write("df_keep", df_keep_cpd)
 
-        batch_list_cpd = df_keep_cpd["metabatchid"].tolist()
+        batch_list_cpd = df_keep_cpd["batchid"].tolist()
         b_list_cpd = [f"'{b}'" for b in batch_list_cpd if "jcp2022_800" not in b]
         df_results_cpd = pd.DataFrame()
         df_keep_prof_cpd = pd.DataFrame()
@@ -121,24 +127,24 @@ else:
             if len(df_results_cpd) > 0:
                 df_results_cpd.drop_duplicates(subset=["pubchemid"], inplace=True)
                 df_keep_prof_cpd = df_source[
-                    df_source["metabatchid"].isin(df_keep_cpd["metabatchid"].values)
+                    df_source["batchid"].isin(df_keep_cpd["batchid"].values)
                 ].reset_index(drop=True)
                 df_keep_prof_cpd = df_keep_prof_cpd.merge(
-                    df_results_cpd.add_prefix("meta"),
-                    left_on="metabatchid",
-                    right_on="metabatchid",
+                    df_results_cpd,
+                    on="batchid",
+                 
                 ).reset_index(drop=True)
-
+              
                 df_keep_prof_cpd.rename(
-                    columns={"metacpdname": "metaname"}, inplace=True
+                    columns={"cpdname": "name"}, inplace=True
                 )
                 df_keep_prof_cpd.loc[
-                    df_keep_prof_cpd.metaname == "No result", "metaname"
+                    df_keep_prof_cpd.name == "No result", "name"
                 ] = None
-                df_keep_prof_cpd["metaname"] = (
-                    df_keep_prof_cpd["metaname"]
+                df_keep_prof_cpd["name"] = (
+                    df_keep_prof_cpd["name"]
                     .str[:30]
-                    .fillna(df_keep_prof_cpd["metabatchid"])
+                    .fillna(df_keep_prof_cpd["batchid"])
                 )
 
             if (choix_source == "CRISPER") or (choix_source == "ORF-Broad"):
@@ -151,8 +157,8 @@ else:
                 if len(df_results_gene) > 0:
                     df_results_gene.drop_duplicates(subset=["geneid"], inplace=True)
                     df_keep_prof_gene = df_prof_crisper[
-                        df_prof_crisper["metabatchid"].isin(
-                            df_keep_cpd["metabatchid"].values
+                        df_prof_crisper["batchid"].isin(
+                            df_keep_cpd["batchid"].values
                         )
                     ].reset_index(drop=True)
                     meta_cols = [
@@ -161,13 +167,13 @@ else:
                         if col.startswith("meta")
                     ]
                     df_keep_cpd[meta_cols] = df_keep_prof_gene[meta_cols]
-                    df_keep_cpd["metaname"] = df_keep_cpd["metabatchid"]
+                    df_keep_cpd["name"] = df_keep_cpd["batchid"]
 
-                    df_keep_prof_gene["metaname"] = df_keep_prof_gene["metabatchid"]
+                    df_keep_prof_gene["name"] = df_keep_prof_gene["batchid"]
                     df_keep_prof_gene = df_keep_prof_gene.merge(
                         df_results_gene.add_prefix("meta"),
-                        left_on="metabatchid",
-                        right_on="metabatchid",
+                        on="batchid",
+                       
                     ).reset_index(drop=True)
 
                     df_keep_prof_cpd = pd.concat([df_keep_prof_cpd, df_keep_prof_gene])
@@ -175,21 +181,16 @@ else:
 
                 st.session_state["df_sim_crisper"] = df_keep_cpd
 
-            fig_clusmap_cpd = px.histogram(df_hist_cpd, x="sim")
-            fig_clusmap_cpd.add_vline(x=thres_cpd)
-
-            st.plotly_chart(
-                fig_clusmap_cpd, theme="streamlit", use_container_width=True
-            )
+            
             st.session_state["df_sim_cpd"] = df_results_cpd
 
         if len(df_keep_cpd) > 1:
             st.write("\n")
 
             df_keep_cpd = df_keep_cpd.merge(
-                df_results_cpd, left_on="metabatchid", right_on="batchid"
+                df_results_cpd, on="batchid"
             ).reset_index(drop=True)
-            df_keep_cpd = df_keep_cpd.drop(["metabatchid"], axis=1)
+            df_keep_cpd = df_keep_cpd.drop(["batchid"], axis=1)
             df_keep_cpd["source"] = choix_source
 
             fig_cols1 = st.columns(2)
@@ -226,14 +227,14 @@ else:
 
             df_src_emd["color"] = "others"
             df_src_emd.loc[
-                df_src_emd["metabatchid"].isin(df_keep_prof_cpd["metabatchid"]), "color"
+                df_src_emd["batchid"].isin(df_keep_prof_cpd["batchid"]), "color"
             ] = "similar compounds"
             df_src_emd.loc[
-                df_src_emd["metabatchid"] == choix_batchid, "color"
+                df_src_emd["batchid"] == choix_batchid, "color"
             ] = "selected compounds"
             # st.write(
             #     "df_src_emd",
-            #     df_src_emd[df_src_emd["metabatchid"].isin(df_keep_cpd["batchid"])],
+            #     df_src_emd[df_src_emd["batchid"].isin(df_keep_cpd["batchid"])],
             # )
             fig = px.scatter(
                 df_src_emd,
@@ -243,7 +244,7 @@ else:
                 opacity=0.5,
                 color_discrete_sequence=["blue", "red", "green"],
                 title=f"{rad} {title}:UMAP ",
-                hover_data=["metabatchid", "metaname"],
+                hover_data=["batchid"],
             )
             if choix_source not in (["Ksilink_625", "Ksilink_25", "CRISPER"]):
                 st.plotly_chart(fig, theme="streamlit", use_container_width=True)
@@ -258,8 +259,8 @@ else:
                     tmp = df_src_emd.loc[
                         (df_src_emd["umap1"] == x) & (df_src_emd["umap2"] == y)
                     ]
-                    batch = tmp.metabatchid.values[0]
-                    name = tmp.metaname.values[0]
+                    batch = tmp.batchid.values[0]
+                    name = tmp.name.values[0]
 
                     sql_point = f"select * from platemap where batchid='{batch}' and assay='{choix_source}'"
                     df_plates = sql_df(sql_point, conn)
@@ -285,11 +286,11 @@ else:
             tmp = df_keep_prof_cpd.head(15)
 
             # if choix_source=="CRISPER" or choix_source=="ORF-Broad" :
-            #     tmp["metaname"]=tmp["metasymbol"]
+            #     tmp["name"]=tmp["metasymbol"]
 
-            cpd_names = tmp.metaname.values
+            cpd_names = tmp.name.values
 
-            df_plt = tmp.set_index("metaname")
+            df_plt = tmp.set_index("name")
 
             filter_col = [col for col in df_plt.columns if not col.startswith("meta")]
             df_plt = df_plt[filter_col].T
@@ -307,7 +308,7 @@ else:
             tmp = df_keep_prof_cpd.copy()
 
             if len(tmp) > 1:
-                plt_src, col_colors = get_col_colors(tmp, inex_col_name="metaname")
+                plt_src, col_colors = get_col_colors(tmp, inex_col_name="name")
                 fig_clusmap, ax1 = plt.subplots()
                 fig_clusmap = sns.clustermap(
                     plt_src,

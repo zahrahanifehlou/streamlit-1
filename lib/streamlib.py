@@ -334,21 +334,27 @@ def get_sql_jump(table_name="cpdgene", col_name="geneid", list_geneid=["hdac6"])
 
 
 def find_sim_cpds(df1, df2):
-    filter_col1 = [col for col in df1.columns if not col.startswith("meta")]
-    filter_col2 = [col for col in df2.columns if not col.startswith("meta")]
+
+    
+
+    meta_cols=["geneid","name","pubchemid","keggid", "efficay","smile","source","cpdname","batchid"]
+    filter_col1 = [col for col in df1.columns if  col not in meta_cols] 
+    filter_col2 = [col for col in df2.columns if  col not in meta_cols] 
+   
     filter_col = list(set(filter_col1) & set(filter_col2))
     simi = cosine_similarity(df1[filter_col], df2[filter_col])
     return simi
 
 
 def find_umap(df, title):
-    filter_cols = [col for col in df.columns if not col.startswith("meta")]
-    meta_cols = [col for col in df.columns if col.startswith("meta")]
+    meta_cols=["geneid","name","pubchemid","keggid", "efficay","smile","source","cpdname","batchid"]
+    filter_cols =  [col for col in df.columns if  col not in meta_cols] 
+  
     reducer = umap.UMAP(densmap=True, random_state=42, verbose=True)
     embedding = reducer.fit_transform(df[filter_cols])
     df_emb = pd.DataFrame({"x": embedding[:, 0], "y": embedding[:, 1]})
-    df_emb[meta_cols] = df[meta_cols]
+    df_emb["batchid"] = df["batchid"]
     fig = px.scatter(
-        df_emb, x="x", y="y", hover_data=meta_cols, color="metasource", title=title
+        df_emb, x="x", y="y", hover_data=["batchid"], color="metasource", title=title
     )
     st.plotly_chart(fig, theme="streamlit", use_container_width=True)
