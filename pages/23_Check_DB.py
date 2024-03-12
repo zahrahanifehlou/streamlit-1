@@ -36,39 +36,39 @@ st.write("Test", KG.sample(22).reset_index())
 #     repo_id="Qwen/Qwen1.5-0.5B-Chat-GGUF", filename="*q8_0.gguf", verbose=False
 # )
 
-llm = Llama(
-    # model_path="../mistral-ins-7b-q4/mistral-7b-instruct-v0.2.Q4_K_M.gguf",
-    # "L:\PROJECTS\JUMP-CRISPR\Code\streamlit_arno\mixtral\mixtral-8x7b-v0.1.Q4_K_M.gguf"
-    model_path="../mixtral/mixtral-8x7b-v0.1.Q4_K_M.gguf",
-    chat_format="chatml",
-    # n_gpu_layers=-1, # Uncomment to use GPU acceleration
-    # seed=1337, # Uncomment to set a specific seed
-    n_ctx=2048,  # Uncomment to increase the context window
-)
+# llm = Llama(
+#     # model_path="../mistral-ins-7b-q4/mistral-7b-instruct-v0.2.Q4_K_M.gguf",
+#     # "L:\PROJECTS\JUMP-CRISPR\Code\streamlit_arno\mixtral\mixtral-8x7b-v0.1.Q4_K_M.gguf"
+#     model_path="../mixtral/mixtral-8x7b-v0.1.Q4_K_M.gguf",
+#     chat_format="chatml",
+#     # n_gpu_layers=-1, # Uncomment to use GPU acceleration
+#     # seed=1337, # Uncomment to set a specific seed
+#     n_ctx=2048,  # Uncomment to increase the context window
+# )
 
 
-output = llm.create_chat_completion(
-    messages=[
-        {
-            "role": "user",
-            "content": "The variable KG is a pandas DataFrame obtained with @load_data()",
-        },
-        {"role": "assistant", "content": ""},
-        {"role": "user", "content": "What are the columns of KG"},
-        {"role": "assistant", "content": ""},
-    ],
-    response_format={
-        "type": "json_object",
-        "schema": {
-            "type": "object",
-            "properties": {"response": {"type": "string"}},
-            "required": ["response"],
-            # "properties": {"team_name": {"type": "string"}},
-            # "required": ["team_name"],
-        },
-    },
-    temperature=0.7,
-)
+# output = llm.create_chat_completion(
+#     messages=[
+#         {
+#             "role": "user",
+#             "content": "The variable KG is a pandas DataFrame obtained with @load_data()",
+#         },
+#         {"role": "assistant", "content": ""},
+#         {"role": "user", "content": "What are the columns of KG"},
+#         {"role": "assistant", "content": ""},
+#     ],
+#     response_format={
+#         "type": "json_object",
+#         "schema": {
+#             "type": "object",
+#             "properties": {"response": {"type": "string"}},
+#             "required": ["response"],
+#             # "properties": {"team_name": {"type": "string"}},
+#             # "required": ["team_name"],
+#         },
+#     },
+#     temperature=0.7,
+# )
 
 
 # from transformers import AutoModelForCausalLM, AutoTokenizer
