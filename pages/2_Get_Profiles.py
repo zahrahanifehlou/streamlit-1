@@ -4,7 +4,8 @@ import pandas as pd
 import psycopg2
 import streamlit as st
 import plotly.express as px
-
+import sys
+sys.path.append('/mnt/shares/L/PROJECTS/JUMP-CRISPR/Code/streamlit_ZH2/lib/')
 # import umap
 from streamlib import sql_df, get_sql_jump, get_col_colors
 
@@ -16,7 +17,7 @@ def init_connection():
 
 
 conn = "postgres://arno:123456@192.168.2.131:5432/ksi_cpds"
-conn_profileDB = "postgres://arno:12345@192.168.2.131:5432/ksilink_cpds"
+
 
 table_mapping = {
     "KEGG": {
@@ -99,7 +100,7 @@ if len(var_t) > 0:
 # -------------------------------------------------------------------------------------------------------------------
 db_name = st.radio(
     "Find compounds in which DataSet",
-    ("SelectChem and Jump DataSet", "KEGG", "PubChem"),
+    ("SelectChem and Jump DataSet", "KEGG"),
     horizontal=True,
 )
 
@@ -112,6 +113,7 @@ if len(df_res) > 0:
         sql_query = get_sql_jump(
             table_name=table_name, col_name=col_name, list_geneid=list_geneid
         )
+       
         df_cpds = (
             sql_df(sql_query, conn)
             .drop_duplicates(subset=["batchid"])
@@ -119,12 +121,8 @@ if len(df_res) > 0:
         )
 
         if db_name == "KEGG":
-            # sql_query = get_sql_kegg(table_name=table_name, col_name=col_name)
             df_cpds = df_cpds.dropna(subset=["keggid"]).reset_index(drop=True)
-if db_name == "PubChem":
-    st.session_state["PubChem"] = var_t
-    st.switch_page("pages/19_PubChem.py")
-
+     
 # get genes are in crispr but not in cpd
 df_prof_crisper = pd.DataFrame()
 df_prof = pd.DataFrame()
@@ -137,22 +135,22 @@ if str(option) == "gene" and len(df_res) > 0:
     batch_list = [f"'{batchid}'" for batchid in df_crisperBatchs["batchid"]]
     if len(batch_list) > 0:
         sql_crisper_profile = (
-            f"SELECT * FROM aggprofile WHERE metabatchid IN ({','.join(batch_list)})"
+            f"SELECT * FROM aggprofile WHERE batchid IN ({','.join(batch_list)})"
         )
 
-        df_prof_crisper = sql_df(sql_crisper_profile, conn_profileDB)
+        df_prof_crisper = sql_df(sql_crisper_profile, conn)
         df_prof_crisper = df_prof_crisper.merge(
-            df_crisperBatchs.add_prefix("meta"),
-            left_on="metabatchid",
-            right_on="metabatchid",
+            df_crisperBatchs,
+            on="batchid",
+            
         ).reset_index(drop=True)
-        df_prof_crisper["metatype"] = "CRISPR"
+        df_prof_crisper["type"] = "CRISPR"
 
-        df_prof_crisper["metaefficacy"] = "Unknown"
-        df_prof_crisper["metaname"] = df_prof_crisper["metasymbol"]
+        df_prof_crisper["efficacy"] = "Unknown"
+        df_prof_crisper["name"] = df_prof_crisper["symbol"]
         df_prof = pd.concat([df_prof, df_prof_crisper])
 
-        df_prof["metaname"] = df_prof["metaname"].fillna(df_prof["metabatchid"])
+        df_prof["name"] = df_prof["name"].fillna(df_prof["batchid"])
 
 
 # get cpd gene/target info-------------------------------------------------------------------------------------------------------------------
@@ -221,6 +219,7 @@ if len(df_cpds) > 0:
             "compounds GENE info",
             "compounds PATHWAY info",
             "compounds efficacy info",
+            "compounds info in Pubchem",
         ]
     )
     tabs[0].write(df_cpds)
@@ -272,6 +271,10 @@ if len(df_cpds) > 0:
             )
             fig.update_traces(textposition="inside", textinfo="percent+label")
             st.plotly_chart(fig, theme="streamlit", use_container_width=True)
+    with tabs[4]:
+        st.session_state["PubChem"] = df_cpds
+       # st.switch_page("pages/19_PubChem.py")
+
     st.session_state["df_cpds"] = df_cpdGene
 
     # get profile------------------------------------------------------------------------------------------------------------------
@@ -284,24 +287,24 @@ if len(df_cpds) > 0:
         list_batchid = [f"'{batch}'" for batch in df_cpdGene_tmp["batchid"]]
     if len(list_batchid) > 0:
         sql_profile = (
-            "select * from aggprofile where metabatchid in ("
+            "select * from aggprofile where batchid in ("
             + ",".join(list_batchid)
             + ")"
         )
 
-        df_prof = sql_df(sql_profile, conn_profileDB)
+        df_prof = sql_df(sql_profile, conn)
         df_prof.reset_index(inplace=True, drop=True)
 
         df_prof = df_prof.merge(
-            df_cpds.add_prefix("meta"), left_on="metabatchid", right_on="metabatchid"
+            df_cpds, on="batchid"
         ).reset_index(drop=True)
-        df_prof.rename(columns={"metacpdname": "metaname"}, inplace=True)
-        df_prof.loc[df_prof.metaname == "No result", "metaname"] = None
-        df_prof["metaname"] = df_prof["metaname"].str[:30]
-        df_prof["metaname"] = df_prof["metaname"].fillna(df_prof["metabatchid"])
+        
+        df_prof.loc[df_prof.cpdname == "No result", "cpdname"] = None
+        df_prof["name"] = df_prof["cpdname"].str[:30]
+        df_prof["name"] = df_prof["cpdname"].fillna(df_prof["batchid"])
         if len(df_prof_crisper) > 0:
             df_prof = pd.concat([df_prof, df_prof_crisper])
-            df_prof["metaname"] = df_prof["metaname"].fillna(df_prof["metabatchid"])
+            df_prof["name"] = df_prof["name"].fillna(df_prof["batchid"])
 
 tab1, tab2, tab3, tab4 = st.tabs(
     [
@@ -322,7 +325,7 @@ if len(df_prof) > 0:
     tab1.write(df_prof)
     tab2.write(df_prof.describe().T)
 
-    list_sources = df_prof.metasource.unique().tolist()
+    list_sources = df_prof.source.unique().tolist()
     options2 = st.text_area("Enter sources")
     if options2:
         var_t2 = options2.split("\n")
@@ -331,19 +334,19 @@ if len(df_prof) > 0:
     if not options2:
         tmp = df_prof.copy()
     else:
-        tmp = df_prof.loc[df_prof["metasource"].isin(var_t2)]
+        tmp = df_prof.loc[df_prof["source"].isin(var_t2)]
     tmp.reset_index(inplace=True, drop=True)
-    meta_cols = [col for col in tmp.columns if col.startswith("meta")]
-    st.write(tmp[meta_cols])
+    meta_cols = ["name", "batchid", "source","symbol"]
+   
 
-    tmp["meta_name_source"] = tmp["metaname"] + "_" + tmp["metasource"]
-    cpd_names = tmp.meta_name_source.values
-    df_plt = tmp.drop_duplicates(subset="meta_name_source")
-    df_plt = df_plt.set_index("meta_name_source")
-
+    tmp["nameAndsource"] = tmp["name"] + "_" + tmp["source"]
+    cpd_names = tmp.nameAndsource.values
+    df_plt = tmp.drop_duplicates(subset="nameAndsource")
+    df_plt = df_plt.set_index("nameAndsource")
+   
     # df_plt = df_plt.drop('name',axis=1)
 
-    filter_col = [col for col in df_plt.columns if not col.startswith("meta")]
+    filter_col = df_plt.select_dtypes(include=[int, float]).columns.tolist()
     df_plt2 = df_plt[filter_col].T
 
     sty = st.radio("Line Style", ["linear", "spline"])
@@ -362,7 +365,7 @@ if len(df_prof) > 0:
         import matplotlib.pyplot as plt
         import seaborn as sns
 
-        plt_src, col_colors = get_col_colors(tmp, inex_col_name="meta_name_source")
+        plt_src, col_colors = get_col_colors(tmp, inex_col_name="nameAndsource")
 
         fig_clusmap, ax1 = plt.subplots()
         fig_clusmap = sns.clustermap(
@@ -383,21 +386,22 @@ if len(df_prof) > 0:
         st.pyplot(fig_clusmap)
 
     st.session_state["df_profiles"] = tmp
-    profile_conn = "postgres://arno:12345@192.168.2.131:5432/ksilink_cpds"
+
 
     @st.cache_data
     def get_umap(choix_source):
-        sql_umqpemd = f"select * from umapemd where metasource='{choix_source}'"
-        df_src_emd = sql_df(sql_umqpemd, profile_conn)
+        sql_umqpemd = f"select umap.* from umap where umap.source='{choix_source}' "
+        #sql_umqpemd="SELECT umap.*, batchs.name  FROM umap  INNER JOIN batchs ON batchs.batchid = umap.batchid  WHERE umap.source = '{choix_source}'"
+     
+        df_src_emd = sql_df(sql_umqpemd, conn)
         return df_src_emd
 
     # st.write(var_t2)
     if options2:
         df_src_emd = get_umap(choix_source=var_t2[0])
-        # st.write(df_src_emd)
         df_src_emd["color"] = "others"
         df_src_emd.loc[
-            df_src_emd["metaname"].isin(tmp["metaname"].to_list()), "color"
+            df_src_emd["batchid"].isin(tmp["batchid"].to_list()), "color"
         ] = "selected compounds"
 
         fig = px.scatter(
@@ -408,15 +412,7 @@ if len(df_prof) > 0:
             opacity=0.5,
             color_discrete_sequence=["blue", "red", "green"],
             title="UMAP ",
-            hover_data=["metaname"],
+            hover_data=["batchid"],
         )
 
         st.plotly_chart(fig, theme="streamlit", use_container_width=True)
-    # st.session_state["df_cpds"] = df_cpds
-
-    # st.session_state["df_efficacy"] = df_efficacy
-    # st.session_state["df_crisper"] = df_prof_crisper
-
-
-# conn_profileDB.close()
-# conn.close()
