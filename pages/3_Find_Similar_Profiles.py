@@ -129,11 +129,14 @@ else:
                 df_keep_prof_cpd = df_source[
                     df_source["batchid"].isin(df_keep_cpd["batchid"].values)
                 ].reset_index(drop=True)
+        
                 df_keep_prof_cpd = df_keep_prof_cpd.merge(
                     df_results_cpd,
                     on="batchid",
+                     how='left',
                  
                 ).reset_index(drop=True)
+        
               
                 df_keep_prof_cpd.rename(
                     columns={"cpdname": "name"}, inplace=True
@@ -224,6 +227,9 @@ else:
                 st.plotly_chart(fig, theme="streamlit", use_container_width=True)
 
             st.write("\n")  # ----------plot sim cpds in UMAP
+        
+            aa=df_src_emd[df_src_emd["batchid"].isin(df_keep_prof_cpd["batchid"])]
+            st.write(aa)
 
             df_src_emd["color"] = "others"
             df_src_emd.loc[
@@ -291,8 +297,10 @@ else:
             cpd_names = tmp.name.values
 
             df_plt = tmp.set_index("name")
+            meta_cols=["geneid","name","pubchemid","keggid", "efficay","smile","source","cpdname","batchid"]
+            filter_col = [col for col in df_plt.columns if  col not in meta_cols] 
 
-            filter_col = [col for col in df_plt.columns if not col.startswith("meta")]
+        
             df_plt = df_plt[filter_col].T
             fig_clusmap = px.line(
                 df_plt,

@@ -239,7 +239,10 @@ def convert_df(df):
 
 
 def get_col_colors(df, inex_col_name="name"):
-    list_col = [col for col in df.columns if not col.startswith("Meta")]
+    meta_cols=["geneid","name","pubchemid","keggid", "efficay","smile","source","cpdname","batchid"]
+    list_col = [col for col in df.columns if  col not in meta_cols] 
+    
+   
     ER = [
         x
         for x in list_col
