@@ -10,7 +10,7 @@ import umap
 from rdkit import Chem, DataStructs
 from rdkit.Chem import AllChem, Draw
 from sklearn.metrics.pairwise import cosine_similarity
-
+from streamlib import sql_df, find_sim_cpds, get_col_colors
 
 st.set_page_config(
     layout="wide",
@@ -26,12 +26,6 @@ def init_connection():
     return psycopg2.connect(**st.secrets["postgres"])
 
 
-def find_sim_cpds(df1, df2):
-    filter_col1 = [col for col in df1.columns if not col.startswith("meta")]
-    filter_col2 = [col for col in df2.columns if not col.startswith("meta")]
-    filter_col = list(set(filter_col1) & set(filter_col2))
-    simi = cosine_similarity(df1[filter_col], df2[filter_col])
-    return simi
 
 
 def find_umap(df, title):
@@ -101,12 +95,14 @@ def load_data():
     if "df_tmap" in st.session_state:
         df_tmap = st.session_state["df_tmap"]
     else:
-        sql = "SELECT * FROM tmap"
-
-        conn_profileDB = "postgres://arno:12345@192.168.2.131:5432/ksilink_cpds"
-        df_tmap = sql_df(sql, conn_profileDB).reset_index(drop=True)
-        # conn_profileDB.close()
-    # st.session_state["df_tmap"] = df_tmap
+        sql = f"SELECT cpdpath.pathid, cpd.cpdname, cpd.smile,cpd.keggid, tmap.*, gene.symbol FROM tmap INNER JOIN cpd ON cpd.pubchemid=tmap.pubchemid  \
+                INNER JOIN cpdbatchs ON cpd.pubchemid=cpdbatchs.pubchemid  \
+                        left JOIN cpdpath ON cpdpath.pubchemid=cpdbatchs.pubchemid  \
+                        LEFT JOIN cpdgene ON cpdbatchs.pubchemid=cpdgene.pubchemid  \
+                        LEFT JOIN gene ON gene.geneid=cpdgene.geneid "
+                       
+        conn = "postgres://arno:12345@192.168.2.131:5432/ksi_cpds"
+        df_tmap = sql_df(sql, conn).reset_index(drop=True)
     return df_tmap
 
 
@@ -116,7 +112,7 @@ def plot_tmap(df_tmap, color_col, l):
         df_tmap,
         x="x",
         y="y",
-        hover_data=["pubchemid", "name", "genetarget", "efficacy", "disname", "keggid"],
+        hover_data=["pubchemid", "cpdname","symbol","pathid"],
         color_discrete_sequence=l,
         opacity=0.3,
         color=color_col,
@@ -146,7 +142,7 @@ tmap1 = st.toggle("TMAP plt of all compounds")
 if tmap1:
     color_col = st.radio(
         "select color",
-        ("source", "genetarget", "efficacy", "disname"),
+        ( "symbol",  "pathid"),
         horizontal=True,
     )
     plot_tmap(df_tmap, color_col, px.colors.qualitative.D3)
