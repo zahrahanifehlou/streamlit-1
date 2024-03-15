@@ -363,7 +363,7 @@ def loadDeepfth(files):
     # df = pd.read_feather(files)
     df = pl.read_ipc(files).to_pandas()
     # df =cudf.read_feather
-    df = df.drop("tags", axis=1)
+    # df = df.drop("tags", axis=1)
     df["Well"] = l2[1]
     df["Plate"] = l2[0]
     list_df.append(df)
@@ -415,7 +415,7 @@ if on and dl:
         with st.spinner("Wait for it... computing UMAP with cuml"):
             # gdf = cudf.DataFrame(alldata[cols])
             emb = umap.UMAP(random_state=42, verbose=False).fit_transform(alldata[cols])
-            emb = emb.to_pandas().values
+            # emb = emb.to_pandas().values
             df_all_umap = pd.DataFrame()
             df_all_umap["X"] = emb[:, 0]
             df_all_umap["Y"] = emb[:, 1]
