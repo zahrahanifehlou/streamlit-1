@@ -356,7 +356,7 @@ def loadDeepTar(files):
                 except:
                     print("error")
 
-    df2 = pd.concat(list_df).groupby(["Plate", "Well"]).median()
+    df2 = pd.concat(list_df).groupby(["Plate", "Well"]).median(numeric_only=True)
     df2 = df2.reset_index()
 
     return df2
@@ -373,7 +373,7 @@ def loadDeepfth(files):
     df["Plate"] = l2[0]
     list_df.append(df)
 
-    df2 = pd.concat(list_df).groupby(["Plate", "Well"]).median()
+    df2 = pd.concat(list_df).groupby(["Plate", "Well"]).median(numeric_only=True)
     df2 = df2.reset_index()
 
     return df2
