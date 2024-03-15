@@ -17,6 +17,8 @@ import glob
 import tarfile
 import io
 import plotly.express as px
+import multiprocessing
+
 
 st.set_page_config(
     layout="wide",
@@ -37,6 +39,9 @@ def get_pyg_html(df: pd.DataFrame) -> str:
         # debug=False,
     )
     return html
+
+
+nb_cpu = multiprocessing.cpu_count()
 
 
 @st.cache_resource
@@ -400,9 +405,9 @@ if on and dl:
     if len(files) > 0:
         with st.spinner(f"Wait for it... Loading {len(files)} files"):
             if not fth:
-                result_deep = pqdm(files, loadDeepTar, n_jobs=20)
+                result_deep = pqdm(files, loadDeepTar, n_jobs=nb_cpu)
             else:
-                result_deep = pqdm(files, loadDeepfth, n_jobs=20)
+                result_deep = pqdm(files, loadDeepfth, n_jobs=nb_cpu)
             alldata = pd.concat(result_deep).reset_index(drop=True)
             # alldata = tools.setCategories(tools.retrieve_tags(alldata))
             # alldata = tools.getScreenCategories(alldata)r
