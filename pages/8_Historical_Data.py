@@ -109,12 +109,12 @@ on = st.sidebar.toggle("Search Data")
 dl = st.sidebar.toggle("Deep Learning Data")
 cbc = st.sidebar.toggle("Cell by Cell Data")
 tp = st.sidebar.toggle("Temporal Data")
-list_proj = os.listdir("/mnt/shares/L/Projects/")
+list_proj = os.listdir("/mnt/shares/L/PROJECTS/")
 proj = st.selectbox("Choose your project", list_proj)
 
 if on and tp:
     paths = sorted(
-        Path(f"/mnt/shares/L/Projects/{proj}/Checkout_Results/").iterdir(),
+        Path(f"/mnt/shares/L/PROJECTS/{proj}/Checkout_Results/").iterdir(),
         key=os.path.getmtime,
         reverse=True,
     )
@@ -207,7 +207,7 @@ if on and tp:
 
 if on and not dl and not cbc and not tp:
     paths = sorted(
-        Path(f"/mnt/shares/L/Projects/{proj}/Checkout_Results/").iterdir(),
+        Path(f"/mnt/shares/L/PROJECTS/{proj}/Checkout_Results/").iterdir(),
         key=os.path.getmtime,
         reverse=True,
     )
@@ -362,7 +362,7 @@ if on and dl:
     import tools
 
     paths = sorted(
-        Path(f"/mnt/shares/L/Projects/{proj}/Checkout_Results/").iterdir(),
+        Path(f"/mnt/shares/L/PROJECTS/{proj}/Checkout_Results/").iterdir(),
         key=os.path.getmtime,
         reverse=True,
     )
@@ -414,7 +414,7 @@ if on and cbc:
     import tools
 
     paths = sorted(
-        Path(f"/mnt/shares/L/Projects/{proj}/Checkout_Results/").iterdir(),
+        Path(f"/mnt/shares/L/PROJECTS/{proj}/Checkout_Results/").iterdir(),
         key=os.path.getmtime,
         reverse=True,
     )
