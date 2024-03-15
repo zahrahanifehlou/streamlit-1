@@ -32,9 +32,9 @@ def get_pyg_html(df: pd.DataFrame) -> str:
     html = get_streamlit_html(
         df,
         spec="./chart_meta_0.json",
-        themeKey="vega",
+        theme_key="vega",
         use_kernel_calc=True,
-        debug=False,
+        # debug=False,
     )
     return html
 
@@ -357,6 +357,23 @@ def loadDeepTar(files):
     return df2
 
 
+@st.cache_data
+def loadDeepfth(files):
+    l2 = files.replace("\\", "/").replace(".fth", "").split("/")[-1].split("_")
+    # df = pd.read_feather(files)
+    df = pl.read_ipc(files).to_pandas()
+    # df =cudf.read_feather
+    df = df.drop("tags", axis=1)
+    df["Well"] = l2[1]
+    df["Plate"] = l2[0]
+    list_df.append(df)
+
+    df2 = pd.concat(list_df).groupby(["Plate", "Well"]).median()
+    df2 = df2.reset_index()
+
+    return df2
+
+
 if on and dl:
     sys.path.append("/mnt/shares/L/Code/KsilinkNotebooks/LIB/")
     import tools
@@ -372,40 +389,45 @@ if on and dl:
         "Choose result directory corresponding to this assay", paths_clean
     )
     list_df = []
-    if uploaded_file:
+    fth = st.sidebar.toggle("FTH")
+    if uploaded_file and not fth:
         files = glob.glob(f"{uploaded_file}/**/*deep_features.tar", recursive=True)
+    if uploaded_file and fth:
+        files = glob.glob(f"{uploaded_file}/**/*deep_features.fth", recursive=True)
+        # files = [f for f in files if "DMSO" not in f]
+        # files = [f for f in files if "WT" not in f]
 
-        if len(files) > 0:
-            with st.spinner(
-                f"Wait for it... Loading {len(files)} files and computing UMAP"
-            ):
+    if len(files) > 0:
+        with st.spinner(f"Wait for it... Loading {len(files)} files"):
+            if not fth:
                 result_deep = pqdm(files, loadDeepTar, n_jobs=20)
-                alldata = pd.concat(result_deep).reset_index(drop=True)
-                alldata = tools.setCategories(tools.retrieve_tags(alldata))
-                alldata = tools.getScreenCategories(alldata)
-                cols = [x for x in alldata.columns if "Feature_" in x]
-                cols_alpha = [x for x in alldata.columns if "Feature_" not in x]
-                st.write(alldata.sample(5))
-                import umap
+            else:
+                result_deep = pqdm(files, loadDeepfth, n_jobs=20)
+            alldata = pd.concat(result_deep).reset_index(drop=True)
+            # alldata = tools.setCategories(tools.retrieve_tags(alldata))
+            # alldata = tools.getScreenCategories(alldata)r
+            cols = [x for x in alldata.columns if "Feature_" in x]
+            cols_alpha = [x for x in alldata.columns if "Feature_" not in x]
+            st.write(alldata.sample(5))
+            import umap
+            # import cuml.manifold.umap as um
+        with st.spinner("Wait for it... computing UMAP with cuml"):
+            emb = umap.UMAP(random_state=42, verbose=False).fit_transform(alldata[cols])
+            df_all_umap = pd.DataFrame()
+            df_all_umap["X"] = emb[:, 0]
+            df_all_umap["Y"] = emb[:, 1]
+            df_all_umap[cols_alpha] = alldata[cols_alpha]
 
-                emb = umap.UMAP(random_state=42, verbose=False).fit_transform(
-                    alldata[cols]
-                )
-                df_all_umap = pd.DataFrame()
-                df_all_umap["X"] = emb[:, 0]
-                df_all_umap["Y"] = emb[:, 1]
-                df_all_umap[cols_alpha] = alldata[cols_alpha]
-
-                components.html(get_pyg_html(df_all_umap), height=1000, scrolling=True)
-            st.success("Done!")
+        components.html(get_pyg_html(df_all_umap), height=1000, scrolling=True)
+        st.success("Done!")
 
 
 @st.cache_data
 def loadCellbyCell(file):
     df2 = pd.read_feather(file)
-    l = file.replace("\\", "/").replace(".fth", "").split("/")[-1].split("_")
-    df2["Well"] = l[1]
-    df2["Plate"] = l[0]
+    l2 = file.replace("\\", "/").replace(".fth", "").split("/")[-1].split("_")
+    df2["Well"] = l2[1]
+    df2["Plate"] = l2[0]
     return df2
 
 
