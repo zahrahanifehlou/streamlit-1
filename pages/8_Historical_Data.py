@@ -313,9 +313,7 @@ if on and not dl and not cbc and not tp:
                     import umap
 
                     #
-                    model = umap.UMAP(random_state=42, verbose=False).fit(
-                        data_scaled[col_sel]
-                    )
+                    model = umap.UMAP(verbose=False).fit(data_scaled[col_sel])
                     emb = model.transform(data_scaled[col_sel])
                     # st.write('UMAP VISU')
                     df_all_umap = pd.DataFrame()
@@ -417,9 +415,9 @@ if on and dl:
             import umap
             # import cudf
             # from cuml.manifold.umap import UMAP as cumlUMAP
-        with st.spinner("Wait for it... computing UMAP with cuml"):
+        with st.spinner("Wait for it... computing UMAP"):
             # gdf = cudf.DataFrame(alldata[cols])
-            emb = umap.UMAP(random_state=42, verbose=False).fit_transform(alldata[cols])
+            emb = umap.UMAP(verbose=False).fit_transform(alldata[cols])
             # emb = emb.to_pandas().values
             df_all_umap = pd.DataFrame()
             df_all_umap["X"] = emb[:, 0]
