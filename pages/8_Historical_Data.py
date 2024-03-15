@@ -410,9 +410,12 @@ if on and dl:
             cols_alpha = [x for x in alldata.columns if "Feature_" not in x]
             st.write(alldata.sample(5))
             import umap
-            # import cuml.manifold.umap as um
+            # import cudf
+            # from cuml.manifold.umap import UMAP as cumlUMAP
         with st.spinner("Wait for it... computing UMAP with cuml"):
+            # gdf = cudf.DataFrame(alldata[cols])
             emb = umap.UMAP(random_state=42, verbose=False).fit_transform(alldata[cols])
+            emb = emb.to_pandas().values
             df_all_umap = pd.DataFrame()
             df_all_umap["X"] = emb[:, 0]
             df_all_umap["Y"] = emb[:, 1]
