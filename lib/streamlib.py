@@ -20,15 +20,8 @@ def str_to_float(strs):
 
 
 def sql_df(sql_str, conn):
-    # cur = conn.cursor()
-    # cur.execute(sql_str)
-    # rows = cur.fetchall()
-    # df_d = pd.DataFrame(rows, columns=[desc[0] for desc in cur.description])
     df_d = pl.read_database_uri(query=sql_str, uri=conn)
-
     return df_d.to_pandas()
-
-    # return df_d
 
 
 ################################### STRINGDB PPI ##############################################
@@ -57,13 +50,13 @@ def get_stringDB(df_all_umap, thresh=0.7, genecol="target"):
     list_inter = []
     list_edges = []
     for line in results.text.strip().split("\n"):
-        l = line.strip().split("\t")
+        l2 = line.strip().split("\t")
 
-        if len(l) > 4:
-            p1, p2 = l[2], l[3]
+        if len(l2) > 4:
+            p1, p2 = l2[2], l2[3]
 
             # filter the interaction according to experimental score
-            experimental_score = float(l[10])
+            experimental_score = float(l2[10])
             if experimental_score >= thresh:
                 # print
                 # print("\t".join([p1, p2, "experimentally confirmed (prob. %.3f)" % experimental_score]))
@@ -234,125 +227,40 @@ def get_sql_jump(table_name="cpdgene", col_name="geneid", list_geneid=["hdac6"])
 ########################################################################################
 
 
-def convert_df(df):
-    return df.to_csv(index=False).encode("utf-8")
-
-
-def get_col_colors(df, inex_col_name="name"):
-    meta_cols=["geneid","name","pubchemid","keggid", "efficay","smile","source","cpdname","batchid"]
-    list_col = [col for col in df.columns if  col not in meta_cols] 
-    
-   
-    ER = [
-        x
-        for x in list_col
-        if "ER" in x and all(y not in x for y in ["RNA", "Mito", "AGP", "DNA"])
-    ]
-    RNA = [
-        x
-        for x in list_col
-        if "RNA" in x and all(y not in x for y in ["ER", "Mito", "AGP", "DNA"])
-    ]
-    Mito = [
-        x
-        for x in list_col
-        if "Mito" in x and all(y not in x for y in ["ER", "RNA", "AGP", "DNA"])
-    ]
-    mito = [
-        x
-        for x in list_col
-        if "mito" in x and all(y not in x for y in ["ER", "RNA", "AGP", "DNA"])
-    ]
-    AGP = [
-        x
-        for x in list_col
-        if "AGP" in x and all(y not in x for y in ["ER", "RNA", "Mito", "DNA"])
-    ]
-    DNA = [
-        x
-        for x in list_col
-        if "DNA" in x and all(y not in x for y in ["ER", "RNA", "Mito", "AGP"])
-    ]
-    list_fin = []
-    list_fin.extend(DNA)
-    list_fin.extend(RNA)
-    list_fin.extend(ER)
-    list_fin.extend(AGP)
-    list_fin.extend(Mito)
-    list_fin.extend(mito)
-
-    list_fin = list(dict.fromkeys(list_fin))
-
-    list_fin.append(inex_col_name)
-
-    df_plt = df[list_fin]
-    df_plt.set_index(inex_col_name, inplace=True)
-    col_colors = []
-
-    for col in df_plt.columns:
-        if col in ER:
-            col_colors.append("red")
-        elif col in DNA:
-            col_colors.append("blue")
-        elif col in RNA:
-            col_colors.append("green")
-        elif col in AGP:
-            col_colors.append("orange")
-        elif col in Mito or col in mito:
-            col_colors.append("pink")
-        else:
-            col_colors.append("white")
-    return df_plt, col_colors
-
-
-def get_sql_kegg(table_name="keggcpdgene", col_name="geneid", list_geneid=["hdac6"]):
-    where_clause = f" WHERE UPPER({table_name}.{col_name}) IN ({','.join(list_geneid)})"
-
-    if table_name == "keggcpd":
-        sql = f"SELECT * FROM keggcpd{where_clause}"
-    else:
-        sql = f"SELECT keggcpd.keggid, keggcpd.keggcpdname, {table_name}.{col_name} FROM keggcpd\
-                INNER JOIN {table_name} ON {table_name}.keggid = keggcpd.keggid{where_clause}\
-                GROUP BY keggcpd.keggcpdname, keggcpd.keggid, {table_name}.{col_name}"
-
-    return sql
-
-
-def get_sql_jump(table_name="cpdgene", col_name="geneid", list_geneid=["hdac6"]):
-    select_clause = "SELECT cpd.pubchemid, cpdbatchs.batchid, cpd.synonyms, cpd.keggid, cpd.cpdname, cpd.smile"
-
-    if table_name == "keggcpddis":
-        sql = f"{select_clause}, keggcpddis.disid FROM cpdbatchs\
-                INNER JOIN cpd ON cpdbatchs.pubchemid=cpd.pubchemid\
-                INNER JOIN keggcpddis ON keggcpddis.keggid=cpd.keggid WHERE UPPER({table_name}.{col_name}) IN ({','.join(list_geneid)})"
-    elif table_name in ["cpd", "cpdbatchs"]:
-        sql = f"{select_clause} FROM cpdbatchs RIGHT JOIN cpd ON cpd.pubchemid=cpdbatchs.pubchemid WHERE UPPER({table_name}.{col_name}) IN ({','.join(list_geneid)})"
-    else:
-        sql = f"{select_clause}, {table_name}.{col_name} FROM cpdbatchs\
-                INNER JOIN {table_name} ON {table_name}.pubchemid=cpdbatchs.pubchemid\
-                INNER JOIN cpd ON cpdbatchs.pubchemid=cpd.pubchemid WHERE UPPER({table_name}.{col_name}) IN ({','.join(list_geneid)})\
-                GROUP BY cpd.pubchemid, cpdbatchs.batchid, cpd.synonyms, cpd.keggid, cpd.cpdname, cpd.smile, {table_name}.{col_name}"
-
-    return sql
-
-
 def find_sim_cpds(df1, df2):
+    meta_cols = [
+        "geneid",
+        "name",
+        "pubchemid",
+        "keggid",
+        "efficay",
+        "smile",
+        "source",
+        "cpdname",
+        "batchid",
+    ]
+    filter_col1 = [col for col in df1.columns if col not in meta_cols]
+    filter_col2 = [col for col in df2.columns if col not in meta_cols]
 
-    
-
-    meta_cols=["geneid","name","pubchemid","keggid", "efficay","smile","source","cpdname","batchid"]
-    filter_col1 = [col for col in df1.columns if  col not in meta_cols] 
-    filter_col2 = [col for col in df2.columns if  col not in meta_cols] 
-   
     filter_col = list(set(filter_col1) & set(filter_col2))
     simi = cosine_similarity(df1[filter_col], df2[filter_col])
     return simi
 
 
 def find_umap(df, title):
-    meta_cols=["geneid","name","pubchemid","keggid", "efficay","smile","source","cpdname","batchid"]
-    filter_cols =  [col for col in df.columns if  col not in meta_cols] 
-  
+    meta_cols = [
+        "geneid",
+        "name",
+        "pubchemid",
+        "keggid",
+        "efficay",
+        "smile",
+        "source",
+        "cpdname",
+        "batchid",
+    ]
+    filter_cols = [col for col in df.columns if col not in meta_cols]
+
     reducer = umap.UMAP(densmap=True, random_state=42, verbose=True)
     embedding = reducer.fit_transform(df[filter_cols])
     df_emb = pd.DataFrame({"x": embedding[:, 0], "y": embedding[:, 1]})

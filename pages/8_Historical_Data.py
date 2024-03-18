@@ -17,6 +17,8 @@ import glob
 import tarfile
 import io
 import plotly.express as px
+import multiprocessing
+
 
 st.set_page_config(
     layout="wide",
@@ -32,11 +34,14 @@ def get_pyg_html(df: pd.DataFrame) -> str:
     html = get_streamlit_html(
         df,
         spec="./chart_meta_0.json",
-        themeKey="vega",
+        theme_key="vega",
         use_kernel_calc=True,
-        debug=False,
+        # debug=False,
     )
     return html
+
+
+nb_cpu = multiprocessing.cpu_count()
 
 
 @st.cache_resource
@@ -109,12 +114,12 @@ on = st.sidebar.toggle("Search Data")
 dl = st.sidebar.toggle("Deep Learning Data")
 cbc = st.sidebar.toggle("Cell by Cell Data")
 tp = st.sidebar.toggle("Temporal Data")
-list_proj = os.listdir("/mnt/shares/L/Projects/")
+list_proj = os.listdir("/mnt/shares/L/PROJECTS/")
 proj = st.selectbox("Choose your project", list_proj)
 
 if on and tp:
     paths = sorted(
-        Path(f"/mnt/shares/L/Projects/{proj}/Checkout_Results/").iterdir(),
+        Path(f"/mnt/shares/L/PROJECTS/{proj}/Checkout_Results/").iterdir(),
         key=os.path.getmtime,
         reverse=True,
     )
@@ -207,7 +212,7 @@ if on and tp:
 
 if on and not dl and not cbc and not tp:
     paths = sorted(
-        Path(f"/mnt/shares/L/Projects/{proj}/Checkout_Results/").iterdir(),
+        Path(f"/mnt/shares/L/PROJECTS/{proj}/Checkout_Results/").iterdir(),
         key=os.path.getmtime,
         reverse=True,
     )
@@ -308,9 +313,7 @@ if on and not dl and not cbc and not tp:
                     import umap
 
                     #
-                    model = umap.UMAP(random_state=42, verbose=False).fit(
-                        data_scaled[col_sel]
-                    )
+                    model = umap.UMAP(verbose=False).fit(data_scaled[col_sel])
                     emb = model.transform(data_scaled[col_sel])
                     # st.write('UMAP VISU')
                     df_all_umap = pd.DataFrame()
@@ -351,7 +354,24 @@ def loadDeepTar(files):
                 except:
                     print("error")
 
-    df2 = pd.concat(list_df).groupby(["Plate", "Well"]).median()
+    df2 = df.groupby(["Plate", "Well"]).median(numeric_only=True)
+    df2 = df2.reset_index()
+
+    return df2
+
+
+@st.cache_data
+def loadDeepfth(files):
+    l2 = files.replace("\\", "/").replace(".fth", "").split("/")[-1].split("_")
+    # df = pd.read_feather(files)
+    df = pl.read_ipc(files).to_pandas()
+    # df =cudf.read_feather
+    # df = df.drop("tags", axis=1)
+    df["Well"] = l2[1]
+    df["Plate"] = l2[0]
+    # list_df.append(df)
+
+    df2 = df.groupby(["Plate", "Well"]).median(numeric_only=True)
     df2 = df2.reset_index()
 
     return df2
@@ -362,7 +382,7 @@ if on and dl:
     import tools
 
     paths = sorted(
-        Path(f"/mnt/shares/L/Projects/{proj}/Checkout_Results/").iterdir(),
+        Path(f"/mnt/shares/L/PROJECTS/{proj}/Checkout_Results/").iterdir(),
         key=os.path.getmtime,
         reverse=True,
     )
@@ -372,40 +392,48 @@ if on and dl:
         "Choose result directory corresponding to this assay", paths_clean
     )
     list_df = []
-    if uploaded_file:
+    fth = st.sidebar.toggle("FTH")
+    if uploaded_file and not fth:
         files = glob.glob(f"{uploaded_file}/**/*deep_features.tar", recursive=True)
+    if uploaded_file and fth:
+        files = glob.glob(f"{uploaded_file}/**/*deep_features.fth", recursive=True)
+        # files = [f for f in files if "DMSO" not in f]
+        # files = [f for f in files if "WT" not in f]
 
-        if len(files) > 0:
-            with st.spinner(
-                f"Wait for it... Loading {len(files)} files and computing UMAP"
-            ):
-                result_deep = pqdm(files, loadDeepTar, n_jobs=20)
-                alldata = pd.concat(result_deep).reset_index(drop=True)
-                alldata = tools.setCategories(tools.retrieve_tags(alldata))
-                alldata = tools.getScreenCategories(alldata)
-                cols = [x for x in alldata.columns if "Feature_" in x]
-                cols_alpha = [x for x in alldata.columns if "Feature_" not in x]
-                st.write(alldata.sample(5))
-                import umap
+    if len(files) > 0:
+        with st.spinner(f"Wait for it... Loading {len(files)} files"):
+            if not fth:
+                result_deep = pqdm(files, loadDeepTar, n_jobs=min(nb_cpu, 60))
+            else:
+                result_deep = pqdm(files, loadDeepfth, n_jobs=min(nb_cpu, 60))
+            alldata = pd.concat(result_deep).reset_index(drop=True)
+            # alldata = tools.setCategories(tools.retrieve_tags(alldata))
+            # alldata = tools.getScreenCategories(alldata)r
+            cols = [x for x in alldata.columns if "Feature_" in x]
+            cols_alpha = [x for x in alldata.columns if "Feature_" not in x]
+            st.write(alldata.sample(5))
+            import umap
+            # import cudf
+            # from cuml.manifold.umap import UMAP as cumlUMAP
+        with st.spinner("Wait for it... computing UMAP"):
+            # gdf = cudf.DataFrame(alldata[cols])
+            emb = umap.UMAP(verbose=False).fit_transform(alldata[cols])
+            # emb = emb.to_pandas().values
+            df_all_umap = pd.DataFrame()
+            df_all_umap["X"] = emb[:, 0]
+            df_all_umap["Y"] = emb[:, 1]
+            df_all_umap[cols_alpha] = alldata[cols_alpha]
 
-                emb = umap.UMAP(random_state=42, verbose=False).fit_transform(
-                    alldata[cols]
-                )
-                df_all_umap = pd.DataFrame()
-                df_all_umap["X"] = emb[:, 0]
-                df_all_umap["Y"] = emb[:, 1]
-                df_all_umap[cols_alpha] = alldata[cols_alpha]
-
-                components.html(get_pyg_html(df_all_umap), height=1000, scrolling=True)
-            st.success("Done!")
+        components.html(get_pyg_html(df_all_umap), height=1000, scrolling=True)
+        st.success("Done!")
 
 
 @st.cache_data
 def loadCellbyCell(file):
     df2 = pd.read_feather(file)
-    l = file.replace("\\", "/").replace(".fth", "").split("/")[-1].split("_")
-    df2["Well"] = l[1]
-    df2["Plate"] = l[0]
+    l2 = file.replace("\\", "/").replace(".fth", "").split("/")[-1].split("_")
+    df2["Well"] = l2[1]
+    df2["Plate"] = l2[0]
     return df2
 
 
@@ -414,7 +442,7 @@ if on and cbc:
     import tools
 
     paths = sorted(
-        Path(f"/mnt/shares/L/Projects/{proj}/Checkout_Results/").iterdir(),
+        Path(f"/mnt/shares/L/PROJECTS/{proj}/Checkout_Results/").iterdir(),
         key=os.path.getmtime,
         reverse=True,
     )
