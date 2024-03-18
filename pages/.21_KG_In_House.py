@@ -44,7 +44,7 @@ df_source = sql_df(sql_profile, profile_conn)
 sql_batch = f"select * from cpdbatchs where metasource='{choix_source}'"
 df_batchs = sql_df(sql_batch, conn)
 df_batchs = df_batchs.drop_duplicates()
-df_merge = df_source.merge(df_batchs, left_on="metabatchid", right_on="batchid")
+df_merge = df_source.merge(df_batchs, on="batchid")
 df_merge = df_merge.rename(
     columns={"batchid": "meta_batchid", "pubchemid": "meta_pubchemid"}
 )

@@ -272,10 +272,27 @@ if len(df_cpds) > 0:
             fig.update_traces(textposition="inside", textinfo="percent+label")
             st.plotly_chart(fig, theme="streamlit", use_container_width=True)
     with tabs[4]:
-        st.session_state["PubChem"] = df_cpds
-       # st.switch_page("pages/19_PubChem.py")
+        rad_match = st.radio(
+        "check in All compounds from compounds info ?can be long...",
+        ["No", "Yes"],
+        horizontal=True,
+        )
+        if rad_match=="No":
+            var_text_cpdid = st.text_area("Or just for few compounds", help="cpd id separated by enter")
+            var_cpd_id = var_text_cpdid.split("\n")
+            var_cpd_id = [t.strip().upper() for t in var_cpd_id if t != ""]
+            list_pub = list(set(var_cpd_id))
+    
+            if len(list_pub)>0:
+                
+                st.session_state["PubChem"] = list_pub
+                st.switch_page("pages/19_PubChem.py")
+        else :
+            list_pub=list(df_cpdGene.pubchemid.unique())
+            
+            st.switch_page("pages/19_PubChem.py")
+            
 
-    st.session_state["df_cpds"] = df_cpdGene
 
     # get profile------------------------------------------------------------------------------------------------------------------
     st.write("Profiles in JUMP CP DATA SET")

@@ -361,3 +361,5 @@ def find_umap(df, title):
         df_emb, x="x", y="y", hover_data=["batchid"], color="metasource", title=title
     )
     st.plotly_chart(fig, theme="streamlit", use_container_width=True)
+
+
