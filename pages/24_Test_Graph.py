@@ -18,30 +18,63 @@ from streamlit_d3graph import d3graph, vec2adjmat
 st.set_page_config(layout="wide")
 
 
-RHSA1 = nx.read_gml("../R-HSA-70171.gml")
+RHSA1 = nx.read_gml("../R-HSA-8949215.gml")
+G = RHSA1
+# lab = G.nodes
+# for i in lab:
+#     st.write(lab[i]["type"])
 # data = nx.node_link_data(RHSA1)
 # st.write(data)
 # for node, nbrsdict in RHSA1.adj.items():
 #     st.write(node, nbrsdict)
+# G = nx.karate_club_graph()
+# test = nx.to_dict_of_dicts(G)
+# df_test = pd.DataFrame.from_dict(test)
+# st.write(test)
+adjmat = nx.adjacency_matrix(G).todense()
+adjmat = pd.DataFrame(
+    index=range(adjmat.shape[0]), data=adjmat, columns=range(adjmat.shape[0])
+)
+adjmat.columns = adjmat.columns.astype(str)
+adjmat.index = adjmat.index.astype(str)
+# adjmat.iloc[3, 4] = 5
+# adjmat.iloc[4, 5] = 6
+# adjmat.iloc[5, 6] = 7
 
-adjmat = nx.to_pandas_adjacency(RHSA1)
-edge_df = nx.to_pandas_edgelist(RHSA1)
-# st.write(edge_df)
+df = pd.DataFrame(index=adjmat.index)
+
+df["degree"] = np.array([*G.degree()])[:, 1]
+df["label"] = [i for i in (G.nodes)]
+df["relation"] = [G.nodes[i]["type"] for i in G.nodes]
 # st.write(adjmat)
+st.write(df)
+# exit(0)
+label = df["label"].values
+node_size = df["degree"].values
+# node_size
+# adjmat = nx.to_pandas_adjacency(RHSA1)
+edge_df = nx.to_pandas_edgelist(RHSA1)
+st.write(edge_df)
+st.write(adjmat)
+adjmat = vec2adjmat(edge_df["source"], edge_df["target"])
 d3 = d3graph()
 
 d3.graph(adjmat)
-# d3.set_node_properties(
-#     label=df["label"].values,
-#     color=df["label"].values,
-#     size=df["degree"].values,
-#     edge_size=df["degree"].values,
-#     cmap="Set1",
-# )
+d3.set_node_properties(color=df["relation"].values, label=label)
+# d3.set_node_properties()
 d3.set_edge_properties(directed=True)
+
+for idx, row in edge_df.iterrows():
+    d3.edge_properties[row["source"], row["target"]]["label"] = row["type"]
+
 d3.show()
 
 
+d3 = d3graph()
+adjmat = d3.import_example("bigbang")
+st.write(adjmat)
+# # Initialize with clustering colors
+# d3.graph(adjmat, color="cluster")
 # GG = nx.DiGraph()
 
 # st.write(KG)
