@@ -72,7 +72,7 @@ if not edge_df.empty:
     for idx, row in edge_df.iterrows():
         d3.edge_properties[row["source"], row["target"]]["label"] = row["type"]
 
-    d3.show()
+    d3.show(title="Metabolics Flux", figsize=(1200, 1200))
 
 
 # # Initialize with clustering colors
