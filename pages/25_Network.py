@@ -24,19 +24,7 @@ path_net = soup.get_text().split("\n")
 st.write(path_net)
 exit(0)
 
-graphistry.register(
-    api=3,
-    protocol="https",
-    server="hub.graphistry.com",
-    personal_key_id="HRJRHX9IOV",
-    personal_key_secret="9HVQORNH7TC7SJ0W",
-)
-edges = pd.read_csv("L:/PROJECTS/JUMP-CRISPR/KeggNetworks/keggnet.csv")
-g = graphistry.bind(source="source", destination="target").edges(edges)
-g2 = g.bind(edge_title="relation")
-# graphistry.edges(edges, "source", "target").plot()
-g2.plot(edges)
-exit(0)
+
 # url1 = "http://rest.kegg.jp/link/pathway/network"
 # url2 = "http://rest.kegg.jp/link/disease/network"
 # url3 = "http://rest.kegg.jp/link/hsa/network"
