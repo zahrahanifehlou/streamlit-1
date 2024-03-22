@@ -75,6 +75,8 @@ list_df = load_files(uploaded_files)
 
 if len(list_df) > 0:
     data = filter_data(list_df)
+    if "fieldId" in data.columns.tolist():
+        data["fieldId"] = data["fieldId"].astype(str)
     if "tags" in data.columns.tolist():
         new = data["tags"].str.split(";", n=1, expand=True)
         for i in range(len(new.columns)):
