@@ -65,7 +65,7 @@ def filter_data(list_dfs):
         data = pd.concat([data1, data[cols_alpha].reset_index(drop=True)], axis=1)
         data = data.dropna(axis=1)
         tab1, tab2, tab3 = st.tabs(["Dataframe", "Samples", "Summary"])
-        tab1.write(data.head(2))
+        tab1.write(data)
         tab2.write(data.sample(5))
         tab3.write(data.describe())
     return data
