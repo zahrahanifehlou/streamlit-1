@@ -186,6 +186,7 @@ if len(list_df) > 0:
                 columns=col_sel,
             )
             data_scaled["tags"] = data["tags"]
+            data_scaled["fieldId"] = data["fieldId"]
             components.html(get_pyg_html(data_scaled), height=1000, scrolling=True)
             df_agg = data_scaled.groupby("tags").median().reset_index()
             # t= st.radio("Time Series", ["yes","no"],1)
