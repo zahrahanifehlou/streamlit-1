@@ -298,6 +298,9 @@ if not df_genes.empty:
     # col_a,col_b=st.columns(2)
     thres = st.sidebar.slider("Interaction Thresholds", 0.0, 1.0, 0.8, 0.02)
     if not df_inter.empty:
+        df_inter = df_inter.drop_duplicates(subset="symbol", keep="first")
+        if disp:
+            st.write("df_inter_clean", df_inter)
         list_edges, list_inters = get_stringDB(df_inter, thres, "symbol")
         if list_edges is None:
             st.warning(f"Error in requests stringDB: {list_inters}")
@@ -306,7 +309,7 @@ if not df_genes.empty:
         # st.write(list_edges)
         list_cat = get_list_category(df_inter, "symbol")
         categ = st.selectbox("Select Category", list_cat)
-        df_go_ento = get_stringDB_enr(df_inter, "symbol", categ)
+        df_go_ento = get_stringDB_enr(df_inter, "symbol", categ, fdra=100)
 
         st.write(f"{categ} Enrichment", df_go_ento)
         df_go_ento["log_p_val"] = -np.log10(df_go_ento["p_val"].apply(str_to_float))
