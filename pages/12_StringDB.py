@@ -8,7 +8,7 @@ import requests
 from pyvis.network import Network
 import matplotlib
 from streamlit_agraph import agraph, Node, Edge, Config
-
+import json
 # from lib import streamlib
 
 from streamlib import (
@@ -28,7 +28,7 @@ conn_prof = "postgres://arno:12345@192.168.2.131:5432/ksilink_cpds"
 
 
 def get_stringDB(df_all_umap, thresh=0.7, genecol="target"):
-    string_api_url = "https://version-11-5.string-db.org/api"
+    string_api_url = "https://version-12-0.string-db.org/api"
     string_api_url = "https://string-db.org/api"
     output_format = "tsv-no-header"
     method = "network"
@@ -52,9 +52,10 @@ def get_stringDB(df_all_umap, thresh=0.7, genecol="target"):
     list_id1 = []
     list_inter = []
     list_edges = []
+    st.write(results.text.strip().split("\n"))
     for line in results.text.strip().split("\n"):
         l = line.strip().split("\t")
-        # st.write(l)
+
         if len(l) > 4:
             p1, p2 = l[2], l[3]
             # filter the interaction according to experimental score
@@ -68,6 +69,32 @@ def get_stringDB(df_all_umap, thresh=0.7, genecol="target"):
                     list_edges.append((p1, p2))
                     list_inter.append(experimental_score)
     return list_edges, list_inter
+
+
+def get_list_category2(df_all_umap, genecol="target"):
+    string_api_url = "https://string-db.org/api"
+    output_format = "json"
+    method = "enrichment"
+    params = {
+        "identifiers": "\r".join(df_all_umap[genecol].to_list()),
+        # "identifiers" : "\r".join(["p53", "BRCA1", "cdk2", "Q99835"]), # your protein list
+        "species": 9606,  # species NCBI identifier
+        "limit": 1,  # only one (best) identifier per input protein
+        "echo_query": 1,  # see your input identifiers in the output
+        "caller_identity": "www.awesome_app.org",  # your app name
+    }
+    request_url = "/".join([string_api_url, output_format, method])
+
+    response = requests.post(request_url, data=params)
+    data = json.loads(response.text)
+    list_category = []
+    for row in data:
+        # st.write(row)
+        category = row["category"]
+        list_category.append(category)
+        # st.write("\t".join([term,preferred_names, str(fdr), description]))
+
+    return list(set(list_category))
 
 
 def get_relation(df_genes):
@@ -307,7 +334,7 @@ if not df_genes.empty:
             exit(0)
         st.write(f"retrieved : {len(list_edges)} Interaction with {thres} threshold")
         # st.write(list_edges)
-        list_cat = get_list_category(df_inter, "symbol")
+        list_cat = get_list_category2(df_inter, "symbol")
         categ = st.selectbox("Select Category", list_cat)
         df_go_ento = get_stringDB_enr(df_inter, "symbol", categ, fdra=100)
 
@@ -318,7 +345,7 @@ if not df_genes.empty:
         st.write("## Computing Network")
         H = nx.Graph(list_edges)
         G = ig.Graph.from_networkx(H)
-        G = G.simplify()
+        # G = G.simplify()
         # partition = la.find_partition(
         #     G, la.ModularityVertexPartition, n_iterations=-1, weights=list_inters
         # )
@@ -388,14 +415,14 @@ if not df_genes.empty:
         # if df_clust.empty:
         #     st.warning("Please reduce the threshold to get more interaction")
         #     exit()
-        # if disp:
-        #     st.write("DF_CLUST", df_clust)
+        if disp:
+            st.write("DF_CLUST", df_clust)
         df_umap_cluster = df_inter.merge(
             df_clust, left_on="symbol", right_on="symbol"
         ).reset_index(drop=True)
         # # df_umap_cluster['chromosome']=df_umap_cluster['chromosome'].apply(int_to_str)
-        # if disp:
-        #     st.write(df_umap_cluster)
+        if disp:
+            st.write("df_umap_cluster", df_umap_cluster)
 
         ################################### ENRICHMENT ##############################################
         A = G.get_edgelist()
