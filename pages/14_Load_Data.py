@@ -137,27 +137,38 @@ if len(list_df) > 0:
                 theme="streamlit",
                 use_container_width=True,
             )
+            T=1.0/30.0
+            N=len(time_cols)
+            import scipy
+            from scipy import signal
+            import matplotlib.pyplot as plt
+            import pywt
+            sel_col_fft= st.selectbox("Chose exp",df_plt.columns)
+            yy=df_plt[sel_col_fft].values
+            # yf = scipy.fftpack.fft(yy)
+            widths = np.arange(1, N//8)
+            # xf = np.linspace(0.0, 1.0/(2.0*T), N//2)
+            # cwtmatr = signal.cwt(yy, signal.ricker, widths)
+            # cwtmatr_yflip = np.flipud(cwtmatr)
+            cwtmatr, freqs = pywt.cwt(yy, widths, 'mexh')
+            fig_cwt, ax = plt.subplots()
+            ax.imshow(cwtmatr, cmap='PRGn', aspect='auto',
+           vmax=abs(cwtmatr).max(), vmin=-abs(cwtmatr).max()) 
+            
+            ax.pcolormesh(sig_x, freqs, cwtmatr)
+            
+
+            
+            # ax.imshow(cwtmatr_yflip,  cmap='PRGn', aspect='auto',
+            #     vmax=abs(cwtmatr).max(), vmin=-abs(cwtmatr).max())
+            st.pyplot(fig_cwt, use_container_width=True)
     else:
         # if "tags" in data.columns.tolist():
         # data['tags']=data['Well']
 
         # st.write(df_plt)
         # N=len(time_cols)
-        # T=1.0/30.0
-        # import scipy
-        # from scipy import signal
-        # import matplotlib.pyplot as plt
-        # sel_col_fft= st.selectbox("Chose exp",df_plt.columns)
-        # yy=df_plt[sel_col_fft].values
-        # yf = scipy.fftpack.fft(yy)
-        # widths = np.arange(1, N//8)
-        # xf = np.linspace(0.0, 1.0/(2.0*T), N//2)
-        # cwtmatr = signal.cwt(yy, signal.ricker, widths)
-        # cwtmatr_yflip = np.flipud(cwtmatr)
-        # fig_cwt, ax = plt.subplots()
-        # ax.imshow(cwtmatr_yflip,  cmap='PRGn', aspect='auto',
-        #    vmax=abs(cwtmatr).max(), vmin=-abs(cwtmatr).max())
-        # st.pyplot(fig_cwt, use_container_width=True)
+
         # df_fft=pd.DataFrame()
         # df_fft['xf']=xf
         # df_fft['yf']=2.0/N * np.abs(yf[:N//2])
