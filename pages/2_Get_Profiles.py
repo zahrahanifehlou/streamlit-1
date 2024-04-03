@@ -381,6 +381,7 @@ if len(df_prof) > 0:
     if len(tmp) > 1:
         import matplotlib.pyplot as plt
         import seaborn as sns
+    
 
         plt_src, col_colors = get_col_colors(tmp, inex_col_name="nameAndsource")
 

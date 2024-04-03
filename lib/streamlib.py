@@ -173,9 +173,12 @@ def convert_df(df):
     return df.to_csv(index=False).encode("utf-8")
 
 
-def get_col_colors(df):
-    feat_cols = [col for col in df.columns if not col.startswith("Meta")]
-    df_out = df[feat_cols]
+def get_col_colors(df,inex_col_name="nameAndsource"):
+    
+    numerics = ['int16', 'int32', 'int64', 'float16', 'float32', 'float64']
+    df_out = df.select_dtypes(include=numerics)
+    df_out[inex_col_name]=df[inex_col_name]
+        
     prefix_colors = {
         "ER": "red",
         "DNA": "blue",
@@ -187,9 +190,8 @@ def get_col_colors(df):
     col_colors = [
         prefix_colors.get(col.split("_")[0], "white") for col in df_out.columns
     ]
-    if "name" not in df_out.columns:
-        df_out["name"] = df["metacpdname"] + "_" + df["metasource"]
-    df_plt = df_out.set_index("name")
+  
+    df_plt = df_out.set_index(inex_col_name)
     return df_plt, col_colors
 
 
