@@ -65,7 +65,7 @@ def filter_data(list_dfs):
         data = pd.concat([data1, data[cols_alpha].reset_index(drop=True)], axis=1)
         data = data.dropna(axis=1)
         tab1, tab2, tab3 = st.tabs(["Dataframe", "Samples", "Summary"])
-        tab1.write(data.head(2))
+        tab1.write(data)
         tab2.write(data.sample(5))
         tab3.write(data.describe())
     return data
@@ -75,6 +75,8 @@ list_df = load_files(uploaded_files)
 
 if len(list_df) > 0:
     data = filter_data(list_df)
+    if "fieldId" in data.columns.tolist():
+        data["fieldId"] = data["fieldId"].astype(str)
     if "tags" in data.columns.tolist():
         new = data["tags"].str.split(";", n=1, expand=True)
         for i in range(len(new.columns)):
@@ -184,6 +186,7 @@ if len(list_df) > 0:
                 columns=col_sel,
             )
             data_scaled["tags"] = data["tags"]
+            data_scaled["fieldId"] = data["fieldId"]
             components.html(get_pyg_html(data_scaled), height=1000, scrolling=True)
             df_agg = data_scaled.groupby("tags").median().reset_index()
             # t= st.radio("Time Series", ["yes","no"],1)

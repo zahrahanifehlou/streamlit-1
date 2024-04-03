@@ -5,7 +5,8 @@ import psycopg2
 import streamlit as st
 import plotly.express as px
 import sys
-sys.path.append('/mnt/shares/L/PROJECTS/JUMP-CRISPR/Code/streamlit_ZH2/lib/')
+
+sys.path.append("/mnt/shares/L/PROJECTS/JUMP-CRISPR/Code/streamlit_ZH2/lib/")
 # import umap
 from streamlib import sql_df, get_sql_jump, get_col_colors
 
@@ -113,7 +114,7 @@ if len(df_res) > 0:
         sql_query = get_sql_jump(
             table_name=table_name, col_name=col_name, list_geneid=list_geneid
         )
-       
+
         df_cpds = (
             sql_df(sql_query, conn)
             .drop_duplicates(subset=["batchid"])
@@ -122,7 +123,7 @@ if len(df_res) > 0:
 
         if db_name == "KEGG":
             df_cpds = df_cpds.dropna(subset=["keggid"]).reset_index(drop=True)
-     
+
 # get genes are in crispr but not in cpd
 df_prof_crisper = pd.DataFrame()
 df_prof = pd.DataFrame()
@@ -142,7 +143,6 @@ if str(option) == "gene" and len(df_res) > 0:
         df_prof_crisper = df_prof_crisper.merge(
             df_crisperBatchs,
             on="batchid",
-            
         ).reset_index(drop=True)
         df_prof_crisper["type"] = "CRISPR"
 
@@ -273,26 +273,25 @@ if len(df_cpds) > 0:
             st.plotly_chart(fig, theme="streamlit", use_container_width=True)
     with tabs[4]:
         rad_match = st.radio(
-        "check in All compounds from compounds info ?can be long...",
-        ["No", "Yes"],
-        horizontal=True,
+            "check in All compounds from compounds info ?can be long...",
+            ["No", "Yes"],
+            horizontal=True,
         )
-        if rad_match=="No":
-            var_text_cpdid = st.text_area("Or just for few compounds", help="cpd id separated by enter")
+        if rad_match == "No":
+            var_text_cpdid = st.text_area(
+                "Or just for few compounds", help="cpd id separated by enter"
+            )
             var_cpd_id = var_text_cpdid.split("\n")
             var_cpd_id = [t.strip().upper() for t in var_cpd_id if t != ""]
             list_pub = list(set(var_cpd_id))
-    
-            if len(list_pub)>0:
-                
+
+            if len(list_pub) > 0:
                 st.session_state["PubChem"] = list_pub
                 st.switch_page("pages/19_PubChem.py")
-        else :
-            list_pub=list(df_cpdGene.pubchemid.unique())
-            
-            st.switch_page("pages/19_PubChem.py")
-            
+        else:
+            list_pub = list(df_cpdGene.pubchemid.unique())
 
+            st.switch_page("pages/19_PubChem.py")
 
     # get profile------------------------------------------------------------------------------------------------------------------
     st.write("Profiles in JUMP CP DATA SET")
@@ -304,18 +303,14 @@ if len(df_cpds) > 0:
         list_batchid = [f"'{batch}'" for batch in df_cpdGene_tmp["batchid"]]
     if len(list_batchid) > 0:
         sql_profile = (
-            "select * from aggprofile where batchid in ("
-            + ",".join(list_batchid)
-            + ")"
+            "select * from aggprofile where batchid in (" + ",".join(list_batchid) + ")"
         )
 
         df_prof = sql_df(sql_profile, conn)
         df_prof.reset_index(inplace=True, drop=True)
 
-        df_prof = df_prof.merge(
-            df_cpds, on="batchid"
-        ).reset_index(drop=True)
-        
+        df_prof = df_prof.merge(df_cpds, on="batchid").reset_index(drop=True)
+
         df_prof.loc[df_prof.cpdname == "No result", "cpdname"] = None
         df_prof["name"] = df_prof["cpdname"].str[:30]
         df_prof["name"] = df_prof["cpdname"].fillna(df_prof["batchid"])
@@ -353,14 +348,13 @@ if len(df_prof) > 0:
     else:
         tmp = df_prof.loc[df_prof["source"].isin(var_t2)]
     tmp.reset_index(inplace=True, drop=True)
-    meta_cols = ["name", "batchid", "source","symbol"]
-   
+    meta_cols = ["name", "batchid", "source", "symbol"]
 
     tmp["nameAndsource"] = tmp["name"] + "_" + tmp["source"]
     cpd_names = tmp.nameAndsource.values
     df_plt = tmp.drop_duplicates(subset="nameAndsource")
     df_plt = df_plt.set_index("nameAndsource")
-   
+
     # df_plt = df_plt.drop('name',axis=1)
 
     filter_col = df_plt.select_dtypes(include=[int, float]).columns.tolist()
@@ -405,12 +399,11 @@ if len(df_prof) > 0:
 
     st.session_state["df_profiles"] = tmp
 
-
     @st.cache_data
     def get_umap(choix_source):
         sql_umqpemd = f"select umap.* from umap where umap.source='{choix_source}' "
-        #sql_umqpemd="SELECT umap.*, batchs.name  FROM umap  INNER JOIN batchs ON batchs.batchid = umap.batchid  WHERE umap.source = '{choix_source}'"
-     
+        # sql_umqpemd="SELECT umap.*, batchs.name  FROM umap  INNER JOIN batchs ON batchs.batchid = umap.batchid  WHERE umap.source = '{choix_source}'"
+
         df_src_emd = sql_df(sql_umqpemd, conn)
         return df_src_emd
 
