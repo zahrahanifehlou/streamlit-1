@@ -174,7 +174,7 @@ else:
 
                     df_keep_prof_gene["name"] = df_keep_prof_gene["batchid"]
                     df_keep_prof_gene = df_keep_prof_gene.merge(
-                        df_results_gene.add_prefix("meta"),
+                        df_results_gene,
                         on="batchid",
                        
                     ).reset_index(drop=True)
