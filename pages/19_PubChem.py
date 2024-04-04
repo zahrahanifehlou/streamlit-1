@@ -32,9 +32,12 @@ list_pub = []
 if len(list_cpd) > 0:
     for item in list_cpd:
         try:
-            list_pub.append(pcp.get_compounds(item, choice, as_dataframe=True))
+            temp_df = pcp.get_compounds(item, choice, as_dataframe=True)
+            our_choice = "our_" + choice
+            temp_df[our_choice] = item
+            list_pub.append(temp_df)
         except:
-            print("cant find this pubchemid", item)
+            st.warning(f"can't find this {choice}: {item}")
         # st.write("list_pub", list_pub)
     # # compounds = pcp.get_compounds(cpd_df.cid, "cid", as_dataframe=True)
     # list_pub.append(pcp.get_compounds(134159676, "cid", as_dataframe=True))
