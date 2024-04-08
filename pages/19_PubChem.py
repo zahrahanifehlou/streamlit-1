@@ -46,7 +46,7 @@ if len(list_cpd) > 0:
     st.write("Pubchem Info:", compounds)
     st.warning("Getting MOA")
     compounds["pubchem_moa"] = pubchem.moa_annotation(compounds["cid"])
-
+    st.write("compoundsMOA", compounds)
     st.warning("Getting bioassay")
     bioassay_df = pubchem.bioassay(compounds.cid)
     with_target = bioassay_df.dropna(subset=["Target GeneID"]).reset_index(drop=True)
@@ -98,7 +98,7 @@ if len(list_cpd) > 0:
     st.write("target_merge", target_merge)
 
     target_merge = target_merge.merge(
-        compounds[["iupac_name", "cid", "canonical_smiles", "pubchem_moa"]],
+        compounds[["iupac_name", "cid", "canonical_smiles", "pubchem_moa", our_choice]],
         left_on="pubchem_cid",
         right_on="cid",
     )
