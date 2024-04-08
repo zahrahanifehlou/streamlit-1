@@ -330,8 +330,8 @@ if on and not dl and not cbc and not tp:
 @st.cache_data
 def loadDeepTar(files):
     with tarfile.open(files, "r") as tar:
-        list_df = []
         # Replace 'your_file.feather' with the actual file name
+        list_df = []
         for member in tar.getmembers():
             # Check if the member is a file and has the '.feather' extension
             if member.isfile() and member.name.endswith(".fth"):
@@ -354,8 +354,9 @@ def loadDeepTar(files):
                 except:
                     print("error")
 
-    df2 = df.groupby(["Plate", "Well"]).median(numeric_only=True)
-    df2 = df2.reset_index()
+        df2 = pd.concat(list_df)
+        df2 = df2.groupby(["Plate", "Well"]).median(numeric_only=True)
+        df2 = df2.reset_index()
 
     return df2
 
