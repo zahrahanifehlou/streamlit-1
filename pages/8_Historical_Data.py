@@ -243,7 +243,7 @@ if on and not dl and not cbc and not tp:
             len_1 = len(df_data)
             df_data.replace([np.inf, -np.inf], np.nan, inplace=True)
 
-            df_data = df_data.dropna()
+            df_data = df_data.dropna(axis=1)
             len_2 = len(df_data)
             df_data = df_data.apply(pd.to_numeric, errors="ignore")
             if len_1 != len_2:
@@ -463,15 +463,15 @@ if on and cbc:
                 df_data = tools.setCategories(tools.retrieve_tags(df_data))
                 df_data = tools.getScreenCategories(df_data)
                 # st.write('df_data',df_data)
-                len_1 = len(df_data)
+                len_1 = len(df_data.columns)
                 df_data.replace([np.inf, -np.inf], np.nan, inplace=True)
 
-                df_data = df_data.dropna()
-                len_2 = len(df_data)
+                df_data = df_data.dropna(axis=1)
+                len_2 = len(df_data.columns)
                 df_data = df_data.apply(pd.to_numeric, errors="ignore")
                 if len_1 != len_2:
                     st.warning(
-                        f"{len_1-len_2} rows were removed due to NaN values", icon="🚨"
+                        f"{len_1-len_2} cols were removed due to NaN values", icon="🚨"
                     )
                 len_col = len(df_data.columns)
                 corr_matrix = df_data.corr().abs()
