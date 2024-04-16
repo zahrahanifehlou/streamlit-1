@@ -32,8 +32,8 @@ lab_size = st.sidebar.slider(
     "label size", min_value=0.2, max_value=20.0, step=0.1, value=2.4
 )
 
-KG = load_data()
-st.write("Test", KG.sample(22).reset_index())
+KG2 = load_data()
+st.write("Test", KG2.sample(22).reset_index())
 
 
 # list_test = ["Risperidone", "autism spectrum disorder"]
@@ -66,11 +66,12 @@ list_gene = [t.strip().upper() for t in var_t if t != ""]
 # st.write(list_gene)
 # exit(0)
 pattern = "|".join(list_gene)
-st.write(pattern)
+# st.write(pattern)
 # KG = KG.query("x_name == @list_gene | y_name==@list_gene")
 # KG = KG.query("x_name in @list_gene")
 if var_text:
-    KG = KG[KG["x_name"].str.contains(pattern, case=False, regex=True)]
+    # KG = KG[KG["x_name"].str.contains(pattern, case=False, regex=True)]
+    KG = KG2.query("x_name == @list_gene | y_name==@list_gene")
     # for i in range()
     # KG2 = KG[KG["y_name"].str.contains(pattern, case=False, regex=True)]
     # KG = pd.concat([KG1, KG2])
@@ -80,7 +81,9 @@ if var_text:
     # KG = KG3.query("relation!='anatomy_protein_present'")
 
     # KG = KG.query("relation!='anatomy_protein_present'")
-    st.write(KG)
+    st.write(len(KG.loc[KG["relation"] == "protein_protein", "x_name"].unique()))
+    # st.write(KG.loc[KG["relation"] == "protein_protein"])
+
 else:
     exit(0)
 # exit(0)
@@ -100,8 +103,18 @@ options = {
 nodes = []
 if var_text:
     GG = nx.DiGraph()
+    list_rel = KG.relation.unique()
 
-    # st.write(KG)
+    sel_rel = st.multiselect("Chose relations for the graph", list_rel)
+    KG = KG[KG["relation"].isin(sel_rel)]
+    st.write("KG1", len(KG))
+
+    # merge = list(set(KG["x_name"].unique().tolist() + KG["y_name"].unique().tolist()))
+    # KG = KG2.query("x_name in @merge | y_name in @merge")
+    # st.write(len(KG.loc[KG["relation"]=="protein_protein","x_name"].unique()))
+    # sel_rel2 = st.multiselect("Chose second relations for the graph", list_rel)
+    # KG = KG[KG["relation"].isin(sel_rel2)]
+    # st.write("KG",len(KG))
     for s, t, r in KG[["x_name", "y_name", "relation"]].values:
         GG.add_edge(s, t, label=r)
     # GG.add_edges_from(KG[["x_name", "y_name"]].values, label=KG["relation"].values)
@@ -117,14 +130,10 @@ if var_text:
     # G = ig.Graph.from_networkx(GG)
     # communities = G.community_edge_betweenness()
     # communities = communities.as_clustering()
+    num_communities = len(KG.relation.unique())
     communities = KG.relation.unique()
 
     if not df.empty:
-        list_rel = df.label.unique()
-
-        sel_rel = st.multiselect("Chose relations for the graph", list_rel)
-        df = df[df["label"].isin(sel_rel)]
-        num_communities = len(df.label.unique())
         # st.warning(f"{sel_rel}")
         if sel_rel:
             palette = ig.RainbowPalette(n=num_communities)
@@ -135,7 +144,7 @@ if var_text:
             df["categorical_label"] = le.transform(df.label)
             #
             # st.write("DF", df)
-            net = Network(notebook=False, heading=list_gene)
+            net = Network(notebook=False, heading=sel_rel)
             list_node = list(df["source"].unique())
             list_node2 = list(df["target"].unique())
             list_nodes = list_node + list_node2
@@ -144,8 +153,10 @@ if var_text:
             for i, name in enumerate(list_nodes):
                 # st.write(i)
                 # st.write(name.upper())
+                # if name.upper() in list(set(merge) - set(list_gene)):
+                #     # st.write(name)
+                #     net.add_node(name, label=name, color="blue")
                 if name.upper() in list_gene:
-                    # st.write(name)
                     net.add_node(name, label=name, color="green")
                 else:
                     net.add_node(name, label=name, color="blue")
@@ -178,9 +189,9 @@ if var_text:
             #     )
             # net.from_nx(GG)
             net.show_buttons(filter_="physics")
-            net.show(f"/mnt/shares/L/Temp/test4.html", notebook=False)
+            net.show("/mnt/shares/L/Temp/test4.html", notebook=False)
 
-            HtmlFile = open(f"/mnt/shares/L/Temp/test4.html", "r", encoding="utf-8")
+            HtmlFile = open("/mnt/shares/L/Temp/test4.html", "r", encoding="utf-8")
             source_code = HtmlFile.read()
             components.html(source_code, height=1200, width=1200)
 

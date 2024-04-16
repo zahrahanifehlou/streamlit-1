@@ -148,18 +148,21 @@ if len(list_df) > 0:
             yy = df_plt[sel_col_fft].values
             # yf = scipy.fftpack.fft(yy)
             widths = np.arange(1, N // 8)
-            widths = np.geomspace(1, len(yy), num=10)
+            # widths = np.geomspace(1, len(yy), num=10)
             time = np.linspace(0, 1, len(yy))
             sampling_period = np.diff(time).mean()
             # xf = np.linspace(0.0, 1.0/(2.0*T), N//2)
             # cwtmatr = signal.cwt(yy, signal.ricker, widths)
             # cwtmatr_yflip = np.flipud(cwtmatr)
-            cwtmatr, freqs = pywt.cwt(
-                yy, widths, "mexh", sampling_period=sampling_period
-            )
+            cwtmatr, freqs = pywt.cwt(yy, widths, "mexh")
             fig_cwt, ax = plt.subplots()
-            #     ax.imshow(cwtmatr, cmap='PRGn', aspect='auto',
-            #    vmax=abs(cwtmatr).max(), vmin=-abs(cwtmatr).max())
+            ax.imshow(
+                cwtmatr,
+                cmap="PRGn",
+                aspect="auto",
+                vmax=abs(cwtmatr).max(),
+                vmin=-abs(cwtmatr).max(),
+            )
 
             ax.pcolormesh(sig_x, freqs, cwtmatr)
 
