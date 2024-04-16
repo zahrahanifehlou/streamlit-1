@@ -81,11 +81,12 @@ if var_text:
     for s, t, r in KG[["x_name", "y_name", "relation"]].values:
         GG.add_edge(s, t, label=r)
     # GG.add_edges_from(KG[["x_name", "y_name"]].values, label=KG["relation"].values)
-    deg = st.slider("Select Degree:", 0, 10, 1)
+    deg = st.slider("Select Degree:", 0, 10, 2)
     get_nodes = GG.nodes()
-    keep = [node for node, degree in dict(GG.degree()).items() if degree > deg]
+    # remove = [node for node, degree in dict(GG.degree()).items() if degree <= deg]
+    remove = [x for x in GG.nodes() if GG.degree(x) <= deg]
     # st.write(get_nodes)
-    remove = get_nodes - keep
+    # remove = get_nodes - keep
     # st.write(remove)
     GG.remove_nodes_from(remove)
     df = nx.to_pandas_edgelist(GG)
@@ -168,8 +169,19 @@ if var_text:
                 for v in net.edges
             ]
 
-            st.warning(f"Retrieved {cpt_sel} members; Added {cpt_other} interactions ")
-            c = ConfigBuilder(nodes, edges)
-            d = c.build()
+            st.warning(
+                f"Retrieved {cpt_sel} members ---> Added {cpt_other} interactions "
+            )
 
+            c = ConfigBuilder(
+                nodes,
+                edges,
+            )
+            # st.write(c)
+            # c.config = config
+            d = c.build(dictify=False)
+            # d.height = 1200
+            # d.width = 1200
+            # d.directed = False
+            # st.write(d)
             return_value = agraph(nodes, edges, config=d)
