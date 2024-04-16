@@ -25,38 +25,10 @@ def load_data():
     return primekg
 
 
-# vert_size = st.sidebar.slider(
-#     "vertex size", min_value=0.2, max_value=20.0, step=0.1, value=1.0
-# )
-# lab_size = st.sidebar.slider(
-#     "label size", min_value=0.2, max_value=20.0, step=0.1, value=2.4
-# )
-
 KG2 = load_data()
 st.write("Test", KG2.sample(22).reset_index())
 
 
-# list_test = ["Risperidone", "autism spectrum disorder"]
-# KGG = KG.query('x_name =="autism spectrum disorder" and y_name=="Risperidone"')
-# st.write(KGG)
-
-# tutu = KG.query('x_name == "autism spectrum disorder" ')
-# st.write(tutu)
-
-# x = (
-#     KG.query('x_name == "autism spectrum disorder" ')
-#     .get(["y_index"])
-#     .drop_duplicates()
-#     .values
-# )
-# x = x.squeeze()
-
-# toto = KG.query('x_index in @x and y_name=="Risperidone"')
-# st.write("toto", toto)
-# titi = KG.query(
-#     'x_name == "autism spectrum disorder" and y_index in [3199, 3417, 33913] '
-# )
-# st.write("titi", titi)
 var_text = st.text_area(
     "Enter your list of entities", help="Name or ID separated by enter"
 )
@@ -89,17 +61,7 @@ else:
     exit(0)
 # exit(0)
 graph_list = []
-# st.write(KG3.reset_index(drop=True))
-# st.write(KG.reset_index(drop=True))
-# exit(0)
-# options = {
-#     "node_color": "blue",
-#     "node_size": vert_size,
-#     "width": 1,
-#     "font_size": lab_size,
-#     "edge_color": "green",
-#     "alpha": 0.6,
-# }
+
 
 nodes = []
 if var_text:
@@ -183,176 +145,31 @@ if var_text:
                     color=matplotlib.colors.to_hex(palette.get(k), keep_alpha=True),
                     title=m,
                 )
-            # couleur = matplotlib.colors.to_hex(palette.get(i), keep_alpha=True)
-            # st.write(couleur)
-            # st.write(u)
-            # st.write(data)
-
-            #     nodes.append(
-            #         Node(
-            #             id=i,
-            #             label=u,r
-            #             # color=couleur,
-            #             title=u,
-            #             # shape="circle",
-            #             size=20,
-            #         )
-            #     )
-            # net.from_nx(GG)
-            # net.show_buttons(filter_="physics")
-            # net.show("/mnt/shares/L/Temp/test4.html", notebook=False)
-
-            # HtmlFile = open("/mnt/shares/L/Temp/test4.html", "r", encoding="utf-8")
-            # source_code = HtmlFile.read()
-            # components.html(source_code, height=1200, width=1200)
-            # layout = st.sidebar.selectbox(
-            #     "layout", ["dot", "neato", "circo", "fdp", "sfdp", "twopi", "osage"]
-            # )
-            # rankdir = st.sidebar.selectbox("rankdir", ["BT", "TB", "LR", "RL"])
-            # ranksep = st.sidebar.slider("ranksep", min_value=0, max_value=10)
-            # nodesep = st.sidebar.slider("nodesep", min_value=0, max_value=10)
-            # phys = st.sidebar.radio("Physics", [True, False])
-
-            # config = Config(
-            #     width=1200,
-            #     height=1200,
-            #     graphviz_layout=layout,
-            #     # graphviz_config={
-            #     #     "rankdir": rankdir,
-            #     #     "ranksep": ranksep,
-            #     #     "nodesep": nodesep,
-            #     # },
-            #     directed=False,
-            #     physics=phys,
-            #     # physics_widget=True,
-            #     hierarchical=False,
-            #     # **kwargs
-            # )
-            # st.write(net.edges)
-
-            for u in net.nodes:
-                # st.write(couleur)
-                nodes.append(
-                    Node(
-                        id=u["id"],
-                        label=u["label"],
-                        color=u["color"],
-                        # title=list_desc[i],
-                        shape=u["shape"],
-                        font="10px arial grey",
-                        size=15,
-                    )
+            nodes = [
+                Node(
+                    id=u["id"],
+                    label=u["label"],
+                    color=u["color"],
+                    # title=list_desc[i],
+                    shape=u["shape"],
+                    font="10px arial grey",
+                    size=15,
                 )
-            edges = []
-            for v in net.edges:
-                edges.append(
-                    Edge(
-                        source=v["from"],
-                        target=v["to"],
-                        title=v["title"],
-                        color=v["color"],
-                    )
+                for u in net.nodes
+            ]
+
+            edges = [
+                Edge(
+                    source=v["from"],
+                    target=v["to"],
+                    title=v["title"],
+                    color=v["color"],
                 )
-            # label=v["title"],
+                for v in net.edges
+            ]
+
             st.warning(f"Retrieved {cpt_sel} members; Added {cpt_other} interactions ")
             c = ConfigBuilder(nodes, edges)
             d = c.build()
-            # st.write(f"Added {cpt_other} interactions")
+
             return_value = agraph(nodes, edges, config=d)
-        # A = GG.edges()
-        # st.write(A)
-        # st.write(nodes)
-        # edges = [Edge(source=i, target=j, type="CURVE_SMOOTH") for (i, j) in A]
-        # st.write(edges[19])
-        # config = Config(
-        #     width=1200,
-        #     height=1200,
-        #     directed=False,
-        #     nodeHighlightBehavior=True,
-        #     highlightColor="#F7A7A6",
-        #     collapsible=True,
-        #     node={"labelProperty": "label"},
-        #     physics=True,
-        #     # link={"labelProperty": "label", "renderLabel": True},
-        # )
-        # st.write("### Displaying the full network/graph clustered with Leiden approach")
-        # return_value = agraph(nodes=nodes, edges=edges, config=config)
-    #     netgg.from_nx(GG)
-    #     netgg.show_buttons(filter_=["physics"])
-    #     netgg.show("total.html", notebook=False)
-
-    #     HtmlFile2 = open("total.html", "r", encoding="utf-8")
-    #     source_code2 = HtmlFile2.read()
-
-    #     components.html(source_code2, height=1200, width=1200)
-    # U = nx.Graph()
-    # G.clear()
-
-    # for r in KG.relation.unique():
-    #     G = nx.Graph()
-    #     nodes = []
-    #     net = Network(notebook=False)
-    #     G.add_edges_from(KG[KG.relation == r][["x_name", "y_name"]].values, relation=r)
-    #     # if i == "indication":
-    #     #     for node, degree in dict(G.degree()).items():
-    #     #         st.write("node,deg", (node, degree))
-    #     remove = [node for node, degree in dict(G.degree()).items() if degree == 1]
-    #     G.remove_nodes_from(remove)
-    #     G = ig.Graph.from_networkx(G)
-    #     communities = G.community_edge_betweenness()
-    #     communities = communities.as_clustering()
-    #     num_communities = len(communities)
-    #     if num_communities > 0:
-    #         palette = ig.RainbowPalette(n=num_communities)
-
-    #         for i, g in enumerate(communities):
-    #             # U.add_edges_from(G.edges(data=True))
-    #             couleur = matplotlib.colors.to_hex(palette.get(i), keep_alpha=True)
-    #             for u in G.vs[g]:
-    #                 # st.write(couleur)
-    #                 nodes.append(
-    #                     Node(
-    #                         id=u.index,
-    #                         label=u["_nx_name"],
-    #                         color=couleur,
-    #                         title=u["_nx_name"],
-    #                         # shape="circle",
-    #                         size=20,
-    #                     )
-    #                 )
-    #         # net.from_nx(G)
-    #         # net.show_buttons(filter_=["physics"])
-    #         # net.show(f"/mnt/shares/L/Temp/{i}.html", notebook=False)
-
-    #         # HtmlFile = open(f"/mnt/shares/L/Temp/{i}.html", "r", encoding="utf-8")
-    #         # source_code = HtmlFile.read()
-    #         st.warning(r)
-    #         A = G.get_edgelist()
-    #         edges = [Edge(source=i, target=j, type="CURVE_SMOOTH") for (i, j) in A]
-    #         config = Config(
-    #             width=1200,
-    #             height=1200,
-    #             directed=False,
-    #             nodeHighlightBehavior=True,
-    #             highlightColor="#F7A7A6",
-    #             collapsible=True,
-    #             node={"labelProperty": "label"},
-    #             physics=True,
-    #             # link={"labelProperty": "label", "renderLabel": True},
-    #         )
-    #         st.write(
-    #             "### Displaying the full network/graph clustered with Leiden approach"
-    #         )
-    #         return_value = agraph(nodes=nodes, edges=edges, config=config)
-    #         # components.html(source_code, height=1200, width=1200)
-
-    #         G.clear()
-# net = Network(notebook=False)
-# net.from_nx(U)
-# net.show_buttons(filter_=["physics"])
-# net.show("total.html", notebook=False)
-
-# HtmlFile = open("total.html", "r", encoding="utf-8")
-# source_code = HtmlFile.read()
-
-# components.html(source_code, height=1200, width=1200)
