@@ -4,7 +4,7 @@ import networkx as nx
 import streamlit.components.v1 as components
 from pyvis.network import Network
 import igraph as ig
-from streamlit_agraph import agraph, Node, Edge, Config
+from streamlit_agraph import agraph, Node, Edge, Config, ConfigBuilder
 import matplotlib
 from sklearn import preprocessing
 
@@ -25,12 +25,12 @@ def load_data():
     return primekg
 
 
-vert_size = st.sidebar.slider(
-    "vertex size", min_value=0.2, max_value=20.0, step=0.1, value=1.0
-)
-lab_size = st.sidebar.slider(
-    "label size", min_value=0.2, max_value=20.0, step=0.1, value=2.4
-)
+# vert_size = st.sidebar.slider(
+#     "vertex size", min_value=0.2, max_value=20.0, step=0.1, value=1.0
+# )
+# lab_size = st.sidebar.slider(
+#     "label size", min_value=0.2, max_value=20.0, step=0.1, value=2.4
+# )
 
 KG2 = load_data()
 st.write("Test", KG2.sample(22).reset_index())
@@ -73,6 +73,7 @@ if var_text:
     # KG = KG[KG["x_name"].str.contains(pattern, case=False, regex=True)]
     KG = KG2.query("x_name == @list_gene | y_name==@list_gene")
     # for i in range()
+
     # KG2 = KG[KG["y_name"].str.contains(pattern, case=False, regex=True)]
     # KG = pd.concat([KG1, KG2])
     # KG = KG[KG["x_name"].isin(list_gene)]
@@ -82,7 +83,7 @@ if var_text:
 
     # KG = KG.query("relation!='anatomy_protein_present'")
     st.write(len(KG.loc[KG["relation"] == "protein_protein", "x_name"].unique()))
-    # st.write(KG.loc[KG["relation"] == "protein_protein"])
+    st.write("Selected KG", KG)
 
 else:
     exit(0)
@@ -91,14 +92,14 @@ graph_list = []
 # st.write(KG3.reset_index(drop=True))
 # st.write(KG.reset_index(drop=True))
 # exit(0)
-options = {
-    "node_color": "blue",
-    "node_size": vert_size,
-    "width": 1,
-    "font_size": lab_size,
-    "edge_color": "green",
-    "alpha": 0.6,
-}
+# options = {
+#     "node_color": "blue",
+#     "node_size": vert_size,
+#     "width": 1,
+#     "font_size": lab_size,
+#     "edge_color": "green",
+#     "alpha": 0.6,
+# }
 
 nodes = []
 if var_text:
@@ -147,9 +148,11 @@ if var_text:
             net = Network(notebook=False, heading=sel_rel)
             list_node = list(df["source"].unique())
             list_node2 = list(df["target"].unique())
-            list_nodes = list_node + list_node2
+            list_nodes = list(set(list_node + list_node2))
             # st.write(list_nodes)
             # st.write(list_gene)
+            cpt_sel = 0
+            cpt_other = 0
             for i, name in enumerate(list_nodes):
                 # st.write(i)
                 # st.write(name.upper())
@@ -158,9 +161,11 @@ if var_text:
                 #     net.add_node(name, label=name, color="blue")
                 if name.upper() in list_gene:
                     net.add_node(name, label=name, color="grey")
+                    cpt_sel = cpt_sel + 1
                 else:
                     k = int(df.loc[df["source"] == name, "categorical_label"].unique())
                     # st.write(tuple(k))
+                    cpt_other = cpt_other + 1
                     net.add_node(
                         name,
                         label=name,
@@ -200,28 +205,31 @@ if var_text:
             # HtmlFile = open("/mnt/shares/L/Temp/test4.html", "r", encoding="utf-8")
             # source_code = HtmlFile.read()
             # components.html(source_code, height=1200, width=1200)
-            layout = st.sidebar.selectbox(
-                "layout", ["dot", "neato", "circo", "fdp", "sfdp", "twopi", "osage"]
-            )
+            # layout = st.sidebar.selectbox(
+            #     "layout", ["dot", "neato", "circo", "fdp", "sfdp", "twopi", "osage"]
+            # )
             # rankdir = st.sidebar.selectbox("rankdir", ["BT", "TB", "LR", "RL"])
             # ranksep = st.sidebar.slider("ranksep", min_value=0, max_value=10)
             # nodesep = st.sidebar.slider("nodesep", min_value=0, max_value=10)
+            # phys = st.sidebar.radio("Physics", [True, False])
 
-            config = Config(
-                width=1200,
-                height=1200,
-                graphviz_layout=layout,
-                # graphviz_config={
-                #     "rankdir": rankdir,
-                #     "ranksep": ranksep,
-                #     "nodesep": nodesep,
-                # },
-                directed=False,
-                physics=True,
-                hierarchical=False,
-                # **kwargs
-            )
+            # config = Config(
+            #     width=1200,
+            #     height=1200,
+            #     graphviz_layout=layout,
+            #     # graphviz_config={
+            #     #     "rankdir": rankdir,
+            #     #     "ranksep": ranksep,
+            #     #     "nodesep": nodesep,
+            #     # },
+            #     directed=False,
+            #     physics=phys,
+            #     # physics_widget=True,
+            #     hierarchical=False,
+            #     # **kwargs
+            # )
             # st.write(net.edges)
+
             for u in net.nodes:
                 # st.write(couleur)
                 nodes.append(
@@ -244,8 +252,13 @@ if var_text:
                         title=v["title"],
                         color=v["color"],
                     )
-                )  # label=v["title"],
-            return_value = agraph(nodes, edges, config=config)
+                )
+            # label=v["title"],
+            st.warning(f"Retrieved {cpt_sel} members; Added {cpt_other} interactions ")
+            c = ConfigBuilder(nodes, edges)
+            d = c.build()
+            # st.write(f"Added {cpt_other} interactions")
+            return_value = agraph(nodes, edges, config=d)
         # A = GG.edges()
         # st.write(A)
         # st.write(nodes)
