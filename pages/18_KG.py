@@ -157,9 +157,15 @@ if var_text:
                 #     # st.write(name)
                 #     net.add_node(name, label=name, color="blue")
                 if name.upper() in list_gene:
-                    net.add_node(name, label=name, color="green")
+                    net.add_node(name, label=name, color="grey")
                 else:
-                    net.add_node(name, label=name, color="blue")
+                    k = int(df.loc[df["source"] == name, "categorical_label"].unique())
+                    # st.write(tuple(k))
+                    net.add_node(
+                        name,
+                        label=name,
+                        color=matplotlib.colors.to_hex(palette.get(k), keep_alpha=True),
+                    )
             # net.add_nodes(list_nodes)
             # st.write(net)
             for i, j, k, m in df[
@@ -188,13 +194,58 @@ if var_text:
             #         )
             #     )
             # net.from_nx(GG)
-            net.show_buttons(filter_="physics")
-            net.show("/mnt/shares/L/Temp/test4.html", notebook=False)
+            # net.show_buttons(filter_="physics")
+            # net.show("/mnt/shares/L/Temp/test4.html", notebook=False)
 
-            HtmlFile = open("/mnt/shares/L/Temp/test4.html", "r", encoding="utf-8")
-            source_code = HtmlFile.read()
-            components.html(source_code, height=1200, width=1200)
+            # HtmlFile = open("/mnt/shares/L/Temp/test4.html", "r", encoding="utf-8")
+            # source_code = HtmlFile.read()
+            # components.html(source_code, height=1200, width=1200)
+            layout = st.sidebar.selectbox(
+                "layout", ["dot", "neato", "circo", "fdp", "sfdp", "twopi", "osage"]
+            )
+            # rankdir = st.sidebar.selectbox("rankdir", ["BT", "TB", "LR", "RL"])
+            # ranksep = st.sidebar.slider("ranksep", min_value=0, max_value=10)
+            # nodesep = st.sidebar.slider("nodesep", min_value=0, max_value=10)
 
+            config = Config(
+                width=1200,
+                height=1200,
+                graphviz_layout=layout,
+                # graphviz_config={
+                #     "rankdir": rankdir,
+                #     "ranksep": ranksep,
+                #     "nodesep": nodesep,
+                # },
+                directed=False,
+                physics=True,
+                hierarchical=False,
+                # **kwargs
+            )
+            # st.write(net.edges)
+            for u in net.nodes:
+                # st.write(couleur)
+                nodes.append(
+                    Node(
+                        id=u["id"],
+                        label=u["label"],
+                        color=u["color"],
+                        # title=list_desc[i],
+                        shape=u["shape"],
+                        font="10px arial grey",
+                        size=15,
+                    )
+                )
+            edges = []
+            for v in net.edges:
+                edges.append(
+                    Edge(
+                        source=v["from"],
+                        target=v["to"],
+                        title=v["title"],
+                        color=v["color"],
+                    )
+                )  # label=v["title"],
+            return_value = agraph(nodes, edges, config=config)
         # A = GG.edges()
         # st.write(A)
         # st.write(nodes)
