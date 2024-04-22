@@ -49,18 +49,28 @@ def get_infos(dftiti):
         st.plotly_chart(fig, theme="streamlit", use_container_width=True)
         # fig_c, ax1 = plt.subplots()
         ax1 = dotplot(
-            enr.results,
-            column="P-value",
-            x="Gene_set",  # set x axis, so you could do a multi-sample/library comparsion
+            enr.res2d,
+            # title="KEGG_2021_Human",
+            cmap="viridis_r",
             size=10,
-            top_term=5,
             figsize=(3, 5),
-            # title="KEGG",
-            xticklabels_rot=45,  # rotate xtick labels
-            show_ring=True,  # set to False to revmove outer ring
-            marker="o",
         )
+        # ax1 = dotplot(
+        #     enr.results,
+        #     column="P-value",
+        #     x="Gene_set",  # set x axis, so you could do a multi-sample/library comparsion
+        #     size=10,
+        #     top_term=5,
+        #     figsize=(3, 5),
+        #     # title="KEGG",
+        #     xticklabels_rot=45,  # rotate xtick labels
+        #     show_ring=True,  # set to False to revmove outer ring
+        #     marker="o",
+        # )
         st.pyplot(ax1.figure)
+
+        ax = barplot(enr.res2d, figsize=(4, 5), color="darkred")
+        st.pyplot(ax.figure)
     else:
         st.warning("Not enough Data")
 
