@@ -50,7 +50,7 @@ def get_infos(dftiti):
         # fig_c, ax1 = plt.subplots()
         ax1 = dotplot(
             enr.res2d,
-            # title="KEGG_2021_Human",
+            title=sel,
             cmap="viridis_r",
             size=10,
             figsize=(3, 5),
@@ -69,7 +69,7 @@ def get_infos(dftiti):
         # )
         st.pyplot(ax1.figure)
 
-        ax = barplot(enr.res2d, figsize=(4, 5), color="darkred")
+        ax = barplot(enr.res2d, title=sel, figsize=(4, 5), color="darkred")
         st.pyplot(ax.figure)
     else:
         st.warning("Not enough Data")
