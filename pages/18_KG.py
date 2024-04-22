@@ -37,6 +37,9 @@ list_gene = [t.strip().upper() for t in var_t if t != ""]
 # list_gene = var_t
 # st.write(list_gene)
 # exit(0)
+df_kg_genes = pd.DataFrame()
+df_kg_genes["KG_List"] = list_gene
+st.session_state["KG_Nodes"] = df_kg_genes
 pattern = "|".join(list_gene)
 # st.write(pattern)
 # KG = KG.query("x_name == @list_gene | y_name==@list_gene")
@@ -172,7 +175,10 @@ if var_text:
             st.warning(
                 f"Retrieved {cpt_sel} members ---> Added {cpt_other} interactions "
             )
-
+            df_sel = pd.DataFrame()
+            df_sel["Nodes"] = net.get_nodes()
+            st.write("all interaction", df_sel)
+            st.session_state["KG_ALL_Nodes"] = df_sel
             c = ConfigBuilder(
                 nodes,
                 edges,
