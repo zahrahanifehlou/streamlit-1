@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 import plotly.express as px
 import streamlit as st
+from gseapy import barplot, dotplot
 
 st.header("Get biological infos from multiple databases", divider="rainbow")
 
@@ -27,6 +28,8 @@ def get_infos(dftiti):
 
     dftiti.dropna(subset=sel_col, axis=0, inplace=True)
     if len(dftiti) > 1:
+        # import matplotlib.pyplot as plt
+
         gene_list = dftiti[sel_col].squeeze().str.strip().to_list()
 
         enr = gp.enrichr(
@@ -44,6 +47,20 @@ def get_infos(dftiti):
 
         fig = px.bar(df_enr, x="Term", y="Log_10_Pv")
         st.plotly_chart(fig, theme="streamlit", use_container_width=True)
+        # fig_c, ax1 = plt.subplots()
+        ax1 = dotplot(
+            enr.results,
+            column="P-value",
+            x="Gene_set",  # set x axis, so you could do a multi-sample/library comparsion
+            size=10,
+            top_term=5,
+            figsize=(3, 5),
+            # title="KEGG",
+            xticklabels_rot=45,  # rotate xtick labels
+            show_ring=True,  # set to False to revmove outer ring
+            marker="o",
+        )
+        st.pyplot(ax1.figure)
     else:
         st.warning("Not enough Data")
 

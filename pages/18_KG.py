@@ -42,7 +42,7 @@ pattern = "|".join(list_gene)
 # KG = KG.query("x_name == @list_gene | y_name==@list_gene")
 # KG = KG.query("x_name in @list_gene")
 if var_text:
-    # KG = KG[KG["x_name"].str.contains(pattern, case=False, regex=True)]
+    # KG = KG2[KG2["x_name"].str.contains(pattern, case=False, regex=True)]
     KG = KG2.query("x_name == @list_gene | y_name==@list_gene")
     # for i in range()
 
