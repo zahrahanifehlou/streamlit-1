@@ -395,7 +395,7 @@ if len(df_prof) > 0:
             figsize=(16, len(plt_src) / 2),
         )
 
-        st.pyplot(fig_clusmap)
+        #st.pyplot(fig_clusmap)
 
     st.session_state["df_profiles"] = tmp
 
