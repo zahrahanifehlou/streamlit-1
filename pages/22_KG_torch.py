@@ -54,10 +54,12 @@ criterion = MarginLoss(margin)
 # model = load_pretrained_transe("fb15k", 100)
 # Move everything to CUDA if available
 if cuda.is_available():
+    st.write("Cuda")
     cuda.empty_cache()
     model.cuda()
     criterion.cuda()
-
+else:
+    st.write("CPU")
 # Define the torch optimizer to be used
 optimizer = Adam(model.parameters(), lr=lr, weight_decay=1e-5)
 
@@ -101,5 +103,5 @@ st.plotly_chart(px.line(df_loss, x=df_loss.index, y="loss"))
 # a = RelationInference(model, ent_emb, ent_emb.indices())
 # model.RelationInference.evaluate(b_size=b_size)
 evaluator = LinkPredictionEvaluator(model, kg_t)
-evaluator.evaluate(b_size=32)
+evaluator.evaluate(b_size=256)
 st.write(evaluator.print_results())
