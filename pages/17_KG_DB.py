@@ -44,9 +44,9 @@ if len(list_gene) > 0:
     converted_dict = {key: value["__id__"] for key, value in label_dict.items()}
     H = nx.relabel_nodes(G, converted_dict)
     # H = nx.relabel_nodes(G, converted_dict)
-    pos = nx.spring_layout(H)
-    nx.draw_networkx_labels(H, pos)
-    nx.draw_networkx_edges(H, pos, edge_color="r", arrows=False)
+    # pos = nx.spring_layout(H)
+    # nx.draw_networkx_labels(H, pos)
+    # nx.draw_networkx_edges(H, pos, edge_color="r", arrows=False)
     # nx.draw_networkx_nodes(H, pos)
 
     net = Network(notebook=False)
