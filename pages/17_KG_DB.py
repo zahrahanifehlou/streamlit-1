@@ -29,12 +29,15 @@ var_text = st.text_area(
     "Enter your list of entities", help="Name or ID separated by enter"
 )
 var_t = var_text.split("\n")
+depth = st.slider("Select depth:", 0, 4, 1)
 deg = st.slider("Select Degree:", 0, 10, 2)
 list_gene = [t.strip().upper() for t in var_t if t != ""]
 if len(list_gene) > 0:
     gsql = (
-        f"""SELECT * from cypher('%s', $$ MATCH p=(n )<-[r*{deg}]-() 
+        f"""SELECT * from cypher('%s', $$ MATCH p=(n )<-[r*{depth}]-() 
         where n.__id__ in {list_gene} 
+        WITH  p,count(r) as rel_cnt
+        WHERE rel_cnt > {deg}
         RETURN  p   $$) as (v agtype)"""
         % graphName
     )
