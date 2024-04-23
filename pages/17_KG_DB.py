@@ -1,6 +1,6 @@
 import streamlit as st
 import pandas as pd
-from age import *
+import age
 import streamlit.components.v1 as components
 from pyvis.network import Network
 import igraph as ig
@@ -8,9 +8,8 @@ from streamlit_agraph import agraph, Node, Edge, Config, ConfigBuilder
 import matplotlib
 from sklearn import preprocessing
 import psycopg2
-from age.networkx import *
+from age import networkx
 import networkx as nx
-
 
 
 st.set_page_config(
@@ -37,7 +36,7 @@ var_text = st.text_area(
 var_t = var_text.split("\n")
 deg = st.slider("Select Degree:", 0, 10, 2)
 list_gene = [t.strip().upper() for t in var_t if t != ""]
-if len(list_gene) >0:
+if len(list_gene) > 0:
     gsql = (
         f"""SELECT * from cypher('%s', $$ MATCH p=(n )<-[r*{deg}]-() 
         where n.__id__ in {list_gene} 
@@ -45,50 +44,45 @@ if len(list_gene) >0:
         % graphName
     )
     st.write(gsql)
-    G = age_to_networkx(conn, graphName, 
-                        query=gsql )
-    label_dict=dict(G.nodes(data="properties", default=1))
-    converted_dict = {key: value['__id__'] for key, value in label_dict.items()}
+    G = networkx.age_to_networkx(conn, graphName, query=gsql)
+    label_dict = dict(G.nodes(data="properties", default=1))
+    converted_dict = {key: value["__id__"] for key, value in label_dict.items()}
     H = nx.relabel_nodes(G, converted_dict)
     H = nx.relabel_nodes(G, converted_dict)
     pos = nx.spring_layout(H)
     nx.draw_networkx_labels(H, pos)
-    nx.draw_networkx_edges(H, pos, edge_color='r', arrows = True)
-    nx.draw_networkx_nodes(H,pos)
- 
+    nx.draw_networkx_edges(H, pos, edge_color="r", arrows=True)
+    nx.draw_networkx_nodes(H, pos)
+
     net = Network(notebook=False)
     net.from_nx(H)
-    #st.write(net.nodes)
+    # st.write(net.nodes)
     nodes = [
-                Node(
-                    id=u["id"],
-                    label=u["id"],
-                    color=u["color"],
-                    # title=list_desc[i],
-                    shape=u["shape"],
-                    font="10px arial grey",
-                    size=15,
-                )
-                for u in net.nodes
-            ]
+        Node(
+            id=u["id"],
+            label=u["id"],
+            color=u["color"],
+            # title=list_desc[i],
+            shape=u["shape"],
+            font="10px arial grey",
+            size=15,
+        )
+        for u in net.nodes
+    ]
 
     edges = [
-                Edge(
-                    source=v["from"],
-                    target=v["to"],
-                   # title=v["title"],
-                   # color=v["color"],
-                )
-                for v in net.edges
-            ]
-   
-   
+        Edge(
+            source=v["from"],
+            target=v["to"],
+            # title=v["title"],
+            # color=v["color"],
+        )
+        for v in net.edges
+    ]
+
     c = ConfigBuilder(
         nodes,
         edges,
     )
     d = c.build(dictify=False)
     return_value = agraph(nodes, edges, config=d)
-
-
-    
