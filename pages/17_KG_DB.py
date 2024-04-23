@@ -24,14 +24,14 @@ st.subheader(
 )
 
 # connect DB
-graphName = 'kg1'
+graphName = "kg1"
 conn = psycopg2.connect(
     host="192.168.2.131",
     port="5432",
     dbname="ksi_cpds",
     user="postgres",
-   # password="123456"
-    )
+    # password="123456"
+)
 
 age.setUpAge(conn, graphName)
 
@@ -42,8 +42,10 @@ var_text = st.text_area(
 var_t = var_text.split("\n")
 list_gene = [t.strip().upper() for t in var_t if t != ""]
 
-gsql=f"""SELECT * from cypher('%s', $$ MATCH p=(n )<-[r*2]-() 
-    where n.__id__ in {list_gene}
- 
-    RETURN  p   $$) as (v agtype)"""% graphName
-st.write(gsql)  
+gsql = (
+    f"""SELECT * from cypher('%s', $$ MATCH p=(n )<-[r*2]-() 
+    where n.__id__ in {list_gene} 
+    RETURN  p   $$) as (v agtype)"""
+    % graphName
+)
+st.write(gsql)

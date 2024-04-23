@@ -1,5 +1,3 @@
-from age.networkx import *
-from age import *
 import networkx as nx
 import argparse
 
