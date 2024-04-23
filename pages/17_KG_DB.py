@@ -43,11 +43,11 @@ if len(list_gene) > 0:
     label_dict = dict(G.nodes(data="properties", default=1))
     converted_dict = {key: value["__id__"] for key, value in label_dict.items()}
     H = nx.relabel_nodes(G, converted_dict)
-    H = nx.relabel_nodes(G, converted_dict)
+    # H = nx.relabel_nodes(G, converted_dict)
     pos = nx.spring_layout(H)
     nx.draw_networkx_labels(H, pos)
-    nx.draw_networkx_edges(H, pos, edge_color="r", arrows=True)
-    nx.draw_networkx_nodes(H, pos)
+    nx.draw_networkx_edges(H, pos, edge_color="r", arrows=False)
+    # nx.draw_networkx_nodes(H, pos)
 
     net = Network(notebook=False)
     net.from_nx(H)
