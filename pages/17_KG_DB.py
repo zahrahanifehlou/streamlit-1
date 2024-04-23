@@ -1,12 +1,7 @@
 import streamlit as st
-import pandas as pd
 import age
-import streamlit.components.v1 as components
 from pyvis.network import Network
-import igraph as ig
-from streamlit_agraph import agraph, Node, Edge, Config, ConfigBuilder
-import matplotlib
-from sklearn import preprocessing
+from streamlit_agraph import agraph, Node, Edge, ConfigBuilder
 import psycopg2
 from age import networkx
 import networkx as nx
