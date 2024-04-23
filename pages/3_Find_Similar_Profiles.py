@@ -314,6 +314,7 @@ else:
 
             st.write("\n")  # ----------plot PROFILE heatmap
             tmp = df_keep_prof_cpd.copy()
+          
 
             if len(tmp) > 1:
                 plt_src, col_colors = get_col_colors(tmp, inex_col_name="name")
@@ -331,7 +332,7 @@ else:
                     figsize=(16, len(plt_src) / 2),
                 )
 
-                st.pyplot(fig_clusmap)
+               # st.pyplot(fig_clusmap)
 
 # --------------------------------------------------------------------------------------------------------
 # with knn_sim_tab:  # Similar CPDs with UMAP
