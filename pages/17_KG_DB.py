@@ -1,6 +1,6 @@
 import streamlit as st
 import pandas as pd
-import networkx as nx
+from age import *
 import streamlit.components.v1 as components
 from pyvis.network import Network
 import igraph as ig
@@ -9,19 +9,14 @@ import matplotlib
 from sklearn import preprocessing
 import psycopg2
 from age.networkx import *
-from age import *
 import networkx as nx
-import argparse
+
+
 
 st.set_page_config(
     layout="wide",
 )
-st.title("Knowledge Graph (PrimeKG)")
-st.header("17080 diseases, 4M relationship,100K Nodes,20 Sources")
-st.subheader(
-    "Building a knowledge graph to enable precision medicine (Harvard MS)",
-    divider="rainbow",
-)
+
 
 # connect DB
 graphName = "kg1"
@@ -41,11 +36,25 @@ var_text = st.text_area(
 )
 var_t = var_text.split("\n")
 list_gene = [t.strip().upper() for t in var_t if t != ""]
-
-gsql = (
-    f"""SELECT * from cypher('%s', $$ MATCH p=(n )<-[r*2]-() 
-    where n.__id__ in {list_gene} 
-    RETURN  p   $$) as (v agtype)"""
-    % graphName
-)
-st.write(gsql)
+if len(list_gene) >0:
+    gsql = (
+        f"""SELECT * from cypher('%s', $$ MATCH p=(n )<-[r*2]-() 
+        where n.__id__ in {list_gene} 
+        RETURN  p   $$) as (v agtype)"""
+        % graphName
+    )
+    st.write(gsql)
+    G = age_to_networkx(conn, graphName, 
+                        query=gsql )
+    label_dict=dict(G.nodes(data="properties", default=1))
+    converted_dict = {key: value['__id__'] for key, value in label_dict.items()}
+    H = nx.relabel_nodes(G, converted_dict)
+    H = nx.relabel_nodes(G, converted_dict)
+    pos = nx.spring_layout(H)
+    nx.draw_networkx_labels(H, pos)
+    nx.draw_networkx_edges(H, pos, edge_color='r', arrows = True)
+    nx.draw_networkx_nodes(H,pos)
+ 
+    # nt = Network(notebook=False)
+    # nt.from_nx(H)
+    # nt.show('nx.html')
