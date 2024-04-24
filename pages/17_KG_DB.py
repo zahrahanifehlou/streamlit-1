@@ -26,6 +26,7 @@ def get_graph(list_gene, depth):
     gsql = (
         f"""SELECT * from cypher('%s', $$ MATCH p=(n )<-[r*{depth}]-() 
         where n.__id__ in {list_gene} 
+      
         RETURN  p   $$) as (v agtype)"""
         % graphName
     )
@@ -38,26 +39,27 @@ def get_graph(list_gene, depth):
 
 
 col1, col2 = st.columns(2)
-
 with col1:
+    depth = st.slider("Select depth:", 0, 4, 1)
+    deg = st.slider("Select Degree:", 0, 10, 0)
+    list_rel=['protein_protein', 'drug_protein', 'drug_drug','disease_protein', 'disease_disease','pathway_pathway', 'pathway_protein']
+    sel_rel = st.multiselect("Chose relations for the graph", list_rel)
+with col2:
     
     var_text = st.text_area(
         "Enter your list of entities", help="Name or ID separated by enter"
     )
     var_t = var_text.split("\n")
     list_gene = [t.strip().upper() for t in var_t if t != ""]
-with col2:
-    depth = st.slider("Select depth:", 0, 4, 1)
 
 
-
-deg = st.slider("Select Degree:", 0, 10, 0)
 
 if len(list_gene) > 0:
-    G=get_graph(list_gene, depth)
+    G=get_graph(list_gene, depth,sel_rel)
     
     remove = [x for x in G.nodes() if G.degree(x) <= deg]
     G.remove_nodes_from(remove)
+ 
     
     label_dict = dict(G.nodes(data="properties", default=1))
     converted_dict = {key: value["__id__"] for key, value in label_dict.items()}
@@ -88,8 +90,8 @@ if len(list_gene) > 0:
         )
         for v in net.edges
     ]
-    config = Config(height=1200,
-                    width=1200,
+    config = Config(height=1000,
+                    width=1000,
                     nodeHighlightBehavior=True,
                     highlightColor="#F7A7A6",
                     directed=True,
