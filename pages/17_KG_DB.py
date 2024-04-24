@@ -55,7 +55,7 @@ with col2:
 
 
 if len(list_gene) > 0:
-    G=get_graph(list_gene, depth,sel_rel)
+    G=get_graph(list_gene, depth)
     
     remove = [x for x in G.nodes() if G.degree(x) <= deg]
     G.remove_nodes_from(remove)
