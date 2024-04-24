@@ -41,10 +41,12 @@ profile_conn = "postgres://arno:12345@192.168.2.131:5432/ksilink_cpds"
 conn = "postgres://arno:123456@192.168.2.131:5432/ksi_cpds"
 sql_profile = f"select * from aggprofile where metasource='{choix_source}'"
 df_source = sql_df(sql_profile, profile_conn)
-sql_batch = f"select * from cpdbatchs where metasource='{choix_source}'"
+df_source = df_source.rename(columns={"metabatchid": "batchid"})
+sql_batch = f"select * from platemap where source='{choix_source}'"
 df_batchs = sql_df(sql_batch, conn)
 df_batchs = df_batchs.drop_duplicates()
 df_merge = df_source.merge(df_batchs, on="batchid")
+st.write(df_merge.sample(5))
 df_merge = df_merge.rename(
     columns={"batchid": "meta_batchid", "pubchemid": "meta_pubchemid"}
 )
@@ -62,10 +64,10 @@ simi_df_alt = simi_df_alt.stack().reset_index()
 simi_df_alt.columns = ["source", "target", "similarity"]
 
 
-simi_high = simi_df_alt[simi_df_alt["similarity"] > 0.9]
-st.write(simi_high.reset_index(drop=True))
+# simi_high = simi_df_alt[simi_df_alt["similarity"] > 0.9]
+# st.write(simi_high.reset_index(drop=True))
 
-G = nx.from_pandas_edgelist(simi_high)
+G = nx.from_pandas_edgelist(simi_df_alt)
 st.write(G)
 # node_and_degree = G.degree()
 # most_connected_node = sorted(G.degree, key=lambda x: x[1], reverse=True)[0]
