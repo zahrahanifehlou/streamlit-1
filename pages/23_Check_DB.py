@@ -305,7 +305,7 @@ for table in tables:
         )
 
 
-st.subheader("check diff in batchids ", divider="rainbow")
+st.subheader("check diff in batchids for ksilink source ", divider="rainbow")
 sql_kegg_cpd = "select metabatchid from aggprofile where metasource='Ksilink_625'"
 df_agg = sql_df(sql_kegg_cpd, conn_prof)
 # st.write("agg_batchid", df_keggcpd)
