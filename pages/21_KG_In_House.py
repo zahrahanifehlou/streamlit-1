@@ -20,10 +20,10 @@ filter_col1 = df_merge.select_dtypes(include=[int, float]).columns.tolist()
 
 simi = cosine_similarity(df_merge[filter_col1])
 
-simi_df_alt = pd.DataFrame(simi, index=df_merge["source"], columns=df_merge["pubchemid"])
+simi_df_alt = pd.DataFrame(simi, index=df_merge["source"], columns=df_merge["batchid"])
 simi_df_alt = simi_df_alt.where(np.triu(np.ones(simi_df_alt.shape), k=1).astype(bool))
 simi_df_alt = simi_df_alt.stack().reset_index()
-simi_df_alt.columns = ["source", "pubchemid", "similarity"]
+simi_df_alt.columns = ["source", "batchid", "similarity"]
 st.write(simi_df_alt)
 
 # # simi_high = simi_df_alt[simi_df_alt["similarity"] > 0.9]
