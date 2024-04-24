@@ -16,20 +16,23 @@ df_merge = sql_df(sql_query, conn)
 
 df_merge["pubchemid"] = df_merge["pubchemid"].astype(int)
 df_merge = df_merge[df_merge["pubchemid"] > 0]
+df_merge["pubchemid"] = df_merge["pubchemid"].astype(str)
 # df_merge["pubchemid"] = df_merge["pubchemid"].str.split(".").str[0]
 
 filter_col1 = df_merge.select_dtypes(include=[int, float]).columns.tolist()
 
-st.write(len(df_merge))
+st.write(df_merge)
 
 
 simi = cosine_similarity(df_merge[filter_col1])
-
-simi_df_alt = pd.DataFrame(simi, index=df_merge["source"], columns=df_merge["batchid"])
+# st.write(simi[0:10])
+df_merge["source"] = df_merge["pubchemid"]
+df_merge["target"] = df_merge["pubchemid"]
+simi_df_alt = pd.DataFrame(simi, index=df_merge["source"], columns=df_merge["target"])
 simi_df_alt = simi_df_alt.where(np.triu(np.ones(simi_df_alt.shape), k=1).astype(bool))
 simi_df_alt = simi_df_alt.stack().reset_index()
-simi_df_alt.columns = ["source", "batchid", "similarity"]
-st.write(len(simi_df_alt))
+simi_df_alt.columns = ["source", "target", "similarity"]
+st.write(simi_df_alt.sample(10))
 
 # # simi_high = simi_df_alt[simi_df_alt["similarity"] > 0.9]
 # # st.write(simi_high.reset_index(drop=True))
