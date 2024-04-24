@@ -1,7 +1,7 @@
 import streamlit as st
 import age
 from pyvis.network import Network
-from streamlit_agraph import agraph, Node, Edge, ConfigBuilder
+from streamlit_agraph import agraph, Node, Edge, ConfigBuilder,Config
 import psycopg2
 from age import networkx
 import networkx as nx
@@ -13,37 +13,49 @@ st.set_page_config(
 
 
 # connect DB
-graphName = "kg1"
-conn = psycopg2.connect(
-    host="192.168.2.131",
-    port="5432",
-    dbname="ksi_cpds",
-    user="postgres",
-    # password="123456"
-)
-
-age.setUpAge(conn, graphName)
-
-
-var_text = st.text_area(
-    "Enter your list of entities", help="Name or ID separated by enter"
-)
-var_t = var_text.split("\n")
-col1, col2 = st.columns(2)
-with col1:
-    depth = st.slider("Select depth:", 0, 4, 1)
-with col2:
-    deg = st.slider("Select Degree:", 0, 10, 0)
-list_gene = [t.strip().upper() for t in var_t if t != ""]
-if len(list_gene) > 0:
+@st.cache_data
+def get_graph(list_gene, depth):
+    graphName = "kg2"
+    conn = psycopg2.connect(
+        host="192.168.2.131",
+        port="5432",
+        dbname="ksi_cpds",
+        user="postgres",
+        # password="123456"
+        )
     gsql = (
         f"""SELECT * from cypher('%s', $$ MATCH p=(n )<-[r*{depth}]-() 
         where n.__id__ in {list_gene} 
         RETURN  p   $$) as (v agtype)"""
         % graphName
     )
+    age.setUpAge(conn, graphName)
     st.write(gsql)
     G = networkx.age_to_networkx(conn, graphName, query=gsql)
+    return G
+
+
+
+
+col1, col2 = st.columns(2)
+
+with col1:
+    
+    var_text = st.text_area(
+        "Enter your list of entities", help="Name or ID separated by enter"
+    )
+    var_t = var_text.split("\n")
+    list_gene = [t.strip().upper() for t in var_t if t != ""]
+with col2:
+    depth = st.slider("Select depth:", 0, 4, 1)
+
+
+
+deg = st.slider("Select Degree:", 0, 10, 0)
+
+if len(list_gene) > 0:
+    G=get_graph(list_gene, depth)
+    
     remove = [x for x in G.nodes() if G.degree(x) <= deg]
     G.remove_nodes_from(remove)
     
@@ -76,10 +88,16 @@ if len(list_gene) > 0:
         )
         for v in net.edges
     ]
+    config = Config(height=1200,
+                    width=1200,
+                    nodeHighlightBehavior=True,
+                    highlightColor="#F7A7A6",
+                    directed=True,
+                    collapsible=True,
+                    physics=False, 
+                    staticGraphWithDragAndDrop=True,
+                    link={'labelProperty': 'label', 'renderLabel': True}
+                    )
 
-    c = ConfigBuilder(
-        nodes,
-        edges,
-    )
-    d = c.build(dictify=False)
-    return_value = agraph(nodes, edges, config=d)
+   
+    return_value = agraph(nodes, edges, config=config)
