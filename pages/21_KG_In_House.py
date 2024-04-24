@@ -14,8 +14,11 @@ sql_query="SELECT aggprofile.*, cpdbatchs.pubchemid , cpd.cpdname , cpd.smile , 
     INNER JOIN cpdbatchs ON cpdbatchs.batchid = aggprofile.batchid left JOIN cpd ON cpdbatchs.pubchemid = cpd.pubchemid WHERE aggprofile.source = 'Ksilink_25'"
 
 df_merge = sql_df(sql_query, conn)
+df_merge['pubchemid'] = df_merge['pubchemid'].astype(str)
+df_merge['pubchemid'] = df_merge['pubchemid'].str.split('.').str[0]
+
 filter_col1 = df_merge.select_dtypes(include=[int, float]).columns.tolist()
-st.write(len(df_merge))
+
 
 
 
