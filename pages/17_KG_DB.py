@@ -24,14 +24,15 @@ def get_graph(list_gene, depth):
         # password="123456"
         )
     gsql = (
-        f"""SELECT * from cypher('%s', $$ MATCH p=(n )<-[r*{depth}]-() 
+        f"""SELECT * from cypher('%s', $$ MATCH p=(n )-[r*{depth}]-() 
         where n.__id__ in {list_gene} 
+      
       
         RETURN  p   $$) as (v agtype)"""
         % graphName
     )
     age.setUpAge(conn, graphName)
-    st.write(gsql)
+
     G = networkx.age_to_networkx(conn, graphName, query=gsql)
     return G
 
@@ -57,8 +58,15 @@ with col2:
 if len(list_gene) > 0:
     G=get_graph(list_gene, depth)
     
-    remove = [x for x in G.nodes() if G.degree(x) <= deg]
+    edge_remove = set([d for d in G.edges(data="label", default=1) if  d[-1] not in (sel_rel)])
+    G.remove_edges_from(edge_remove)
+    
+    remove = [x for x in G.nodes() if G.degree(x) < deg]
     G.remove_nodes_from(remove)
+    
+    
+    
+   
  
     
     label_dict = dict(G.nodes(data="properties", default=1))
