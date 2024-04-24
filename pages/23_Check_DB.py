@@ -14,162 +14,159 @@ import igraph as ig
 import leidenalg as la
 import matplotlib.pyplot as plt
 import psycopg2
-from llama_cpp import Llama
-from huggingface_hub import snapshot_download
-from transformers import AutoModelForCausalLM, AutoTokenizer
 
 
-# model_id = "mistralai/Mixtral-8x7B-Instruct-v0.1"
-# tokenizer = AutoTokenizer.from_pretrained(model_id)
-# snapshot_download(repo_id="mistralai/Mixtral-8x7B-Instruct-v0.1")
+# # model_id = "mistralai/Mixtral-8x7B-Instruct-v0.1"
+# # tokenizer = AutoTokenizer.from_pretrained(model_id)
+# # snapshot_download(repo_id="mistralai/Mixtral-8x7B-Instruct-v0.1")
 
 
-@st.cache_data
-def load_data():
-    primekg = pd.read_csv("../kg.csv", low_memory=False)
-    return primekg
+# @st.cache_data
+# def load_data():
+#     primekg = pd.read_csv("../kg.csv", low_memory=False)
+#     return primekg
 
 
-KG = load_data()
-st.write("Test", KG.sample(22).reset_index())
-# llm = Llama.from_pretrained(
-#     repo_id="Qwen/Qwen1.5-0.5B-Chat-GGUF", filename="*q8_0.gguf", verbose=False
+# KG = load_data()
+# st.write("Test", KG.sample(22).reset_index())
+# # llm = Llama.from_pretrained(
+# #     repo_id="Qwen/Qwen1.5-0.5B-Chat-GGUF", filename="*q8_0.gguf", verbose=False
+# # )
+
+# # llm = Llama(
+# #     # model_path="../mistral-ins-7b-q4/mistral-7b-instruct-v0.2.Q4_K_M.gguf",
+# #     # "L:\PROJECTS\JUMP-CRISPR\Code\streamlit_arno\mixtral\mixtral-8x7b-v0.1.Q4_K_M.gguf"
+# #     model_path="../mixtral/mixtral-8x7b-v0.1.Q4_K_M.gguf",
+# #     chat_format="chatml",
+# #     # n_gpu_layers=-1, # Uncomment to use GPU acceleration
+# #     # seed=1337, # Uncomment to set a specific seed
+# #     n_ctx=2048,  # Uncomment to increase the context window
+# # )
+
+
+# # output = llm.create_chat_completion(
+# #     messages=[
+# #         {
+# #             "role": "user",
+# #             "content": "The variable KG is a pandas DataFrame obtained with @load_data()",
+# #         },
+# #         {"role": "assistant", "content": ""},
+# #         {"role": "user", "content": "What are the columns of KG"},
+# #         {"role": "assistant", "content": ""},
+# #     ],
+# #     response_format={
+# #         "type": "json_object",
+# #         "schema": {
+# #             "type": "object",
+# #             "properties": {"response": {"type": "string"}},
+# #             "required": ["response"],
+# #             # "properties": {"team_name": {"type": "string"}},
+# #             # "required": ["team_name"],
+# #         },
+# #     },
+# #     temperature=0.7,
+# # )
+
+
+# # from transformers import AutoModelForCausalLM, AutoTokenizer
+# import os
+
+# from llama_index.embeddings.huggingface import HuggingFaceEmbedding
+# from llama_index.core import Settings
+# from llama_index.core.query_engine import PandasQueryEngine
+# from llama_index.llms.llama_cpp import LlamaCPP
+# from llama_index.llms.llama_cpp.llama_utils import (
+#     messages_to_prompt,
+#     completion_to_prompt,
 # )
-
-# llm = Llama(
-#     # model_path="../mistral-ins-7b-q4/mistral-7b-instruct-v0.2.Q4_K_M.gguf",
-#     # "L:\PROJECTS\JUMP-CRISPR\Code\streamlit_arno\mixtral\mixtral-8x7b-v0.1.Q4_K_M.gguf"
-#     model_path="../mixtral/mixtral-8x7b-v0.1.Q4_K_M.gguf",
-#     chat_format="chatml",
-#     # n_gpu_layers=-1, # Uncomment to use GPU acceleration
-#     # seed=1337, # Uncomment to set a specific seed
-#     n_ctx=2048,  # Uncomment to increase the context window
-# )
+# from llama_index.core.chat_engine import SimpleChatEngine
 
 
-# output = llm.create_chat_completion(
-#     messages=[
-#         {
-#             "role": "user",
-#             "content": "The variable KG is a pandas DataFrame obtained with @load_data()",
-#         },
-#         {"role": "assistant", "content": ""},
-#         {"role": "user", "content": "What are the columns of KG"},
-#         {"role": "assistant", "content": ""},
-#     ],
-#     response_format={
-#         "type": "json_object",
-#         "schema": {
-#             "type": "object",
-#             "properties": {"response": {"type": "string"}},
-#             "required": ["response"],
-#             # "properties": {"team_name": {"type": "string"}},
-#             # "required": ["team_name"],
-#         },
-#     },
-#     temperature=0.7,
-# )
+# def llama():
+#     llm = LlamaCPP(
+#         # You can pass in the URL to a GGML model to download it automatically
+#         # model_url=model_url,
+#         # optionally, you can set the path to a pre-downloaded model instead of model_url
+#         model_path="/mnt/shares/L/PROJECTS/JUMP-CRISPR/Code/streamlit_arno/mistral-ins-7b-q4/mistral-7b-instruct-v0.2.Q4_K_M.gguf",
+#         temperature=0.1,
+#         max_new_tokens=2560,
+#         # llama2 has a context window of 4096 tokens, but we set it lower to allow for some wiggle room
+#         context_window=3900,
+#         # kwargs to pass to __call__()
+#         generate_kwargs={},
+#         # kwargs to pass to __init__()
+#         # set to at least 1 to use GPU
+#         # model_kwargs={"n_gpu_layers": 1},
+#         # transform inputs into Llama2 format
+#         messages_to_prompt=messages_to_prompt,
+#         completion_to_prompt=completion_to_prompt,
+#         verbose=True,
+#     )
+#     return llm
 
 
-# from transformers import AutoModelForCausalLM, AutoTokenizer
-import os
-
-from llama_index.embeddings.huggingface import HuggingFaceEmbedding
-from llama_index.core import Settings
-from llama_index.core.query_engine import PandasQueryEngine
-from llama_index.llms.llama_cpp import LlamaCPP
-from llama_index.llms.llama_cpp.llama_utils import (
-    messages_to_prompt,
-    completion_to_prompt,
-)
-from llama_index.core.chat_engine import SimpleChatEngine
-
-
-def llama():
-    llm = LlamaCPP(
-        # You can pass in the URL to a GGML model to download it automatically
-        # model_url=model_url,
-        # optionally, you can set the path to a pre-downloaded model instead of model_url
-        model_path="/mnt/shares/L/PROJECTS/JUMP-CRISPR/Code/streamlit_arno/mistral-ins-7b-q4/mistral-7b-instruct-v0.2.Q4_K_M.gguf",
-        temperature=0.1,
-        max_new_tokens=2560,
-        # llama2 has a context window of 4096 tokens, but we set it lower to allow for some wiggle room
-        context_window=3900,
-        # kwargs to pass to __call__()
-        generate_kwargs={},
-        # kwargs to pass to __init__()
-        # set to at least 1 to use GPU
-        # model_kwargs={"n_gpu_layers": 1},
-        # transform inputs into Llama2 format
-        messages_to_prompt=messages_to_prompt,
-        completion_to_prompt=completion_to_prompt,
-        verbose=True,
-    )
-    return llm
+# # # Define a function to handle the conversation flow
+# # def handle_conversation(messages):
+# #     responses = []
+# #     for i, message in enumerate(messages):
+# #         # Ensure alternating roles between user and assistant
+# #         if i % 2 == 0:
+# #             role = "user"
+# #         else:
+# #             role = "assistant"
+# #         # Check if the role matches the message role
+# #         if message["role"] != role:
+# #             raise ValueError(
+# #                 f"Message at position {i} has incorrect role: expected {role}, got {message['role']}"
+# #             )
+# #         # Generate response for user messages
+# #         if message["role"] == "user":
+# #             response = llm.create_chat_completion(
+# #                 messages=[message],
+# #                 response_format={
+# #                     "type": "json_object",
+# #                     "schema": {
+# #                         "type": "object",
+# #                         "properties": {"response": {"type": "string"}},
+# #                         "required": ["response"],
+# #                     },
+# #                 },
+# #                 temperature=0.7,
+# #             )
+# #             responses.append(response)
+# #     return responses
 
 
-# # Define a function to handle the conversation flow
-# def handle_conversation(messages):
-#     responses = []
-#     for i, message in enumerate(messages):
-#         # Ensure alternating roles between user and assistant
-#         if i % 2 == 0:
-#             role = "user"
-#         else:
-#             role = "assistant"
-#         # Check if the role matches the message role
-#         if message["role"] != role:
-#             raise ValueError(
-#                 f"Message at position {i} has incorrect role: expected {role}, got {message['role']}"
-#             )
-#         # Generate response for user messages
-#         if message["role"] == "user":
-#             response = llm.create_chat_completion(
-#                 messages=[message],
-#                 response_format={
-#                     "type": "json_object",
-#                     "schema": {
-#                         "type": "object",
-#                         "properties": {"response": {"type": "string"}},
-#                         "required": ["response"],
-#                     },
-#                 },
-#                 temperature=0.7,
-#             )
-#             responses.append(response)
-#     return responses
+# # # Example conversation
+# # conversation = [
+# #     {"role": "user", "content": "Can you name the planets in the solar system?"},
+# #     {"role": "assistant", "content": ""},
+# #     {"role": "user", "content": "What are the weights?"},
+# #     {"role": "assistant", "content": ""},
+# # ]
+
+# # responses = handle_conversation(conversation)
+# # for response in responses:
+# #     st.write(response)
 
 
-# # Example conversation
-# conversation = [
-#     {"role": "user", "content": "Can you name the planets in the solar system?"},
-#     {"role": "assistant", "content": ""},
-#     {"role": "user", "content": "What are the weights?"},
-#     {"role": "assistant", "content": ""},
-# ]
+# # output = llm(
+# #     "Q: Name the planets in the solar system? A: ",  # Prompt
+# #     max_tokens=32,  # Generate up to 32 tokens, set to None to generate up to the end of the context window
+# #     stop=[
+# #         "Q:",
+# #         "\n",
+# #     ],  # Stop generating just before the model would generate a new question
+# #     echo=True,  # Echo the prompt back in the output
+# # )  # Generate a completion, can also call create_completion
+# st.write(output)
 
-# responses = handle_conversation(conversation)
-# for response in responses:
-#     st.write(response)
+# exit(0)
+# # import webbrowser
+# # webbrowser.open_new_tab("http://librenms.ksilink.int/overview?dashboard=1")
 
-
-# output = llm(
-#     "Q: Name the planets in the solar system? A: ",  # Prompt
-#     max_tokens=32,  # Generate up to 32 tokens, set to None to generate up to the end of the context window
-#     stop=[
-#         "Q:",
-#         "\n",
-#     ],  # Stop generating just before the model would generate a new question
-#     echo=True,  # Echo the prompt back in the output
-# )  # Generate a completion, can also call create_completion
-st.write(output)
-
-exit(0)
-# import webbrowser
-# webbrowser.open_new_tab("http://librenms.ksilink.int/overview?dashboard=1")
-
-# components.iframe("http://librenms.ksilink.int/",height=1600)
-# https://www.google.com/
+# # components.iframe("http://librenms.ksilink.int/",height=1600)
+# # https://www.google.com/
 
 conn_meta = "postgres://arno:123456@192.168.2.131:5432/ksi_cpds"
 conn_prof = "postgres://arno:12345@192.168.2.131:5432/ksilink_cpds"
@@ -236,13 +233,14 @@ col3.write(df_src_emd.metabatchid)
 
 df_inter = df_src_emd[~df_src_emd["metabatchid"].isin(df_src_agg["metabatchid"])]
 st.subheader(
-    "In total more than 5000 ids are not common between agg and umap for Ksilink",
+    f"In total more than {len(df_inter)} ids are not common between agg and umap for Ksilink",
     divider="rainbow",
 )
 st.write("Not in agg", df_inter.metabatchid)
 
 st.subheader(
-    "Test tables in meta, print unique batchid and total batchids", divider="rainbow"
+    "Test tables in meta, print unique batchid and batchids not with JCP",
+    divider="rainbow",
 )
 conn = psycopg2.connect(conn_meta)
 cursor = conn.cursor()
@@ -266,15 +264,16 @@ for table in tables:
             f"{table} -> pubchemid:",
             (len(df_tab.pubchemid.unique()), len(df_tab.pubchemid)),
         )
-    if "pubchemsid" in df_tab.columns:
+    if "keggid" in df_tab.columns:
         st.write(
-            f"{table} -> pubchemsid:",
-            (len(df_tab.pubchemsid.unique()), len(df_tab.pubchemsid)),
+            f"{table} -> keggid:",
+            (len(df_tab.keggid.unique()), len(df_tab.keggid)),
         )
 
 
 st.subheader(
-    "Test tables in prof, print unique batchid and total batchids", divider="rainbow"
+    "Test tables in prof, print unique batchid and batchids not with JCP",
+    divider="rainbow",
 )
 conn = psycopg2.connect(conn_prof)
 cursor = conn.cursor()
@@ -306,11 +305,11 @@ for table in tables:
         )
 
 
-st.subheader("Removed pubchemid column", divider="rainbow")
+st.subheader("check diff in batchids ", divider="rainbow")
 sql_kegg_cpd = "select metabatchid from aggprofile where metasource='Ksilink_625'"
 df_agg = sql_df(sql_kegg_cpd, conn_prof)
 # st.write("agg_batchid", df_keggcpd)
-sql_kegg_cpd = "select batchid from cpdbatchs where metasource='Ksilink_625'"
+sql_kegg_cpd = "select batchid from platemap where source='Ksilink_625'"
 df_batch = sql_df(sql_kegg_cpd, conn_meta)
 
 cola, colb = st.columns(2)
@@ -318,6 +317,10 @@ df = df_agg[~df_agg["metabatchid"].isin(df_batch.batchid)]
 cola.write(df.reset_index(drop=True))
 df2 = df_batch[~df_batch["batchid"].isin(df_agg.metabatchid)]
 colb.write(df2.reset_index(drop=True))
+if len(df) == 0 and len(df2) == 0:
+    st.warning("Everything fine")
+else:
+    st.warning("Disparity")
 exit(0)
 # df_sel = df_src_emd[df_src_emd["metabatchid"]=='DMSO']
 # sim_crispr = find_sim_cpds(df_src_emd, df_sel)
