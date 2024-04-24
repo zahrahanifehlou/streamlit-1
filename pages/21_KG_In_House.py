@@ -11,10 +11,11 @@ import numpy as np
 choix_source = "Ksilink_25"
 conn = "postgres://arno:123456@192.168.2.131:5432/ksi_cpds"
 sql_query="SELECT aggprofile.*, cpdbatchs.pubchemid , cpd.cpdname , cpd.smile , cpd.keggid  FROM aggprofile\
-    left JOIN cpdbatchs ON cpdbatchs.batchid = aggprofile.batchid left JOIN cpd ON cpdbatchs.pubchemid = cpd.pubchemid WHERE aggprofile.source = 'Ksilink_25'"
+    INNER JOIN cpdbatchs ON cpdbatchs.batchid = aggprofile.batchid left JOIN cpd ON cpdbatchs.pubchemid = cpd.pubchemid WHERE aggprofile.source = 'Ksilink_25'"
 
 df_merge = sql_df(sql_query, conn)
 filter_col1 = df_merge.select_dtypes(include=[int, float]).columns.tolist()
+st.write(len(df_merge))
 
 
 
@@ -24,7 +25,7 @@ simi_df_alt = pd.DataFrame(simi, index=df_merge["source"], columns=df_merge["bat
 simi_df_alt = simi_df_alt.where(np.triu(np.ones(simi_df_alt.shape), k=1).astype(bool))
 simi_df_alt = simi_df_alt.stack().reset_index()
 simi_df_alt.columns = ["source", "batchid", "similarity"]
-st.write(simi_df_alt)
+st.write(len(simi_df_alt))
 
 # # simi_high = simi_df_alt[simi_df_alt["similarity"] > 0.9]
 # # st.write(simi_high.reset_index(drop=True))
