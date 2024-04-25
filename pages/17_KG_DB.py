@@ -14,8 +14,8 @@ st.set_page_config(
 
 # connect DB
 @st.cache_data
-def get_graph(list_gene, depth):
-    graphName = "kg2"
+def get_graph(list_gene, depth,sel_rel):
+    graphName = "graph_kg"
     conn = psycopg2.connect(
         host="192.168.2.131",
         port="5432",
@@ -23,14 +23,16 @@ def get_graph(list_gene, depth):
         user="postgres",
         # password="123456"
         )
+    if len(sel_rel)==0:
+        sel_rel=['protein_protein' ]
     gsql = (
-        f"""SELECT * from cypher('%s', $$ MATCH p=(n )-[r*{depth}]-() 
+        f"""SELECT * from cypher('%s', $$ MATCH p=(n )-[r*{depth}]->() 
         where n.__id__ in {list_gene} 
-      
-      
+        and type(relationships(p)[0] ) in {sel_rel}
         RETURN  p   $$) as (v agtype)"""
         % graphName
     )
+    st.write(gsql)
     age.setUpAge(conn, graphName)
 
     G = networkx.age_to_networkx(conn, graphName, query=gsql)
@@ -42,10 +44,12 @@ def get_graph(list_gene, depth):
 col1, col2 = st.columns(2)
 with col1:
     depth = st.slider("Select depth:", 0, 4, 1)
-    deg = st.slider("Select Degree:", 0, 10, 0)
-    list_rel=['protein_protein', 'drug_protein', 'drug_drug','disease_protein', 'disease_disease','pathway_pathway', 'pathway_protein']
-    sel_rel = st.multiselect("Chose relations for the graph", list_rel)
+    deg = st.slider("Minimum Degree:", 0, 10,1)
+    
 with col2:
+    list_rel=['protein_protein', 'drug_protein','bioprocess_bioprocess',  'bioprocess_protein',  'molfunc_molfunc', 'molfunc_protein', 
+      'drug_drug','disease_protein', 'disease_disease','pathway_pathway', 'pathway_protein']
+    sel_rel = st.multiselect("Chose relations for the graph", list_rel,default ='protein_protein')
     
     var_text = st.text_area(
         "Enter your list of entities", help="Name or ID separated by enter"
@@ -56,18 +60,12 @@ with col2:
 
 
 if len(list_gene) > 0:
-    G=get_graph(list_gene, depth)
+    G=get_graph(list_gene, depth,sel_rel)
     
-    edge_remove = set([d for d in G.edges(data="label", default=1) if  d[-1] not in (sel_rel)])
-    G.remove_edges_from(edge_remove)
+    
     
     remove = [x for x in G.nodes() if G.degree(x) < deg]
     G.remove_nodes_from(remove)
-    
-    
-    
-   
- 
     
     label_dict = dict(G.nodes(data="properties", default=1))
     converted_dict = {key: value["__id__"] for key, value in label_dict.items()}
@@ -98,7 +96,7 @@ if len(list_gene) > 0:
         )
         for v in net.edges
     ]
-    config = Config(height=1000,
+    config = Config(height=600,
                     width=1000,
                     nodeHighlightBehavior=True,
                     highlightColor="#F7A7A6",
@@ -111,3 +109,8 @@ if len(list_gene) > 0:
 
    
     return_value = agraph(nodes, edges, config=config)
+    cols=st.columns(2)
+    with(cols[0]):
+        st.write("node list\n", H.nodes)
+    with (cols[1]):
+        st.write("edge list \n",H.edges)
