@@ -57,7 +57,7 @@ tab1.image("DB.png")
 tab2.image("sources.png")
 tab3.image("cpds_per_sources.png")
 tab4.image("profile_db.png")
-tab5.image("graph_db.png", width=25 )
+tab5.image("graph_db.png" )
 # st.write(st.session_state)
 
 if st.button("Clear Cache"):

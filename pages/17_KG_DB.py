@@ -26,7 +26,7 @@ def get_graph(list_gene, depth,sel_rel):
     if len(sel_rel)==0:
         sel_rel=['protein_protein' ]
     gsql = (
-        f"""SELECT * from cypher('%s', $$ MATCH p=(n )-[r*{depth}]->() 
+        f"""SELECT * from cypher('%s', $$ MATCH p=(n )-[r*{depth}]-() 
         where n.__id__ in {list_gene} 
         and type(relationships(p)[0] ) in {sel_rel}
         RETURN  p   $$) as (v agtype)"""
