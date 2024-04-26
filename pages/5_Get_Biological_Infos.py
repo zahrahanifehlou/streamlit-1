@@ -48,12 +48,15 @@ def get_infos(dftiti):
         fig = px.bar(df_enr, x="Term", y="Log_10_Pv")
         st.plotly_chart(fig, theme="streamlit", use_container_width=True)
         # fig_c, ax1 = plt.subplots()
+        top_t = st.slider("Number of Pathways", 1, 30, 10)
+        circle = st.slider("Size of circles", 1, 30, 10)
         ax1 = dotplot(
             enr.res2d,
             title=sel,
             cmap="viridis_r",
-            size=10,
+            size=circle,
             figsize=(3, 5),
+            top_term=top_t,
         )
         # ax1 = dotplot(
         #     enr.results,
@@ -69,7 +72,9 @@ def get_infos(dftiti):
         # )
         st.pyplot(ax1.figure)
 
-        ax = barplot(enr.res2d, title=sel, figsize=(4, 5), color="darkred")
+        ax = barplot(
+            enr.res2d, title=sel, figsize=(4, 5), color="darkred", top_term=top_t
+        )
         st.pyplot(ax.figure)
     else:
         st.warning("Not enough Data")
