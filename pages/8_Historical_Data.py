@@ -114,8 +114,10 @@ on = st.sidebar.toggle("Search Data")
 dl = st.sidebar.toggle("Deep Learning Data")
 cbc = st.sidebar.toggle("Cell by Cell Data")
 tp = st.sidebar.toggle("Temporal Data")
+
 list_proj = os.listdir("/mnt/shares/L/PROJECTS/")
 proj = st.selectbox("Choose your project", list_proj)
+
 
 if on and tp:
     paths = sorted(
@@ -210,7 +212,98 @@ if on and tp:
     # exit(0)
 
 
-if on and not dl and not cbc and not tp:
+@st.cache_data
+def loadDeepTar(files):
+    with tarfile.open(files, "r") as tar:
+        # Replace 'your_file.feather' with the actual file name
+        list_df = []
+        for member in tar.getmembers():
+            # Check if the member is a file and has the '.feather' extension
+            if member.isfile() and member.name.endswith(".fth"):
+                # Extract the Feather file content
+                l = (
+                    member.name.replace("\\", "/")
+                    .replace(".fth", "")
+                    .split("/")[-1]
+                    .split("_")
+                )
+                # print(l)
+                feather_content = tar.extractfile(member).read()
+                try:
+                    df = pd.read_feather(io.BytesIO(feather_content))
+                    # df =cudf.read_feather
+                    df = df.drop("tags", axis=1)
+                    df["Well"] = l[1]
+                    df["Plate"] = l[0]
+                    list_df.append(df)
+                except:
+                    print("error")
+
+        df2 = pd.concat(list_df)
+        df2 = df2.groupby(["Plate", "Well"]).median(numeric_only=True)
+        df2 = df2.reset_index()
+
+    return df2
+
+
+qc = st.sidebar.toggle("QC", False)
+
+if on and qc:
+    paths = sorted(
+        Path(f"/mnt/shares/L/PROJECTS/{proj}/Checkout_Results/").iterdir(),
+        key=os.path.getmtime,
+        reverse=True,
+    )
+    # st.write(paths)
+    paths_clean = [f for f in paths if "test" not in str((f)).lower()]
+    uploaded_files = st.multiselect(
+        "Choose  directories corresponding to this assay", paths_clean
+    )
+
+    list_df = []
+    if uploaded_files:
+        for item in uploaded_files:
+            fth_file = [f for f in listdir(item) if f.startswith("ag")]
+            if len(fth_file) > 0:
+                for fi in fth_file:
+                    # st.write(item.as_posix())
+                    if fi.endswith(".fth"):
+                        list_df.append(pd.read_feather(item.as_posix() + "/" + fi))
+                    else:
+                        # st.write(item.as_posix()+'/'+fi)
+                        list_df.append(
+                            pd.read_csv(item.as_posix() + "/" + fi, encoding="latin1")
+                        )
+                df_data = pd.concat(list_df)
+                # st.write("df_data", df_data)
+            else:
+                st.warning("No data started with ag in this directory", icon="🚨")
+
+            tar_files = [f for f in listdir(item) if "BG_roi.tar" in f]
+            list_df2 = []
+            if len(tar_files) > 0:
+                for fi in tar_files:
+                    list_df2.append(loadDeepTar(item.as_posix() + "/" + fi))
+                    # st.write(item.as_posix())
+                df_tar = pd.concat(list_df2)
+                # st.write("df_tar", df_tar)
+            df_tot = df_data.merge(df_tar, on=["Plate", "Well"])
+            # st.write("df_tot", df_tot)
+            components.html(get_pyg_html(df_tot), height=1000, scrolling=True)
+            sel_feat = st.selectbox("Select Feature", df_tot.columns)
+            fig3 = px.box(
+                df_tot,
+                x="tags",
+                y=sel_feat,
+                title="BoxPlots",
+                hover_data="tags",
+                color="tags",
+                points="all",
+                notched=True,
+            )
+            st.plotly_chart(fig3, theme="streamlit", use_container_width=True)  #
+
+if on and not dl and not cbc and not tp and not qc:
     paths = sorted(
         Path(f"/mnt/shares/L/PROJECTS/{proj}/Checkout_Results/").iterdir(),
         key=os.path.getmtime,
@@ -238,6 +331,7 @@ if on and not dl and not cbc and not tp:
                         )
             else:
                 st.warning("No data started with ag in this directory", icon="🚨")
+
         if len(list_df) > 0:
             df_data = pd.concat(list_df)
             len_1 = len(df_data)
@@ -262,7 +356,7 @@ if on and not dl and not cbc and not tp:
             to_drop = [column for column in upper.columns if any(upper[column] > 0.95)]
 
             # Drop features
-            df_data = df_data.drop(df_data[to_drop], axis=1)
+            # df_data = df_data.drop(df_data[to_drop], axis=1)
             len_col2 = len(df_data.columns)
             if len_col != len_col2:
                 st.warning(
@@ -325,40 +419,6 @@ if on and not dl and not cbc and not tp:
                     components.html(
                         get_pyg_html(df_all_umap), height=1000, scrolling=True
                     )
-
-
-@st.cache_data
-def loadDeepTar(files):
-    with tarfile.open(files, "r") as tar:
-        # Replace 'your_file.feather' with the actual file name
-        list_df = []
-        for member in tar.getmembers():
-            # Check if the member is a file and has the '.feather' extension
-            if member.isfile() and member.name.endswith(".fth"):
-                # Extract the Feather file content
-                l = (
-                    member.name.replace("\\", "/")
-                    .replace(".fth", "")
-                    .split("/")[-1]
-                    .split("_")
-                )
-                # print(l)
-                feather_content = tar.extractfile(member).read()
-                try:
-                    df = pd.read_feather(io.BytesIO(feather_content))
-                    # df =cudf.read_feather
-                    df = df.drop("tags", axis=1)
-                    df["Well"] = l[1]
-                    df["Plate"] = l[0]
-                    list_df.append(df)
-                except:
-                    print("error")
-
-        df2 = pd.concat(list_df)
-        df2 = df2.groupby(["Plate", "Well"]).median(numeric_only=True)
-        df2 = df2.reset_index()
-
-    return df2
 
 
 @st.cache_data

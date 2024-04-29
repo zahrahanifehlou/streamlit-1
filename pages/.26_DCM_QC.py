@@ -2,81 +2,123 @@ import streamlit as st
 
 import sys  # To properly import the files !
 
-# For tools modules
-sys.path.append("/mnt/shares/L/Code/KsilinkNotebooks/LIB/")
-
-
-# For exp_graphs & deep_loader modules
-sys.path.append("/mnt/shares/L/Code/KsilinkNotebooks/DCM/helper_lib")
 
 import pandas as pd
-from glob import iglob as glob
+
 import plotly.express as px
 from plotly.subplots import make_subplots
 import plotly.graph_objects as go
 import numpy as np
 import ipywidgets as widgets
+from pqdm.processes import pqdm
+import glob
+import tarfile
+import tools
+from os import listdir
+from pathlib import Path
+import polars as pl
+import os
+import json
+import multiprocessing
+import io
 
+
+nb_cpu = multiprocessing.cpu_count()
+
+
+@st.cache_data
+def loadDeepfth(files):
+    l2 = files.replace("\\", "/").replace(".fth", "").split("/")[-1].split("_")
+    # df = pd.read_feather(files)
+    df = pd.read_feather(files)
+    # df =cudf.read_feather
+    # df = df.drop("tags", axis=1)
+    # df["Well"] = l2[1]
+    df["Plate"] = l2[0]
+    # list_df.append(df)
+
+    # df2 = df.groupby(["Plate"]).median(numeric_only=True)
+    # df2 = df2.reset_index()
+
+    return df
+
+
+@st.cache_data
+def loadDeepTar(files):
+    with tarfile.open(files, "r") as tar:
+        # Replace 'your_file.feather' with the actual file name
+        list_df = []
+        for member in tar.getmembers():
+            # Check if the member is a file and has the '.feather' extension
+            if member.isfile() and member.name.endswith(".fth"):
+                # Extract the Feather file content
+                l = (
+                    member.name.replace("\\", "/")
+                    .replace(".fth", "")
+                    .split("/")[-1]
+                    .split("_")
+                )
+                # print(l)
+                feather_content = tar.extractfile(member).read()
+                try:
+                    df = pd.read_feather(feather_content)
+                    # df =cudf.read_feather
+                    df = df.drop("tags", axis=1)
+                    df["Well"] = l[1]
+                    df["Plate"] = l[0]
+                    list_df.append(df)
+                except:
+                    print("error")
+
+        df2 = pd.concat(list_df)
+        df2 = df2.groupby(["Plate", "Well"]).median(numeric_only=True)
+        df2 = df2.reset_index()
+
+    return df2
+
+
+sys.path.append("/mnt/shares/L/Code/KsilinkNotebooks/LIB/")
 import tools
 
-from exp_graphs import *
-from deep_loader import *
-
-import json
+list_proj = os.listdir("/mnt/shares/L/PROJECTS/")
+proj = st.selectbox("Choose your project", list_proj)
 
 
-def load_deep_features(buffer, well, plate):  # Load all the features from the well
-    tmp_df = pd.read_feather(buffer)
+paths = sorted(
+    Path(f"/mnt/shares/L/PROJECTS/{proj}/Checkout_Results/").iterdir(),
+    key=os.path.getmtime,
+    reverse=True,
+)
+# st.write(paths)
+paths_clean = [f for f in paths if "test" not in str((f)).lower()]
+uploaded_file = st.selectbox(
+    "Choose result directory corresponding to this assay", paths_clean
+)
+list_df = []
 
-    tmp_df["Well"] = well
-    tmp_df["Plate"] = plate
+files = glob.glob(f"{uploaded_file}/**/*roi.fth", recursive=True)
+st.write(files)
+for f in files:
+    list_df.append(loadDeepfth(f))
 
-    return tmp_df
+# result_deep = pqdm(files, loadDeepfth, n_jobs=min(nb_cpu, 60))
 
+alldata1 = pd.concat(list_df).reset_index(drop=True)
+st.write(alldata1)
+list_df = []
+files2 = glob.glob(f"{uploaded_file}/**/*ag*.fth", recursive=True)
+# st.write(files2)
+for f in files2:
+    list_df.append(loadDeepfth(f))
 
-list_files = st.file_uploader("Load your files", accept_multiple_files=True)
-if list_files:
-    df = pd.concat([pd.read_feather(x) for x in list_files], ignore_index=True)
-    cols = {x for x in df.columns}
-    df = tools.getCategories(df)
-    categories = [x for x in df.columns if x not in cols]
-    st.write("Categories: ", df)
-    df.loc[df.cell.isna(), "cell"] = df.CellLines[df.cell.isna()]
-    df.loc[df.exp.isna(), "exp"] = df.Plate[df.exp.isna()].apply(
-        lambda x: x.split("-")[1]
-    )
-    train_paths = list(set(["/".join(x.split("\\")[:-1]) for x in list_files]))
-    print(train_paths)
+# result_deep2 = pqdm(files2, loadDeepfth, n_jobs=min(nb_cpu, 60))
 
-    classes = {
-        "All": {
-            "Plate": lambda x: True
-            if "16" in x or "21" in x or "20" in x or "19" in x
-            else False
-        },
-    }
+alldata = pd.concat(list_df).reset_index(drop=True)
 
-    train_df = load_features_from(
-        train_paths, classes, file_sub="roi", loader=load_deep_features
-    )
-    train_df.loc[train_df.cell.isna(), "cell"] = train_df.loc[
-        train_df.cell.isna(), "CellLines"
-    ]
-    train_df.loc[train_df.exp.isna(), "exp"] = train_df.Plate[
-        train_df.exp.isna()
-    ].apply(lambda x: x.split("-")[1])
-    train_df["disp"] = train_df[list(["cell", "exp"])].apply(
-        lambda row: " ".join(row.values.astype(str)), axis=1
-    )
-    train_df["disp"] = train_df[list(["cell", "exp"])].apply(
-        lambda row: " ".join(row.values.astype(str)), axis=1
-    )
+# alldata = pd.concat([alldata, alldata2], axis=1)
 
-    sdfa = train_df.groupby(list(["cell", "exp"]) + ["Well", "Plate"], as_index=False)[
-        "Area"
-    ].count()
-    sdfa.rename(columns={"Area": "Nucleis"}, inplace=True)
-    sdfa["disp"] = sdfa[list(["cell", "exp"])].apply(
-        lambda row: " ".join(row.values.astype(str)), axis=1
-    )
-    st.write("sdfa", sdfa)
+cols = [x for x in alldata.columns if "Feature_" in x]
+cols_alpha = [x for x in alldata.columns if "Feature_" not in x]
+st.write(alldata)
+list_cols = alldata.columns
+sel_col = st.selectbox("select column to display", list_cols)
