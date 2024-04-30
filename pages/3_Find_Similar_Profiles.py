@@ -1,5 +1,8 @@
 # NMDA GSK2879552 Bay K
 
+import sys
+
+sys.path.append("/mnt/shares/L/PROJECTS/JUMP-CRISPR/Code/streamlit_ZH2/lib/")
 import matplotlib.pyplot as plt
 import pandas as pd
 import plotly.express as px
@@ -40,7 +43,7 @@ else:
     df_sel = cpd_pro[
         (cpd_pro["source"] == choix_source) & (cpd_pro["name"] == choix)
     ].head(1)
-    title = f" compounds to {choix} in  {choix_source}"
+    title = f" Profile to {choix} in  {choix_source}"
     with mainCols[1]:
         st.write("Selected Profile", df_sel)
         choix_batchid = df_sel["batchid"].values[0]
@@ -173,6 +176,7 @@ else:
                     ]
                     df_keep_cpd[meta_cols] = df_keep_prof_gene[meta_cols]
                     df_keep_cpd["name"] = df_keep_cpd["batchid"]
+                    
 
                     df_keep_prof_gene["name"] = df_keep_prof_gene["batchid"]
                     df_keep_prof_gene = df_keep_prof_gene.merge(

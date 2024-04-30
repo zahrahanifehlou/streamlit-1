@@ -156,6 +156,7 @@ if str(option) == "gene" and len(df_res) > 0:
 # get cpd gene/target info-------------------------------------------------------------------------------------------------------------------
 
 if len(df_cpds) > 0:
+    
     list_pubchemid = [f"'{t}'" for t in df_cpds["pubchemid"]]
     list_batchid = [f"'{batch}'" for batch in df_cpds["batchid"]]
 
@@ -193,6 +194,7 @@ if len(df_cpds) > 0:
     df_efficacy = df_efficacy.drop_duplicates(
         subset=["pubchemid", "efficacy", "keggid"]
     ).reset_index(drop=True)
+    
 
     # compounds PATHWAY info
     sql = f"SELECT cpdpath.pubchemid, pathway.pathid, pathway.pathname, cpdpath.server FROM pathway\
@@ -204,6 +206,10 @@ if len(df_cpds) > 0:
         .drop_duplicates(subset=["pubchemid", "pathid", "server"])
         .reset_index(drop=True)
     )
+    
+    df_cpdPath['pubchemid'] = df_cpdPath['pubchemid'].astype(str)
+    df_cpdPath['pubchemid'] = df_cpdPath['pubchemid'].str.split('.').str[0]
+    
     df_cpdPath = df_cpdPath.merge(
         df_cpds[["cpdname", "batchid", "pubchemid"]],
         left_on="pubchemid",
@@ -306,7 +312,7 @@ if len(df_cpds) > 0:
         sql_profile = (
             "select * from aggprofile where batchid in (" + ",".join(list_batchid) + ")"
         )
-        st.write(sql_profile)
+      
 
         df_prof = sql_df(sql_profile, conn)
         df_prof.reset_index(inplace=True, drop=True)
