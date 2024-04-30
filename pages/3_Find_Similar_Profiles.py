@@ -305,11 +305,12 @@ else:
             cpd_names = tmp.name.values
 
             df_plt = tmp.set_index("name")
-            meta_cols=["geneid","name","pubchemid","keggid", "efficay","smile","source","cpdname","batchid"]
+            meta_cols=["geneid","name","pubchemid","keggid", "efficay","smile","source","cpdname","batchid","symbol"]
             filter_col = [col for col in df_plt.columns if  col not in meta_cols] 
 
         
             df_plt = df_plt[filter_col].T
+        
             fig_clusmap = px.line(
                 df_plt,
                 x=filter_col,
