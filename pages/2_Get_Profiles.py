@@ -62,7 +62,7 @@ col3, col4 = st.columns(2)
 with col3:
     rad_match = st.radio(
         "Exact Match?",
-        ["Yes", "No"],
+        [ "No", "Yes"],
         horizontal=True,
     )
     var_text = st.text_area("Enter your search", help="Name or ID separated by enter")
@@ -306,6 +306,7 @@ if len(df_cpds) > 0:
         sql_profile = (
             "select * from aggprofile where batchid in (" + ",".join(list_batchid) + ")"
         )
+        st.write(sql_profile)
 
         df_prof = sql_df(sql_profile, conn)
         df_prof.reset_index(inplace=True, drop=True)
@@ -380,6 +381,9 @@ if len(df_prof) > 0:
         plt_src, col_colors = get_col_colors(tmp, inex_col_name="nameAndsource")
 
         fig_clusmap, ax1 = plt.subplots()
+        figsize=(16, len(plt_src))
+        if len(plt_src)>20 :
+            figsize=(16, len(plt_src)/2)
         fig_clusmap = sns.clustermap(
             plt_src,
             metric="cosine",
@@ -392,38 +396,9 @@ if len(df_prof) > 0:
             center=0,
             vmin=-5,
             vmax=5,
-            figsize=(16, len(plt_src) / 2),
+            figsize=figsize,
         )
 
-        #st.pyplot(fig_clusmap)
+        st.pyplot(fig_clusmap)
 
     st.session_state["df_profiles"] = tmp
-
-    @st.cache_data
-    def get_umap(choix_source):
-        sql_umqpemd = f"select umap.* from umap where umap.source='{choix_source}' "
-        # sql_umqpemd="SELECT umap.*, batchs.name  FROM umap  INNER JOIN batchs ON batchs.batchid = umap.batchid  WHERE umap.source = '{choix_source}'"
-
-        df_src_emd = sql_df(sql_umqpemd, conn)
-        return df_src_emd
-
-    # st.write(var_t2)
-    if options2:
-        df_src_emd = get_umap(choix_source=var_t2[0])
-        df_src_emd["color"] = "others"
-        df_src_emd.loc[
-            df_src_emd["batchid"].isin(tmp["batchid"].to_list()), "color"
-        ] = "selected compounds"
-
-        fig = px.scatter(
-            df_src_emd,
-            x="umap1",
-            y="umap2",
-            color="color",
-            opacity=0.5,
-            color_discrete_sequence=["blue", "red", "green"],
-            title="UMAP ",
-            hover_data=["batchid"],
-        )
-
-        st.plotly_chart(fig, theme="streamlit", use_container_width=True)

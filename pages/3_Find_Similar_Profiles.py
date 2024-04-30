@@ -1,5 +1,5 @@
 # NMDA GSK2879552 Bay K
-from streamlib import sql_df, find_sim_cpds, get_col_colors
+
 import matplotlib.pyplot as plt
 import pandas as pd
 import plotly.express as px
@@ -11,6 +11,7 @@ from streamlit_plotly_events import plotly_events
 from PIL import Image
 import os
 
+from streamlib import sql_df, get_sql_jump, get_col_colors ,find_sim_cpds
 
 def init_connection():
     return psycopg2.connect(**st.secrets["postgres"])
@@ -149,6 +150,7 @@ else:
                     .str[:30]
                     .fillna(df_keep_prof_cpd["batchid"])
                 )
+               
 
             if (choix_source == "CRISPER") or (choix_source == "ORF-Broad"):
                 sql_crisper2 = f"SELECT gene.symbol, gene.geneid, genebatchs.batchid FROM genebatchs INNER JOIN gene \
@@ -193,7 +195,7 @@ else:
             df_keep_cpd = df_keep_cpd.merge(
                 df_results_cpd, on="batchid"
             ).reset_index(drop=True)
-            df_keep_cpd = df_keep_cpd.drop(["batchid"], axis=1)
+            #df_keep_cpd = df_keep_cpd.drop(["batchid"], axis=1)
             df_keep_cpd["source"] = choix_source
 
             fig_cols1 = st.columns(2)
@@ -229,7 +231,7 @@ else:
             st.write("\n")  # ----------plot sim cpds in UMAP
         
             aa=df_src_emd[df_src_emd["batchid"].isin(df_keep_prof_cpd["batchid"])]
-            st.write(aa)
+    
 
             df_src_emd["color"] = "others"
             df_src_emd.loc[
@@ -238,10 +240,7 @@ else:
             df_src_emd.loc[
                 df_src_emd["batchid"] == choix_batchid, "color"
             ] = "selected compounds"
-            # st.write(
-            #     "df_src_emd",
-            #     df_src_emd[df_src_emd["batchid"].isin(df_keep_cpd["batchid"])],
-            # )
+         
             fig = px.scatter(
                 df_src_emd,
                 x="umap1",
@@ -257,6 +256,7 @@ else:
 
             else:
                 selected_points = plotly_events(fig, click_event=True)
+                
 
                 if selected_points:
                     x = selected_points[0]["x"]
@@ -265,11 +265,15 @@ else:
                     tmp = df_src_emd.loc[
                         (df_src_emd["umap1"] == x) & (df_src_emd["umap2"] == y)
                     ]
+                    
                     batch = tmp.batchid.values[0]
-                    name = tmp.name.values[0]
+                 
+                    
+                  
 
-                    sql_point = f"select * from platemap where batchid='{batch}' and assay='{choix_source}'"
+                    sql_point = f"select * from platemap where batchid='{batch}' and source='{choix_source}'"
                     df_plates = sql_df(sql_point, conn)
+                    st.write(df_plates)
 
                     plt_len = len(df_plates)
                     if plt_len > 0:
@@ -285,7 +289,7 @@ else:
                             image = Image.open(fpath)
                             with br_cols[i]:
                                 st.image(
-                                    image, caption=f"{name} : {plate} {well}", width=256
+                                    image, caption=f"{batch} : {plate} {well}", width=256
                                 )
 
             st.write("\n")  # ----------plot PROFILE
@@ -327,12 +331,13 @@ else:
                     xticklabels=False,
                     yticklabels=True,
                     col_cluster=False,
+                    row_cluster=False,
                     cmap="vlag",
                     center=0,
                     figsize=(16, len(plt_src) / 2),
                 )
 
-               # st.pyplot(fig_clusmap)
+                st.pyplot(fig_clusmap)
 
 # --------------------------------------------------------------------------------------------------------
 # with knn_sim_tab:  # Similar CPDs with UMAP
