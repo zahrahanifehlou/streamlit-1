@@ -43,7 +43,7 @@ else:
     df_sel = cpd_pro[
         (cpd_pro["source"] == choix_source) & (cpd_pro["name"] == choix)
     ].head(1)
-    title = f" Profile to {choix} in  {choix_source}"
+    title = f" Perturbation to {choix} in  {choix_source}"
     with mainCols[1]:
         st.write("Selected Profile", df_sel)
         choix_batchid = df_sel["batchid"].values[0]

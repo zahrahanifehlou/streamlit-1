@@ -17,29 +17,55 @@ st.set_page_config(
 )
 st.header("Find Similar Structures", divider="rainbow")
 
+# Load or fetch data
+@st.cache_data
+def load_data():
+    if "df_tmap" in st.session_state:
+        df_tmap = st.session_state["df_tmap"]
+    else:
+        sql = f"SELECT  cpd.cpdname, cpd.smile,cpd.keggid, tmap.* ,cpdpath.pathid, cpdgene.geneid , gene.* FROM tmap \
+            INNER JOIN cpd ON cpd.pubchemid=tmap.pubchemid  \
+            INNER JOIN cpdpath ON cpdpath.pubchemid=tmap.pubchemid  \
+            INNER JOIN cpdgene ON tmap.pubchemid=cpdgene.pubchemid \
+            INNER JOIN gene ON cpdgene.geneid=gene.geneid "
+                       
+        conn = "postgres://arno:12345@192.168.2.131:5432/ksi_cpds"
+        df_tmap = sql_df(sql, conn).reset_index(drop=True)
+       
+       
+    return df_tmap
 
-def convert_df(df):
-    return df.to_csv(index=False).encode("utf-8")
-
-
-def init_connection():
-    return psycopg2.connect(**st.secrets["postgres"])
-
-
-
-
-def find_umap(df, title):
-    filter_cols = [col for col in df.columns if not col.startswith("meta")]
-    meta_cols = [col for col in df.columns if col.startswith("meta")]
-    reducer = umap.UMAP(densmap=True, random_state=42, verbose=True)
-    embedding = reducer.fit_transform(df[filter_cols])
-    df_emb = pd.DataFrame({"x": embedding[:, 0], "y": embedding[:, 1]})
-    df_emb[meta_cols] = df[meta_cols]
-
-    fig = px.scatter(
-        df_emb, x="x", y="y", hover_data=meta_cols, color="Type", title=title
-    )
-    st.plotly_chart(fig, theme="streamlit", use_container_width=True)
+@st.cache_data
+def get_mol_list():
+    conn = "postgres://arno:123456@192.168.2.131:5432/ksi_cpds"
+    sql_cpd = f"select cpd.pubchemid, cpd.cpdname, cpd.smile from cpd  "
+    cpd_df = sql_df(sql_cpd, conn)
+    cpd_df = cpd_df[cpd_df["smile"].notna()]
+    cpd_df["pubchemid2"]=cpd_df["pubchemid"].astype(int)
+    
+  
+    mol_list = []
+    pubchem_list = []
+    bits = 1024
+    for index, row in cpd_df.iterrows():
+    
+        smiles=row["smile"]
+        pubchemid=row["pubchemid"]
+        find = 1
+        try:
+            mol = Chem.MolFromSmiles(smiles)
+            morgan = AllChem.GetMorganFingerprintAsBitVect(
+                mol, useChirality=True, radius=3, nBits=bits
+            )
+            mol_list.append(morgan)
+            pubchem_list.append(pubchemid)
+            
+        except:
+            find = 0
+        # morgan_df=pd.DataFrame(columns=["pubchemid","morgan"])
+        # morgan_df["pubchemid"]=pubchem_list
+        # morgan_df["morgan"]=mol_list
+    return mol_list, pubchem_list
 
 
 def plot_smile(mol_list, df_str):
@@ -57,7 +83,11 @@ def plot_smile(mol_list, df_str):
         except:
             st.write("")
 
-
+def tanimoto_similarity(mol1, mol2):
+    fp1 = AllChem.GetMorganFingerprint(mol1, 2)
+    fp2 = AllChem.GetMorganFingerprint(mol2, 2)
+    similarity = DataStructs.TanimotoSimilarity(fp1, fp2)
+    return similarity
 def get_struc(mol_list):
     similarity_matrix = []
     for i in range(len(mol_list)):
@@ -68,14 +98,6 @@ def get_struc(mol_list):
         similarity_matrix.append(row)
     sim_df = pd.DataFrame(similarity_matrix)
     return sim_df
-
-
-def tanimoto_similarity(mol1, mol2):
-    fp1 = AllChem.GetMorganFingerprint(mol1, 2)
-    fp2 = AllChem.GetMorganFingerprint(mol2, 2)
-    similarity = DataStructs.TanimotoSimilarity(fp1, fp2)
-    return similarity
-
 
 def upload_files():
     uploaded_files = st.file_uploader(
@@ -90,29 +112,17 @@ def upload_files():
     return list_df
 
 
-# Load or fetch data
-def load_data():
-    if "df_tmap" in st.session_state:
-        df_tmap = st.session_state["df_tmap"]
-    else:
-        sql = f"SELECT cpdpath.pathid, cpd.cpdname, cpd.smile,cpd.keggid, tmap.*, gene.symbol FROM tmap INNER JOIN cpd ON cpd.pubchemid=tmap.pubchemid  \
-                INNER JOIN cpdbatchs ON cpd.pubchemid=cpdbatchs.pubchemid  \
-                        left JOIN cpdpath ON cpdpath.pubchemid=cpdbatchs.pubchemid  \
-                        LEFT JOIN cpdgene ON cpdbatchs.pubchemid=cpdgene.pubchemid  \
-                        LEFT JOIN gene ON gene.geneid=cpdgene.geneid "
-                       
-        conn = "postgres://arno:12345@192.168.2.131:5432/ksi_cpds"
-        df_tmap = sql_df(sql, conn).reset_index(drop=True)
-    return df_tmap
+
 
 
 # Plot TMAP
+@st.cache_data
 def plot_tmap(df_tmap, color_col, l):
     fig = px.scatter(
         df_tmap,
         x="x",
         y="y",
-        hover_data=["pubchemid", "cpdname","symbol","pathid"],
+        hover_data=["pubchemid", "cpdname","smile","pathid","keggid", "pathid", "geneid"],
         color_discrete_sequence=l,
         opacity=0.3,
         color=color_col,
@@ -142,7 +152,7 @@ tmap1 = st.toggle("TMAP plt of all compounds")
 if tmap1:
     color_col = st.radio(
         "select color",
-        ( "symbol",  "pathid"),
+        ( "symbol",  "pubchemid", "pathid", "mainlocation", "chromosome"),
         horizontal=True,
     )
     plot_tmap(df_tmap, color_col, px.colors.qualitative.D3)
@@ -218,54 +228,35 @@ if len(df_cpds) > 0:
         plot_smile(mol_list, df_str)
 
     with mainTabs[1]:
-        conn = "postgres://arno:123456@192.168.2.131:5432/ksi_cpds"
-        sql_cpd = f"select cpd.pubchemid, cpd.cpdname, cpd.smile from cpd  "
-        jump_df = sql_df(sql_cpd, conn)
-        # conn.close()
-        jump_df = jump_df[jump_df["smile"].notna()]
-        mol_list_jump = []
-        find_list = []
-        bits = 1024
-        for smiles in jump_df["smile"]:
-            find = 1
-            try:
-                mol = Chem.MolFromSmiles(smiles)
-                morgan = AllChem.GetMorganFingerprintAsBitVect(
-                    mol, useChirality=True, radius=3, nBits=bits
-                )
-                mol_list_jump.append(morgan)
-                # mol= mol=Chem.MolFromSmiles(smiles)
-                # fp=Chem.RDKFingerprint(mol)
-                # mol_list_jump.append(fp)
-            except:
-                find = 0
+        
+        mol_list , cpd_pubchem_list =get_mol_list()
+        
 
-            find_list.append(find)
-
-        jump_df["find"] = find_list
-        jump_df = jump_df[jump_df["find"] != 0]
 
         search_tbl = pd.DataFrame()
         df_sim_result = pd.DataFrame()
-        df_sim_result["pubchemid"] = jump_df.pubchemid
+        df_sim_result["pubchemid"] = cpd_pubchem_list
         # 17397405
 
         for pubchemid in list_pubchem:
             try:
+         
                 mol = Chem.MolFromSmiles(
                     pcp.Compound.from_cid(pubchemid).canonical_smiles
                 )
                 fp = AllChem.GetMorganFingerprintAsBitVect(
-                    mol, useChirality=True, radius=3, nBits=bits
+                    mol, useChirality=True, radius=3, nBits=1024
                 )
-                similarities = DataStructs.BulkTanimotoSimilarity(fp, mol_list_jump)
+                similarities = DataStructs.BulkTanimotoSimilarity(fp, mol_list)
+               
+                
 
                 sim_df = pd.DataFrame()
                 name_list = []
                 value_list = []
                 mol_list2 = []
                 # thre_sim = st.sidebar.slider('Similarity Threshold',min_value=0.3,max_value=1.0,value=0.49,step=0.1)
-                for name, value in zip(jump_df.pubchemid, similarities):
+                for name, value in zip(cpd_pubchem_list, similarities):
                     if value > 0.49:
                         name_list.append(name)
                         value_list.append(value)
