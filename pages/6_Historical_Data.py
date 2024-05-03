@@ -64,19 +64,19 @@ def convert_df(df):
     return df.to_csv(index=True).encode("utf-8")
 
 
-profile_conn = "postgres://arno:12345@192.168.2.131:5432/ksilink_cpds"
+
 
 
 st.header("In house Dataset", divider="rainbow")
 
 sql_proj = "select project from projectsprofile group by project"
-res_proj = sql_df(sql_proj, profile_conn)
+res_proj = sql_df(sql_proj, conn_meta)
 
 
 # st.write(res_proj)
 project_name = st.selectbox("Select Project name", res_proj, help="DM1")
 sql_profile = f"SELECT assay from projectsprofile WHERE projectsprofile.project='{project_name}' group by assay"
-res_assay = sql_df(sql_profile, profile_conn)
+res_assay = sql_df(sql_profile, conn_meta)
 # list_assay = res_assay.assay.unique()
 sel_proj = st.selectbox("Select Assay name", res_assay)
 
@@ -86,7 +86,9 @@ def get_data_once(sel_projet):
     sql_assay = (
         f"SELECT * from projectsprofile WHERE projectsprofile.assay='{sel_projet}'"
     )
-    df_pro = sql_df(sql_assay, profile_conn)
+    df_pro = sql_df(sql_assay, conn_meta)
+
+    
     original_columns = [
         "name",
         "batchid",
@@ -101,11 +103,15 @@ def get_data_once(sel_projet):
     pivot_df = df_pro.pivot(
         index=original_columns, columns="feature", values="value"
     ).reset_index()
+   
+    
     return pivot_df
 
 
 pivot_df = get_data_once(sel_proj)
+
 pivot_df = pivot_df.apply(pd.to_numeric, errors="ignore")
+
 components.html(get_pyg_html(pivot_df), height=1000, scrolling=True)
 
 st.header("Dataset from Phenolink not validated", divider="rainbow")
