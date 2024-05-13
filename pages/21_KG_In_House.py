@@ -12,30 +12,39 @@ conn = "postgres://arno:123456@192.168.2.131:5432/ksi_cpds"
 sql_query = "SELECT aggprofile.*, cpdbatchs.pubchemid , cpd.cpdname , cpd.smile , cpd.keggid  FROM aggprofile\
     INNER JOIN cpdbatchs ON cpdbatchs.batchid = aggprofile.batchid left JOIN cpd ON cpdbatchs.pubchemid = cpd.pubchemid WHERE aggprofile.source = 'Ksilink_25'"
 
-df_merge = sql_df(sql_query, conn)
 
-df_merge["pubchemid"] = df_merge["pubchemid"].astype(int)
-df_merge = df_merge[df_merge["pubchemid"] > 0]
-df_merge["pubchemid"] = df_merge["pubchemid"].astype(str)
+sql_query = "SELECT aggprofile.*, genebatchs.geneid,gene.symbol FROM aggprofile INNER JOIN genebatchs ON genebatchs.batchid = aggprofile.batchid INNER JOIN gene on gene.geneid=genebatchs.geneid WHERE aggprofile.source='CRISPER'"
+df_merge = sql_df(sql_query, conn)
+# sql_genes = "SELECT * from gene"
+# df_genes = sql_df(sql_genes, conn)
+
+# st.write(df_genes.sample(2))
+# st.write(df_merge.sample(2))
+# df_concat = pd.merge(df_merge, df_genes, left_on="geneid", right_on="geneid")
+# df_merge = df_concat
+
+# df_merge["pubchemid"] = df_merge["pubchemid"].astype(int)
+# df_merge = df_merge[df_merge["pubchemid"] > 0]
+# df_merge["pubchemid"] = df_merge["pubchemid"].astype(str)
 # df_merge["pubchemid"] = df_merge["pubchemid"].str.split(".").str[0]
 
 filter_col1 = df_merge.select_dtypes(include=[int, float]).columns.tolist()
 
-st.write(df_merge)
+st.write(len(df_merge))
 
 
 simi = cosine_similarity(df_merge[filter_col1])
 # st.write(simi[0:10])
-df_merge["source"] = df_merge["pubchemid"]
-df_merge["target"] = df_merge["pubchemid"]
+df_merge["source"] = df_merge["symbol"]
+df_merge["target"] = df_merge["symbol"]
 simi_df_alt = pd.DataFrame(simi, index=df_merge["source"], columns=df_merge["target"])
 simi_df_alt = simi_df_alt.where(np.triu(np.ones(simi_df_alt.shape), k=1).astype(bool))
 simi_df_alt = simi_df_alt.stack().reset_index()
 simi_df_alt.columns = ["source", "target", "similarity"]
 st.write(simi_df_alt.sample(10))
 
-# # simi_high = simi_df_alt[simi_df_alt["similarity"] > 0.9]
-# # st.write(simi_high.reset_index(drop=True))
+simi_high = simi_df_alt[simi_df_alt["similarity"] > 0.9]
+st.write(simi_high.reset_index(drop=True))
 
 # G = nx.from_pandas_edgelist(simi_df_alt)
 # st.write(G)r

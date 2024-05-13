@@ -36,7 +36,7 @@ var_text = st.text_area(
     "Enter your list of entities", help="Name or ID separated by enter"
 )
 var_t = var_text.split("\n")
-list_gene = [t.strip().upper() for t in var_t if t != ""]
+list_gene = [t.strip() for t in var_t if t != ""]
 # list_gene = var_t
 # st.write(list_gene)
 # exit(0)
