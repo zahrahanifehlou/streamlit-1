@@ -24,7 +24,7 @@ st.set_page_config(layout="wide")
 
 
 conn_meta = "postgres://arno:123456@192.168.2.131:5432/ksi_cpds"
-conn_prof = "postgres://arno:12345@192.168.2.131:5432/ksilink_cpds"
+
 
 
 def get_stringDB(df_all_umap, thresh=0.7, genecol="target"):
@@ -257,14 +257,14 @@ if not df_genes.empty:
                 bq.append("'" + bs + "'")
 
         sql_profile = (
-            "select * from aggprofile where metabatchid  in (" + ",".join(bq) + ")"
+            "select * from aggprofile where batchid  in (" + ",".join(bq) + ")"
         )
 
-        df_cpd_prof = sql_df(sql_profile, conn_prof)
-        list_sources = df_cpd_prof["metasource"].unique().tolist()
+        df_cpd_prof = sql_df(sql_profile, conn_meta)
+        list_sources = df_cpd_prof["source"].unique().tolist()
         choix_source = st.selectbox("Select the Source", list_sources)
         df_cpd_prof = df_cpd_prof[
-            df_cpd_prof["metasource"] == choix_source
+            df_cpd_prof["source"] == choix_source
         ].reset_index(drop=True)
         if disp:
             st.write("df_cpd_prof", df_cpd_prof)
@@ -272,7 +272,7 @@ if not df_genes.empty:
         # # st.write(df_cpd_src.sample(5))
 
         df_cpds_merge = df_cpd_prof.merge(
-            df_drug_meta, left_on="metabatchid", right_on="batchid"
+            df_drug_meta, left_on="batchid", right_on="batchid"
         ).reset_index(drop=True)
 
         # st.write("TOTOT: ",unique_gene)
@@ -503,14 +503,14 @@ if not df_genes.empty:
 
         numerics = ["float16", "float32", "float64"]
         # sql_dot="select * from umapemd"
-        # df_temp=sql_df(sql_dot,conn_prof)
+        # df_temp=sql_df(sql_dot,conn_meta)
         # st.write(df_temp)
         # choix_source = "Ksilink_25"
         if choice == "Cpds":
-            umap_sql = f"select * from umapemd where metasource='{choix_source}'"
+            umap_sql = f"select * from umapemd where source='{choix_source}'"
         else:
-            umap_sql = "select * from umapemd where metasource='CRISPER'"
-        df_umap = sql_df(umap_sql, conn_prof)
+            umap_sql = "select * from umapemd where source='CRISPER'"
+        df_umap = sql_df(umap_sql, conn_meta)
 
         if choice == "Cpds":
             # df_umap = df_umap.dropna(subset="keggid", axis=0)
@@ -518,14 +518,14 @@ if not df_genes.empty:
             dict1 = df_umap_cluster.set_index("batchid").to_dict()["description"]
             dict2 = df_umap_cluster.set_index("batchid").to_dict()["symbol"]
             # st.write("Dict", dict1)
-            df_umap["description"] = df_umap["metabatchid"].map(dict1)
+            df_umap["description"] = df_umap["batchid"].map(dict1)
             # df_umap["description"] = df_umap_cluster["description"]
-            df_umap["target"] = df_umap["metabatchid"].map(dict2)
+            df_umap["target"] = df_umap["batchid"].map(dict2)
             df_umap["target"] = df_umap["target"].fillna("")
             df_umap_cluster = df_umap_cluster.reset_index()
             df_umap = df_umap.reset_index()
             df_umap["size"] = 5
-            df_umap["size"] = df_umap["metabatchid"].apply(
+            df_umap["size"] = df_umap["batchid"].apply(
                 lambda x: 0.5 if x not in df_umap_cluster["batchid"].to_list() else 5
             )
 

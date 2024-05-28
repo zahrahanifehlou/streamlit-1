@@ -155,7 +155,7 @@ if tmap1:
         ( "symbol",  "pubchemid", "pathid", "mainlocation", "chromosome"),
         horizontal=True,
     )
-    plot_tmap(df_tmap, color_col, px.colors.qualitative.D3)
+    plot_tmap(df_tmap, color_col, px.colors.qualitative.Alphabet)
 
 
 # -----------------------------------------------------------------------------------------------------------------------
