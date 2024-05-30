@@ -14,7 +14,6 @@ st.set_page_config(
     layout="wide",
 )
 
-
 from nebula3.data.DataObject import Value, ValueWrapper
 from nebula3.data.ResultSet import ResultSet
 
@@ -64,7 +63,64 @@ def resp_to_dataframe(resp: ResultSet):
     return(output_table)
 
 @st.cache_data
-def get_graph(list_gene, depth,sel_rel):
+def get_graph_nebula_match(list_gene, depth,sel_rel):
+    
+    client = None
+    space_name ="KG"
+    config = Config()
+    config.max_connection_pool_size = 2
+    connection_pool = ConnectionPool()
+    assert connection_pool.init([("192.168.2.130", 9669)], config) 
+    # Get one gclient
+    client = connection_pool.get_session("root", "nebula")
+    assert client is not None
+    resp = client.execute(
+        "CREATE SPACE IF NOT EXISTS {} (vid_type=FIXED_STRING(30)); USE {};".format(
+            space_name, space_name
+        )
+    )
+    #resp =client.execute(space_name)
+    assert resp.is_succeeded(), resp.error_msg()
+
+
+    if len(sel_rel)==0:
+        sel_rel=['protein_protein' ]
+    gsql = (
+        f"""MATCH p=(n )-[r*{depth}]-() 
+        where n.protein.name in {list_gene} 
+        and type(relationships(p)[0] ) in {sel_rel}
+        RETURN  p"""
+    
+    )
+    st.write(gsql)
+
+    resp = client.execute(gsql)
+
+    data_for_vis = resp.dict_for_vis()
+    nodes=data_for_vis.get("nodes_dict")
+    edges=data_for_vis.get("edges_dict")
+    new_edge_list=[]
+    for e in edges:
+        e_list = e.strip("()").split(", ")
+        first_num = e_list[0].strip("'")
+        second_num = e_list[1].strip("'")
+        type = e_list[-1].strip("'")
+        
+        new_edge_list.append([first_num, second_num,type ])
+    output_table=pd.DataFrame(new_edge_list,columns=["source","target","type"])
+    node_names = [node['props']['name'] for node in nodes.values()]
+    node_id = [node['id'] for node in nodes.values()]
+
+    node_dict = dict(zip( node_id,node_names))
+
+    output_table["source"]=output_table["source"].map(node_dict)
+    output_table["target"]=output_table["target"].map(node_dict)
+
+    return output_table
+
+@st.cache_data
+def get_graph_nebula_Go(list_gene, depth,sel_rel):
+   
     client = None
     space_name ="KG"
     config = Config()
@@ -88,33 +144,28 @@ def get_graph(list_gene, depth,sel_rel):
     gsql = (
         f"""MATCH (n )
         where n.protein.name in {list_gene} 
+       
         RETURN   id(n)"""
     
     )
     st.write(gsql)
+    
     resp = client.execute(gsql)
     id_list=[val for val in resp]
     
     id_list = ', '.join(f'{item}' for item in id_list)
-    gsql2=f'''GO {depth} STEP FROM  {id_list} OVER protein_protein   YIELD   properties($^).name as source , properties($$).name as target , type(edge) as type;'''
+    sel_rel = ', '.join(f'{item}' for item in sel_rel)
+    gsql2=f'''GO {depth} STEP FROM  {id_list} OVER {sel_rel}   YIELD   properties($^).name as source , properties($$).name as target , type(edge) as type;'''
     st.write(gsql2)
     resp = client.execute(gsql2)
     assert resp.is_succeeded(), resp.error_msg()
     output=resp_to_dataframe(resp)
     #st.write(output)
-   
- 
     return output
-
-
-
-            
-    
-
 
 col1, col2 = st.columns(2)
 with col1:
-    depth = st.slider("Select depth:", 0, 10, 1)
+    depth = st.slider("Select depth:", 0, 4, 1)
     deg = st.slider("Minimum Degree:", 0, 10,1)
     
 with col2:
@@ -128,9 +179,11 @@ with col2:
     var_t = var_text.split("\n")
     list_gene = [t.strip().upper() for t in var_t if t != ""]
 
+
+
 if len(list_gene) > 0:
     t1_start = process_time() 
-    graph_df=get_graph(list_gene, depth,sel_rel)
+    graph_df=get_graph_nebula_Go(list_gene, depth,sel_rel)
     st.write(graph_df)
     t1_stop = process_time()
     st.write(" time to get dataframe in seconds:", 
