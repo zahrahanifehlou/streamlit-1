@@ -50,14 +50,14 @@ st.markdown(
 
 """
 )
-tab1, tab2, tab3, tab4, tab5 = st.tabs(
-    ["MetaDatabase", "Sources", "Cpds Per Sources", "Profiles Database","Graph Database"]
+tab1, tab2, tab3, tab4 = st.tabs(
+    ["Database", "Sources", "Cpds Per Sources", "Graph Database"]
 )
 tab1.image("DB.png")
 tab2.image("sources.png")
 tab3.image("cpds_per_sources.png")
-tab4.image("profile_db.png")
-tab5.image("graph_db.png" )
+
+tab4.image("graph_db.png" )
 # st.write(st.session_state)
 
 if st.button("Clear Cache"):
