@@ -1,0 +1,452 @@
+<?xml version='1.0' encoding='utf-8'?>
+<gexf xmlns="http://www.gexf.net/1.2draft" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.gexf.net/1.2draft http://www.gexf.net/1.2draft/gexf.xsd" version="1.2">
+  <meta lastmodifieddate="2024-05-31">
+    <creator>NetworkX 3.3</creator>
+  </meta>
+  <graph defaultedgetype="directed" mode="static" name="">
+    <attributes mode="static" class="edge">
+      <attribute id="2" title="edge_type" type="string" />
+      <attribute id="3" title="networkx_key" type="long" />
+    </attributes>
+    <attributes mode="static" class="node">
+      <attribute id="0" title="name" type="string" />
+      <attribute id="1" title="source" type="string" />
+    </attributes>
+    <nodes>
+      <node id="100057" label="99979">
+        <attvalues>
+          <attvalue for="0" value="food-dependent exercise-induced anaphylaxis" />
+          <attvalue for="1" value="mondo" />
+        </attvalues>
+      </node>
+      <node id="100056" label="39869">
+        <attvalues>
+          <attvalue for="0" value="exercise-induced anaphylaxis" />
+          <attvalue for="1" value="mondo" />
+        </attvalues>
+      </node>
+      <node id="100015" label="99965">
+        <attvalues>
+          <attvalue for="0" value="adult-onset segmental dystonia" />
+          <attvalue for="1" value="mondo" />
+        </attvalues>
+      </node>
+      <node id="15990" label="38254">
+        <attvalues>
+          <attvalue for="0" value="focal, segmental or multifocal dystonia" />
+          <attvalue for="1" value="mondo" />
+        </attvalues>
+      </node>
+      <node id="479" label="39096">
+        <attvalues>
+          <attvalue for="0" value="segmental dystonia" />
+          <attvalue for="1" value="mondo" />
+        </attvalues>
+      </node>
+      <node id="60768" label="99954">
+        <attvalues>
+          <attvalue for="0" value="gingival fibroepithelial polyp" />
+          <attvalue for="1" value="mondo" />
+        </attvalues>
+      </node>
+      <node id="60765" label="37362">
+        <attvalues>
+          <attvalue for="0" value="fibroepithelial polyp" />
+          <attvalue for="1" value="mondo" />
+        </attvalues>
+      </node>
+      <node id="3396" label="39168">
+        <attvalues>
+          <attvalue for="0" value="epulis" />
+          <attvalue for="1" value="mondo" />
+        </attvalues>
+      </node>
+      <node id="44916" label="99928">
+        <attvalues>
+          <attvalue for="0" value="extrarenal rhabdoid tumor" />
+          <attvalue for="1" value="mondo" />
+        </attvalues>
+      </node>
+      <node id="2728" label="33519">
+        <attvalues>
+          <attvalue for="0" value="rhabdoid tumor" />
+          <attvalue for="1" value="mondo" />
+        </attvalues>
+      </node>
+      <node id="6517" label="36710">
+        <attvalues>
+          <attvalue for="0" value="childhood malignant neoplasm" />
+          <attvalue for="1" value="mondo" />
+        </attvalues>
+      </node>
+      <node id="44682" label="99893">
+        <attvalues>
+          <attvalue for="0" value="mybpc1-related autosomal recessive non-lethal arthrogryposis multiplex congenita syndrome" />
+          <attvalue for="1" value="mondo" />
+        </attvalues>
+      </node>
+      <node id="32778_8823_100218_60486_15168" label="27504">
+        <attvalues>
+          <attvalue for="0" value="arthrogryposis multiplex congenita" />
+          <attvalue for="1" value="mondo_grouped" />
+        </attvalues>
+      </node>
+      <node id="44101" label="99863">
+        <attvalues>
+          <attvalue for="0" value="pregnancy, cornual" />
+          <attvalue for="1" value="mondo" />
+        </attvalues>
+      </node>
+      <node id="2654" label="35683">
+        <attvalues>
+          <attvalue for="0" value="uterine disease" />
+          <attvalue for="1" value="mondo" />
+        </attvalues>
+      </node>
+      <node id="755" label="39827">
+        <attvalues>
+          <attvalue for="0" value="ectopic pregnancy" />
+          <attvalue for="1" value="mondo" />
+        </attvalues>
+      </node>
+      <node id="44037" label="99859">
+        <attvalues>
+          <attvalue for="0" value="livedo reticularis" />
+          <attvalue for="1" value="mondo" />
+        </attvalues>
+      </node>
+      <node id="5294" label="35931">
+        <attvalues>
+          <attvalue for="0" value="peripheral vascular disease" />
+          <attvalue for="1" value="mondo" />
+        </attvalues>
+      </node>
+      <node id="19293" label="38169">
+        <attvalues>
+          <attvalue for="0" value="skin vascular disease" />
+          <attvalue for="1" value="mondo" />
+        </attvalues>
+      </node>
+      <node id="44001" label="99857">
+        <attvalues>
+          <attvalue for="0" value="hearing loss, mixed conductive-sensorineural" />
+          <attvalue for="1" value="mondo" />
+        </attvalues>
+      </node>
+      <node id="5365_20677" label="39024">
+        <attvalues>
+          <attvalue for="0" value="hearing loss disorder" />
+          <attvalue for="1" value="mondo_grouped" />
+        </attvalues>
+      </node>
+      <node id="43895" label="99851">
+        <attvalues>
+          <attvalue for="0" value="ankle injury" />
+          <attvalue for="1" value="mondo" />
+        </attvalues>
+      </node>
+      <node id="44989" label="36393">
+        <attvalues>
+          <attvalue for="0" value="foot disease" />
+          <attvalue for="1" value="mondo" />
+        </attvalues>
+      </node>
+      <node id="21178" label="37710">
+        <attvalues>
+          <attvalue for="0" value="injury" />
+          <attvalue for="1" value="mondo" />
+        </attvalues>
+      </node>
+      <node id="43589" label="99838">
+        <attvalues>
+          <attvalue for="0" value="femoral neck fracture" />
+          <attvalue for="1" value="mondo" />
+        </attvalues>
+      </node>
+      <node id="5327" label="39825">
+        <attvalues>
+          <attvalue for="0" value="hip fracture" />
+          <attvalue for="1" value="mondo" />
+        </attvalues>
+      </node>
+      <node id="43280" label="99813">
+        <attvalues>
+          <attvalue for="0" value="wallerian degeneration" />
+          <attvalue for="1" value="mondo" />
+        </attvalues>
+      </node>
+      <node id="5071" label="36478">
+        <attvalues>
+          <attvalue for="0" value="nervous system disorder" />
+          <attvalue for="1" value="mondo" />
+        </attvalues>
+      </node>
+      <node id="146456" label="9980">
+        <attvalues>
+          <attvalue for="0" value="tmed6" />
+          <attvalue for="1" value="ncbi" />
+        </attvalues>
+      </node>
+      <node id="5793" label="125004">
+        <attvalues>
+          <attvalue for="0" value="endoplasmic reticulum-golgi intermediate compartment" />
+          <attvalue for="1" value="go" />
+        </attvalues>
+      </node>
+      <node id="30134" label="126606">
+        <attvalues>
+          <attvalue for="0" value="copii-coated er to golgi transport vesicle" />
+          <attvalue for="1" value="go" />
+        </attvalues>
+      </node>
+      <node id="16021" label="55522">
+        <attvalues>
+          <attvalue for="0" value="integral component of membrane" />
+          <attvalue for="1" value="go" />
+        </attvalues>
+      </node>
+      <node id="5789" label="55767">
+        <attvalues>
+          <attvalue for="0" value="endoplasmic reticulum membrane" />
+          <attvalue for="1" value="go" />
+        </attvalues>
+      </node>
+      <node id="5783" label="56032">
+        <attvalues>
+          <attvalue for="0" value="endoplasmic reticulum" />
+          <attvalue for="1" value="go" />
+        </attvalues>
+      </node>
+      <node id="5794" label="56175">
+        <attvalues>
+          <attvalue for="0" value="golgi apparatus" />
+          <attvalue for="1" value="go" />
+        </attvalues>
+      </node>
+      <node id="26507" label="10450">
+        <attvalues>
+          <attvalue for="0" value="cnnm1" />
+          <attvalue for="1" value="ncbi" />
+        </attvalues>
+      </node>
+      <node id="3764" label="10798">
+        <attvalues>
+          <attvalue for="0" value="kcnj8" />
+          <attvalue for="1" value="ncbi" />
+        </attvalues>
+      </node>
+      <node id="10385" label="1150">
+        <attvalues>
+          <attvalue for="0" value="btn2a2" />
+          <attvalue for="1" value="ncbi" />
+        </attvalues>
+      </node>
+      <node id="84910" label="12338">
+        <attvalues>
+          <attvalue for="0" value="tmem87b" />
+          <attvalue for="1" value="ncbi" />
+        </attvalues>
+      </node>
+      <node id="6558" label="1969">
+        <attvalues>
+          <attvalue for="0" value="slc12a2" />
+          <attvalue for="1" value="ncbi" />
+        </attvalues>
+      </node>
+      <node id="10668" label="1972">
+        <attvalues>
+          <attvalue for="0" value="cgrrf1" />
+          <attvalue for="1" value="ncbi" />
+        </attvalues>
+      </node>
+      <node id="489" label="2029">
+        <attvalues>
+          <attvalue for="0" value="atp2a3" />
+          <attvalue for="1" value="ncbi" />
+        </attvalues>
+      </node>
+    </nodes>
+    <edges>
+      <edge source="100057" target="100056" id="0">
+        <attvalues>
+          <attvalue for="2" value="disease_disease" />
+          <attvalue for="3" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="100015" target="15990" id="1">
+        <attvalues>
+          <attvalue for="2" value="disease_disease" />
+          <attvalue for="3" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="100015" target="479" id="2">
+        <attvalues>
+          <attvalue for="2" value="disease_disease" />
+          <attvalue for="3" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="60768" target="60765" id="3">
+        <attvalues>
+          <attvalue for="2" value="disease_disease" />
+          <attvalue for="3" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="60768" target="3396" id="4">
+        <attvalues>
+          <attvalue for="2" value="disease_disease" />
+          <attvalue for="3" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="44916" target="2728" id="5">
+        <attvalues>
+          <attvalue for="2" value="disease_disease" />
+          <attvalue for="3" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="44916" target="6517" id="6">
+        <attvalues>
+          <attvalue for="2" value="disease_disease" />
+          <attvalue for="3" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="44682" target="32778_8823_100218_60486_15168" id="7">
+        <attvalues>
+          <attvalue for="2" value="disease_disease" />
+          <attvalue for="3" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="44101" target="2654" id="8">
+        <attvalues>
+          <attvalue for="2" value="disease_disease" />
+          <attvalue for="3" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="44101" target="755" id="9">
+        <attvalues>
+          <attvalue for="2" value="disease_disease" />
+          <attvalue for="3" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="44037" target="5294" id="10">
+        <attvalues>
+          <attvalue for="2" value="disease_disease" />
+          <attvalue for="3" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="44037" target="19293" id="11">
+        <attvalues>
+          <attvalue for="2" value="disease_disease" />
+          <attvalue for="3" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="44001" target="5365_20677" id="12">
+        <attvalues>
+          <attvalue for="2" value="disease_disease" />
+          <attvalue for="3" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="43895" target="44989" id="13">
+        <attvalues>
+          <attvalue for="2" value="disease_disease" />
+          <attvalue for="3" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="43895" target="21178" id="14">
+        <attvalues>
+          <attvalue for="2" value="disease_disease" />
+          <attvalue for="3" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="43589" target="5327" id="15">
+        <attvalues>
+          <attvalue for="2" value="disease_disease" />
+          <attvalue for="3" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="43280" target="5071" id="16">
+        <attvalues>
+          <attvalue for="2" value="disease_disease" />
+          <attvalue for="3" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="146456" target="5793" id="17">
+        <attvalues>
+          <attvalue for="2" value="cellcomp_protein" />
+          <attvalue for="3" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="146456" target="30134" id="18">
+        <attvalues>
+          <attvalue for="2" value="cellcomp_protein" />
+          <attvalue for="3" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="146456" target="16021" id="19">
+        <attvalues>
+          <attvalue for="2" value="cellcomp_protein" />
+          <attvalue for="3" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="146456" target="5789" id="20">
+        <attvalues>
+          <attvalue for="2" value="cellcomp_protein" />
+          <attvalue for="3" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="146456" target="5783" id="21">
+        <attvalues>
+          <attvalue for="2" value="cellcomp_protein" />
+          <attvalue for="3" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="146456" target="5794" id="22">
+        <attvalues>
+          <attvalue for="2" value="cellcomp_protein" />
+          <attvalue for="3" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="146456" target="26507" id="23">
+        <attvalues>
+          <attvalue for="2" value="protein_protein" />
+          <attvalue for="3" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="146456" target="3764" id="24">
+        <attvalues>
+          <attvalue for="2" value="protein_protein" />
+          <attvalue for="3" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="146456" target="10385" id="25">
+        <attvalues>
+          <attvalue for="2" value="protein_protein" />
+          <attvalue for="3" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="146456" target="84910" id="26">
+        <attvalues>
+          <attvalue for="2" value="protein_protein" />
+          <attvalue for="3" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="146456" target="6558" id="27">
+        <attvalues>
+          <attvalue for="2" value="protein_protein" />
+          <attvalue for="3" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="146456" target="10668" id="28">
+        <attvalues>
+          <attvalue for="2" value="protein_protein" />
+          <attvalue for="3" value="0" />
+        </attvalues>
+      </edge>
+      <edge source="146456" target="489" id="29">
+        <attvalues>
+          <attvalue for="2" value="protein_protein" />
+          <attvalue for="3" value="0" />
+        </attvalues>
+      </edge>
+    </edges>
+  </graph>
+</gexf>
